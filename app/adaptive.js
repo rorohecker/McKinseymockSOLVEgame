@@ -4,7 +4,7 @@ const ADAPTIVE_FOCI={
   weighted:{label:"Weighted averages and expected value",family:"math",mathKind:"Weighted average"},
   range:{label:"Three-value range checks",family:"math",mathKind:"Range check"},
   data:{label:"Redrock data and chart cases",family:"cases"},
-  filter:{label:"Sea Wolf filtering",family:"filter"},
+  filter:{label:"Sea Wolf candidate selection",family:"filter"},
   sfl:{label:"Sustainable Futures decisions",family:"sfl"}
 };
 function caseSkill(kind){
@@ -27,10 +27,11 @@ function sessionSkillStats(){
   if(S.res.sw)for(const r of S.res.sw){
     const deductions=r.sc.ded||[];
     for(let i=0;i<3;i++)add("range",r.trio.length!==3||deductions.some(x=>x.startsWith(ATTRS[i]+" average")));
-    const review=r.review;
-    if(review){
-      for(const id of r.site.planted)add("filter",!review.shown?.includes(id)||review.cat?.[id]!=="cur");
-    }else add("filter",true);
+    // A planted trio is one reference solution, not the only valid way to solve a site.
+    // Judge access to a strong treatment and visible trait mistakes, rather than
+    // whether the player happened to use one reference trio.
+    const traitMiss=deductions.some(x=>x.startsWith("No microbe carries the desired trait")||x.includes("undesired trait"));
+    add("filter",r.trio.length!==3||r.bestPool?.score<100||traitMiss);
   }
   if(S.res.sfl)for(const item of S.res.sfl.score.items)add("sfl",item.pts<item.max);
   if(S.drill?.results){

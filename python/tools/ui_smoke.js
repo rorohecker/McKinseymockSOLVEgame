@@ -108,7 +108,7 @@
     check(S.res.sw.reduce((sum,x)=>sum+x.sc.score,0)===300,'Sea Wolf 300/300');
   }
   function project(){
-    check(S.screen==='sfl-intro','Project intro');ACT['sfl-begin']();
+    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('Each conflicting pair costs 5'),'Project Lead scoring guide');ACT['sfl-begin']();
     check(document.querySelector('.crumb')?.textContent.includes('Decision 1/13'),'Project Lead header agrees with priority ranking step');
     const correct=SFL_RANK.slice().sort((a,b)=>a.rank-b.rank).map(x=>x.id);
     for(let i=0;i<correct.length;i++){
@@ -124,7 +124,7 @@
     check(S.res.sfl.score.total===100,'SFL project 100/100');
   }
   function team(){
-    check(S.screen==='sfl-intro','Team intro');ACT['sfl-begin']();noOverflow('SFL team');
+    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('3 explore, 16 assignment, 4 support, 4 reflection'),'Team Lab scoring guide');ACT['sfl-begin']();noOverflow('SFL team');
     for(let day=0;day<3;day++){
       const f=S.sfl,record=f.records[day],data=f.data,stations=data.days[day].stations;
       data.people.slice(0,3).forEach(p=>ACT['team-ask'](p.id));ACT['team-next']();
@@ -152,6 +152,15 @@
     ACT['break-next']();seawolf();
     if(mode!=='full'){check(S.screen==='break','break after Sea Wolf');ACT['break-next']();(mode==='full20'?project:team)()}
     check(S.screen==='results','combined results');
+    const firstSite=S.res.sw[0],shown=firstSite.review.shown,bestScore=firstSite.bestPool.score;
+    firstSite.review.shown=[];
+    check(sessionSkillStats().filter.missed===0,'alternate perfect Sea Wolf treatment is not flagged as a filter mistake');
+    firstSite.review.shown=shown;firstSite.bestPool.score=80;
+    check(sessionSkillStats().filter.missed===1,'lost access to a perfect treatment is a selection practice signal');
+    firstSite.bestPool.score=bestScore;
+    const deductions=firstSite.sc.ded;firstSite.sc.ded=['No microbe carries the desired trait'];
+    check(sessionSkillStats().filter.missed===1,'submitted trait mistake enters Sea Wolf selection practice');
+    firstSite.sc.ded=deductions;
     check(document.querySelectorAll('.sw-review-site').length===3&&document.querySelectorAll('.sw-review-site .phase-review').length===12,'Sea Wolf four-phase review for each site');
     for(const result of S.res.sw){
       check(result.review.offerHistory.length===4,'prospect offers retained for review');
@@ -169,6 +178,33 @@
       check(S.screen==='results'&&readHistory()[0].mode===mode,mode+' standalone result and history');
       log(mode+' standalone route');
     }
+  }
+  function imperfectRoutes(){
+    home(24680);ACT.start('rr');ACT.rrbegin();ACT['to-an']();
+    for(let i=0;i<3;i++)ACT['an-next']();
+    ACT['to-rep2']();ACT['to-cases']();for(let i=0;i<6;i++)ACT['case-next']();
+    check(S.screen==='results'&&S.res.rr.total===0&&S.res.rr.items.every(x=>x.pts===0),'Redrock blank answers finish with a full worked review');
+    check(document.querySelector('#app').textContent.includes('Redrock worked review'),'Redrock missed-work section renders');
+
+    home(24680);ACT.start('sw');ACT.swbegin();chooseFullProfile();ACT['filter-go']();
+    while(S.sw.cur.step===2)ACT.cat('rej');
+    while(S.sw.cur.step===3)ACT.prospect(S.sw.cur.offer[0].id);
+    for(const id of S.sw.cur.picks.slice(0,3))ACT.sel(id);
+    ACT.confirm();ACT['site-next']();S.clock.end=Date.now()-1;tick();
+    check(S.screen==='results'&&S.res.sw.length===3&&S.res.sw[0].trio.length===3&&S.res.sw[2].sc.ded.includes('Site not reached'),'Sea Wolf review handles poor choices and later timeout');
+    check(document.querySelectorAll('.sw-review-site .phase-review').length===12,'partial Sea Wolf run keeps every review phase');
+
+    home(24680);ACT.start('sfl20');ACT['sfl-begin']();ACT['rank-done']();
+    for(let i=0;i<2;i++){const q=S.sfl.data.questions[S.sfl.step];ACT['sfl-answer'](q.options.find(x=>x.quality===0).id);ACT['sfl-next']()}
+    S.clock.end=Date.now()-1;tick();
+    check(S.screen==='results'&&S.res.sfl.score.items.some(x=>x.your==='No decision'),'Project Lead review explains unanswered decisions after timeout');
+    check(S.res.sfl.score.items.at(-1).why.includes('Answered 2 of 12'),'Project Lead consistency review explains partial score');
+
+    home(24680);ACT.start('sfl30');ACT['sfl-begin']();ACT['team-ask'](S.sfl.data.people[0].id);ACT['team-next']();
+    const day=S.sfl.data.days[0];for(const person of S.sfl.data.people){fill('[data-team-assign="'+person.id+'"]',day.stations.find(w=>w.skill===person.skill).id);fill('[data-team-reason="'+person.id+'"]','Skill fit')}
+    ACT['team-next']();ACT['team-support'](0);S.clock.end=Date.now()-1;tick();
+    check(S.screen==='results'&&S.res.sfl.score.items.some(x=>x.label.includes('Support')&&x.your.includes('No response')),'Team Lab review explains unfinished support after timeout');
+    log('imperfect and partial routes across every game');
   }
   function perfectDrill(d){
     if(d.family==='math'||d.family==='cases'){
@@ -314,7 +350,7 @@
   }
   try{
     localStorage.removeItem(HISTORY_KEY);localStorage.removeItem(SPACED_KEY);
-    fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();spaced();edgeCases();
+    fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();imperfectRoutes();spaced();edgeCases();
     const images=await Promise.all([...imageSources].map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve([src,image.naturalWidth>0]);image.onerror=()=>resolve([src,false]);image.src=src})));
     check(images.every(([,ok])=>ok),'all referenced game images load');
     log('every visited screen has named controls, labeled fields, and loading images');

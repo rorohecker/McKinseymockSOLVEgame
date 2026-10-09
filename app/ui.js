@@ -288,6 +288,7 @@ function rrResults(){const r=S.res.rr,secs=['Analysis','Report','Cases'];
 <details><summary>Case explanations</summary><div class="stack" style="margin-top:10px">${S.rr.d.cases.map((c,i)=>`<p><b>Case ${i+1} · ${c.kind}.</b> ${esc(c.explain)}</p>`).join('')}</div></details></section>`}
 function swResults(){const R=S.res.sw,tot=R.reduce((a,b)=>a+b.sc.score,0);
   return`<section class="card stack"><div><span class="eyebrow sw-t">Sea Wolf</span><div class="score sw-t">${tot} <span class="mute" style="font-size:1.2rem">/ 300</span></div></div>${phaseTimes('sw')}
+<p class="mute">Your pool contains the microbes you kept for a site and the prospects you selected. The full pool is that site's original set before your profile and choices. A full-pool example may no longer be available from your choices.</p>
 ${R.map(r=>`<div class="stack card flat" style="gap:8px"><div class="row" style="justify-content:space-between"><h3>${r.site.name} · ${esc(r.site.contam)}</h3><span class="mono"><b>${r.sc.score}</b>/100</span></div>
 <p>${r.trio.length?r.trio.map(m=>`${esc(m.name)} <span class="mute">(${esc(m.trait)})</span>`).join(', '):'<span class="mute">No treatment</span>'}</p>
 ${r.sc.ded.length?`<ul style="margin:0;padding-left:1.1rem">${r.sc.ded.map(d=>`<li class="no">${r.trio.length===3?'−20 · ':''}${esc(d)}</li>`).join('')}</ul>`:'<p class="ok">Every requirement met.</p>'}

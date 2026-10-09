@@ -11,10 +11,12 @@ function breakHTML(){
 }
 function sflIntroHTML(){
   const team=S.sfl.format==='team',mins=team?30:20;
+  const guide=team
+    ?'<p><b>Explore:</b> Ask up to three questions each day. Each question earns one practice point, and its note remains available.</p><p><b>Assign:</b> Match four researchers to the station skills shown and explain each placement.</p><p><b>Support:</b> Respond to two requests. <b>Reflect:</b> Use skill fit and support to assess each person.</p><p class="mute">Daily points: 3 explore, 16 assignment, 4 support, 4 reflection. The three days are scaled to 100.</p>'
+    :'<p><b>Ranking:</b> Order four first actions for 20 points. Drag rows or use the arrow buttons.</p><p><b>Decisions:</b> Make twelve linked choices worth 60 points. Earlier choices change later context.</p><p><b>Consistency:</b> Starts at 20 points. Each conflicting pair costs 5: transparent versus opaque, evidence versus assumption, or targeted versus spreading effort equally. Skipped decisions reduce this score proportionally.</p>';
   return`<section class="mission-intro stack sfl-scope" style="max-width:820px"><span class="eyebrow">Mission 03 // untimed briefing</span><h1>Sustainable Futures Lab</h1><span class="chip">${team?'Team Lab · 30 minutes':'Project Lead · 20 minutes'}</span>
   <p>${team?'Guide four researchers through three project days. Each day you explore, assign, support and reflect.':'Rank four first actions, then make twelve linked decisions in one environmental project. Earlier choices change later context.'}</p>
-  <div class="card stack"><h3>Practice reconstruction</h3><p>This module uses original scenarios and a transparent practice score. The real tasks and scoring are not published.</p>
-  <p>${team?'Explore: ask up to three questions each day; your notes remain available. Assign: all station requirements will be shown so you can match skills and explain why. Support: respond to two requests. Reflect: use skill fit and your support responses to assess each person.':'The ranking counts for 20 points; twelve decisions count for 60; consistency across decisions counts for 20. You can move ranking rows by dragging or with the arrow buttons.'}</p></div>
+  <div class="card stack"><h3>Practice reconstruction</h3><p>This module uses original scenarios and a transparent practice score. The real tasks and scoring are not published.</p>${guide}</div>
   <div class="row"><button class="btn" data-act="sfl-begin">Start the ${mins}-minute clock</button><button class="btn ghost" data-act="home">Back</button></div></section>`;
 }
 function sflProjectHTML(){
@@ -38,7 +40,7 @@ function sflTeamHTML(){
   let body='';
   if(phase==='explore'){
     const prompts=[...d.people.map(p=>({id:p.id,text:'Ask '+p.name+' about strengths and working style'})),...day.stations.map(w=>({id:w.id,text:'Inspect '+w.name+' requirements'}))];
-    body=`<div class="card stack"><h3>Explore · ${r.asked.length}/3 questions used</h3><p>Choose up to three questions. The notes stay visible for today's decisions.</p><div class="modes team-questions">${prompts.map(p=>`<button class="choice" data-act="team-ask" data-v="${p.id}" ${r.asked.includes(p.id)||r.asked.length>=3?'disabled':''}>${esc(p.text)}</button>`).join('')}</div>${teamFieldNotesHTML(f,r)}<button class="btn" data-act="team-next">Continue to assignments</button></div>`;
+    body=`<div class="card stack"><h3>Explore · ${r.asked.length}/3 questions used</h3><p>Choose up to three questions. Each question earns one practice point and its note stays visible for today's decisions.</p><div class="modes team-questions">${prompts.map(p=>`<button class="choice" data-act="team-ask" data-v="${p.id}" ${r.asked.includes(p.id)||r.asked.length>=3?'disabled':''}>${esc(p.text)}</button>`).join('')}</div>${teamFieldNotesHTML(f,r)}<button class="btn" data-act="team-next">Continue to assignments</button></div>`;
   }else if(phase==='assign'){
     body=`<div class="card stack"><h3>Assign researchers</h3><p>Place all four researchers. Each workstation can hold up to two people. Match their strengths to the required skills and choose a reason that explains each placement.</p>
     <div class="team-stations" aria-label="Today's workstation requirements">${day.stations.map(w=>`<div class="team-station"><b>${esc(w.name)}</b><span>Needs: ${esc(w.skill)}</span><small>${esc(w.task)}</small></div>`).join('')}</div>

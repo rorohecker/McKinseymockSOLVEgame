@@ -72,7 +72,7 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 | Perfect Redrock answer sheet | scores 175 on 500 seeds; empty sheet scores 0 |
 | Sea Wolf sites | planted team scores 100, perfect team found by brute force, unique names, 28-microbe pools on 1,500 sites |
 | Unit tests | 11 pass |
-| Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes plus every standalone game using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast, control labels, broken placeholders and local image loading; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
+| Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes, every standalone game, and imperfect or partial runs using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast, control labels, broken placeholders and local image loading; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
 
 ## Interface notes
 

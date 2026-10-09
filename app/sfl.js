@@ -101,10 +101,11 @@ function scoreSFLProject(data,rank,answers,rankLocked=true){
     const best=q.options.find(x=>x.quality===2);
     items.push({label:"Decision "+(i+1)+" · "+q.phase,pts,max:5,your:choice?.text||"No decision",correct:best?.text||"",why:(choice?choice.why:"No decision submitted.")+" Strongest option: "+(best?.text||"")+" — "+(best?.why||"")})}
   const conflicts=[["transparent","opaque"],["evidence","assume"],["targeted","spread"]];
-  const inconsistent=conflicts.filter(([a,b])=>stances.includes(a)&&stances.includes(b)).length;
+  const conflictingPairs=conflicts.filter(([a,b])=>stances.includes(a)&&stances.includes(b));
+  const inconsistent=conflictingPairs.length;
   const submitted=Array.from({length:12},(_,i)=>answers[i]).filter(x=>x!==undefined).length;
   const consistency=Math.round(Math.max(0,20-inconsistent*5)*submitted/12*10)/10;
-  items.push({label:"Decision consistency",pts:consistency,max:20,why:inconsistent?inconsistent+" conflicting approach(es) across linked decisions.":"No conflicting approach was detected."});
+  items.push({label:"Decision consistency",pts:consistency,max:20,why:(inconsistent?"Conflicting approaches: "+conflictingPairs.map(pair=>pair.join(" versus ")).join(", ")+".":"No conflicting approach was detected.")+" Answered "+submitted+" of 12 decisions; unanswered decisions reduce this score proportionally."});
   return{items,total:Math.round((rankPts+decisionPts+consistency)*10)/10,max:100};
 }
 
