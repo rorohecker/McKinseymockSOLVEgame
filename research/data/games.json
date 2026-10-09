@@ -1,0 +1,29 @@
+{
+  "retrieved": "2026-10-08",
+  "labels": ["OFFICIAL", "CORROBORATED", "REPORTED", "VENDOR CLAIM", "CONTRADICTED", "UNVERIFIED"],
+  "invite_lengths": [
+    {"invite_minutes": 65, "games": ["Redrock Study", "Sea Wolf"], "clock_minutes": [35, 30], "label": "CORROBORATED"},
+    {"invite_minutes": 85, "games": ["Redrock Study", "Sea Wolf", "Sustainable Futures Lab"], "clock_minutes": [35, 30, 20], "label": "CORROBORATED"},
+    {"invite_minutes": 95, "games": ["Redrock Study", "Sea Wolf", "Sustainable Futures Lab (30-min team version)"], "clock_minutes": [35, 30, 30], "label": "REPORTED", "note": "first seen about 24 Aug 2026; described as a pilot; thin evidence"}
+  ],
+  "official": {
+    "tutorial_untimed": true,
+    "invite_states_length": true,
+    "ai_varied_parameters": true,
+    "random_in_person_verification": true,
+    "devices": "PC or Mac only; tech check; sound not required; mouse optional",
+    "languages": ["English", "Spanish (Iberia/LatAm)", "Portuguese (Iberia/LatAm)", "Japanese"],
+    "banned": ["applications", "websites", "AI tools", "pre-prepared notes", "recording or screenshots", "help from others"],
+    "tech_support": "report at the moment of the issue via email or live chat; support may add time or reset the link"
+  },
+  "games": {
+    "redrock": {"name": "Redrock Study", "minutes": 35, "structure": ["Investigation", "Analysis", "Report", "6 mini-cases"], "status": "current", "label": "CORROBORATED"},
+    "sea_wolf": {"name": "Sea Wolf", "aliases": ["Ocean Cleanup", "Ocean Treatment", "Microbe game"], "minutes": 30, "structure": ["3 sites", "team of 3 microbes per site"], "status": "current", "label": "CORROBORATED"},
+    "sfl": {"name": "Sustainable Futures Lab", "minutes_standard": 20, "minutes_new": 30, "standard_structure": "13 questions: 1 drag-and-drop ranking + 12 scenario multiple choice", "status": "current on longer invites since about March 2026", "label": "CORROBORATED (standard); REPORTED (30-min)"},
+    "ecosystem_building": {"name": "Ecosystem Building", "minutes": 30, "pool": 39, "required_species": 8, "status": "retired from default mix; date disputed (July 2025 vs early 2026)", "label": "CONTRADICTED"},
+    "plant_defense": {"status": "legacy; replaced by Redrock (2023 per one guide)", "label": "REPORTED"},
+    "disaster_management": {"status": "legacy", "label": "REPORTED"},
+    "disease_management": {"status": "legacy", "label": "REPORTED"},
+    "migration_management": {"status": "legacy", "label": "REPORTED"}
+  }
+}

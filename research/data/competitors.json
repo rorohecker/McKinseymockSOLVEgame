@@ -1,0 +1,18 @@
+{
+  "checked": "2026-09-27 to 2026-10-08",
+  "note": "vendor-stated; verify on each site",
+  "providers": [
+    {"name": "CaseStar", "url": "https://www.casestar.io/simulators", "games": ["Red Rock", "Sea Wolf", "SFL", "full mock 65/85"], "free": "8-min Red Rock sample; one full 35-min sitting with email; 10-min Sea Wolf site; about 6-min SFL", "paid": "Solve Pass EUR 69 one-time", "features": ["exam mode hides hints", "practice-only scoring model"]},
+    {"name": "Road to Offer", "url": "https://www.roadtooffer.com/mckinsey-sea-wolf", "games": ["Red Rock", "Sea Wolf"], "free": "short Red Rock edition (about 12 min); Sea Wolf site 1 of sim 1", "paid": "review unlock USD 14.99; Sea Wolf USD 29 (10 sims); 3-game USD 79; Pro USD 249/yr", "features": ["Simulation and Learning modes", "10-min advisory clock per site"]},
+    {"name": "SolvePrep", "url": "https://solveprep.com/mckinsey-solve/simulation", "games": ["Red Rock", "Sea Wolf", "SFL (20/30 min switch)"], "free": "one full run per game with account", "paid": "plans on pricing page", "features": ["leaderboard", "AI solver", "Sea Wolf solver", "published datasets"]},
+    {"name": "PSG Cracked", "url": "https://psg-cracked.com", "games": ["Red Rock", "Sea Wolf", "SFL", "Ecosystem"], "free": "one full Red Rock study with unlimited replays for an email", "paid": "bundles and Excel solvers", "features": ["affiliate-linked from StrategyU"]},
+    {"name": "MConsultingPrep", "games": ["Red Rock"], "free": "13-question trial mock"},
+    {"name": "Solve Games Guide", "games": ["Red Rock", "Sea Wolf", "SFL"], "free": "one Redrock case (per CaseStar comparison)", "note": "site asks AI not to reuse content; not summarised"},
+    {"name": "CaseBasix", "url": "https://www.casebasix.com/solve-copy", "games": ["Sea Wolf", "Red Rock", "Ecosystem"], "free": "starter pack", "paid": "16 practice simulations, guarantee"},
+    {"name": "StrategyCase", "url": "https://strategycase.com", "games": ["Red Rock", "Sea Wolf", "SFL", "Ecosystem"], "free": "demo", "paid": "6 months access; Excel solver for Ecosystem"},
+    {"name": "PrepLounge Solve Game Simulation Package", "url": "https://www.preplounge.com/en/shop/test-guide/mckinsey-solve-game-simulation-package", "games": ["Red Rock", "Sea Wolf", "SFL"], "paid": "USD 249 (struck from 484)", "contents": "3 sims with keys; 35 videos about 5h50; 230-page PDF; Sea Wolf Excel solver bonus"},
+    {"name": "CaseInterview.com McK Game", "url": "https://CaseInterview.com/mck-game", "games": ["two practice mini-games"], "note": "not a clone"},
+    {"name": "SolveForge", "url": "https://solveforge.io", "games": ["Red Rock", "Sea Wolf", "SFL"], "free": "free to start", "paid": "Pro"}
+  ],
+  "open_source_found": []
+}

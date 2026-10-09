@@ -1,0 +1,56 @@
+{
+  "retrieved": "2026-10-08",
+  "sites": 3,
+  "clock_minutes": 30,
+  "team_size": 3,
+  "attribute_scale": [1, 10],
+  "attributes_per_microbe": 3,
+  "traits_per_microbe": 1,
+  "attribute_name_sets": {
+    "solveprep": ["Permeability", "Mobility", "Energy"],
+    "strategyu_example": ["Permeability", "Rigidity", "Size"],
+    "roadtooffer_own_model": ["fuel breakdown", "spread containment", "cold resilience"],
+    "verdict": "UNVERIFIED which names (if any) the real game uses"
+  },
+  "site_fields": ["contaminant", "target range per attribute (applies to the AVERAGE of the 3 microbes)", "desired trait", "forbidden trait"],
+  "validity": [
+    "each of 3 attribute averages inside range (endpoints inclusive)",
+    "at least one microbe with the desired trait",
+    "no microbe with the forbidden trait"
+  ],
+  "sum_shortcut": "average range [a,b] with 3 microbes is the same as sum in [3a, 3b]",
+  "steps": {
+    "five_step_version": ["carry-over confirmation (sites 2+)", "set filters", "categorise (current / next / reject)", "prospect: 4 rounds pick 1 of 3", "final selection"],
+    "four_phase_version": ["profile", "categorise", "prospect", "treatment"],
+    "management_consulted_claim": "14 steps total, about 2 minutes each, confirm step only on sites 1 and 2 (UNVERIFIED)"
+  },
+  "pool_sizes": {"microbes_categorised": 10, "prospect_rounds": 4, "prospect_choices_per_round": 3},
+  "filter_semantics_solveprep": {
+    "desired_trait": "OR with the attribute range",
+    "undesired_trait": "AND NOT"
+  },
+  "scoring_models": {
+    "solveprep": {"start": 100, "per_attribute_out_of_range": -20, "no_desired_trait": -20, "per_microbe_with_forbidden_trait": -20, "floor": 0, "max_total": 300},
+    "myconsultingcoach": {"each_of_5_requirements_pct": 20, "forbidden_trait_penalised_once": true}
+  },
+  "error_rates_solveprep_n21456_sites": {"attribute_out_of_range": 0.335, "forbidden_trait_present": 0.126, "desired_trait_missing": 0.098},
+  "failure_patterns_solveprep_survey_n312": [
+    {"pattern": "too much time on sites 1 and 2", "share": 0.68},
+    {"pattern": "forbidden trait treated as soft", "share": 0.54},
+    {"pattern": "re-solving each site from scratch", "share": 0.47},
+    {"pattern": "pushing cleaning above target", "share": 0.31},
+    {"pattern": "changing answers in final five minutes", "share": 0.29}
+  ],
+  "feedback_timing": {"effectiveness_shown_after_submit": "REPORTED (CaseStar change log)", "hidden_until_end": "CaseStar exam mode (practice setting, not the real game)"},
+  "worked_example": {
+    "source": "strategyu.co (original practice data)",
+    "site": {"ranges": {"Permeability": [8, 10], "Rigidity": [6, 8], "Size": [2, 4]}, "desired": "Heat Resistant", "forbidden": "Phosphorous Removal"},
+    "valid_team": [
+      {"name": "Lior Volvox", "values": [10, 2, 4], "trait": "Pressure Resistant"},
+      {"name": "Ryn Bacil", "values": [4, 8, 3], "trait": "Pressure Resistant"},
+      {"name": "Xylo Phage", "values": [10, 10, 5], "trait": "Heat Resistant"}
+    ],
+    "averages": [8.0, 6.67, 4.0],
+    "trap": {"name": "Orun Nema", "values": [8, 6, 3], "trait": "Phosphorous Removal"}
+  }
+}

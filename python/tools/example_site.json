@@ -1,0 +1,14 @@
+{
+  "_note": "StrategyU worked example. Ranges apply to the average of the three microbes. The last two microbes are invented fillers.",
+  "ranges": [[8, 10], [6, 8], [2, 4]],
+  "desired": "Heat Resistant",
+  "undesired": "Phosphorous Removal",
+  "microbes": [
+    {"name": "Lior Volvox", "a": [10, 2, 4], "trait": "Pressure Resistant"},
+    {"name": "Ryn Bacil", "a": [4, 8, 3], "trait": "Pressure Resistant"},
+    {"name": "Xylo Phage", "a": [10, 10, 5], "trait": "Heat Resistant"},
+    {"name": "Orun Nema", "a": [8, 6, 3], "trait": "Phosphorous Removal"},
+    {"name": "Filler One", "a": [7, 7, 2], "trait": "Salt Tolerant"},
+    {"name": "Filler Two", "a": [9, 5, 4], "trait": "Heat Resistant"}
+  ]
+}

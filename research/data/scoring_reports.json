@@ -1,0 +1,21 @@
+{
+  "retrieved": "2026-10-08",
+  "official": {
+    "scoring_model_published": false,
+    "pass_mark_published": false,
+    "weights_published": false,
+    "used_with_rest_of_application": true
+  },
+  "reported_raw_to_decile": [
+    {"raw": 558, "decile": 10, "source": "casestar", "label": "REPORTED"},
+    {"raw": 530, "decile": 9, "source": "casestar", "label": "REPORTED"},
+    {"raw": 510, "decile": 6, "source": "casestar", "label": "REPORTED"},
+    {"raw": 499, "decile": 4, "source": "casestar", "label": "REPORTED"},
+    {"raw": 510, "decile": 7, "source": "preplounge forum, one candidate", "label": "CONTRADICTS the row above"}
+  ],
+  "reported_range": {"low": 499, "high": 558, "scale_top_approx": 560},
+  "coach_claims": {"top_10_percent_above": 525, "advance_rate": "20-30%", "label": "UNVERIFIED"},
+  "turnaround_weeks": {"typical": "1-3", "max_reported": 6},
+  "retake_wait_months_reported": ["12-24 (casestar)", "12-18 (coach)", "12 or 24 (management consulted)"],
+  "product_process": {"claimed_by_many_vendors": true, "confirmed": false}
+}

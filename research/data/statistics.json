@@ -1,0 +1,18 @@
+{
+  "source": "SolvePrep, State of McKinsey Solve 2026 (data pulled 2026-08-20, v1.2). Practice-simulator data, self-selected users.",
+  "runs": {"sea_wolf": 7152, "red_rock": 11063, "sfl": 8407, "total": 26622},
+  "distinct_candidates": 5174,
+  "median_gain_first_to_best_pp": {"red_rock": 20.3, "sfl": 10.4, "sea_wolf": 6.7},
+  "net_of_placebo_pp": {"red_rock": 11.4, "sfl": 5.7, "sea_wolf": 3.3},
+  "pooled_median_score_pct": {"red_rock": 66.0, "sfl": 63.4, "sea_wolf": 76.5},
+  "repeat_users": {"red_rock": 2043, "sfl": 1486, "sea_wolf": 1214},
+  "median_first_to_best_pct": {"red_rock": [61.2, 81.5], "sfl": [58.4, 68.8], "sea_wolf": [71.4, 78.1]},
+  "points_lost_share": {
+    "red_rock": {"written_report": 0.412, "analysis": 0.385, "chart_building": 0.304, "cases": 0.279},
+    "sfl": {"consistency": 0.607, "priority_ranking": 0.391, "judgement": 0.335, "stakeholders": 0.245},
+    "sea_wolf_per_site": {"range_miss": 0.335, "forbidden_trait": 0.126, "desired_trait_missing": 0.098}
+  },
+  "practice_behaviour": {"single_run_pairs_share": 0.47, "first_run_0_2_days_before_test_share": 0.703, "median_lead_days": 1},
+  "casestar_red_rock_94_sittings": {"report": 0.571, "mini_cases": 0.674, "analysis": 0.710, "median": 0.690, "clock_expired": 0.128},
+  "limits": ["vendor-defined component weights", "self-selected users", "self-reported test dates", "different observation windows"]
+}

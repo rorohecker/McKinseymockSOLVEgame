@@ -1,0 +1,29 @@
+{
+  "retrieved": "2026-10-08",
+  "clock_minutes": 35,
+  "phases": [
+    {"name": "Investigation", "suggested_minutes": 5, "notes": "journal numbers; calculator reportedly absent (single source)"},
+    {"name": "Analysis", "suggested_minutes": 12, "questions": "about 3 (2-4 reported), some with sub-parts"},
+    {"name": "Report", "suggested_minutes": 5, "blanks_reported": "8-10 plus one chart choice (CaseStar)", "one_way_gate": true},
+    {"name": "Cases", "count": 6, "suggested_minutes_each": 2, "journal_resets": true, "locks_after_answer": true}
+  ],
+  "pacing_sources": {
+    "casestar": {"investigation": 5, "analysis": 12, "report": 5, "cases": 12, "buffer": 1},
+    "solveprep": "about 15 for Investigation + Analysis, about 10 Report, about 10 Cases"
+  },
+  "math_types": ["percent change", "percentage points vs percent", "shares of a total", "weighted average", "growth rate and CAGR", "independent probability", "expected value", "ratio comparison", "chart choice", "data judgement"],
+  "solveprep_points_model": {"analysis": 60, "written_review": 25, "visual_report": 30, "cases": 60, "total": 175, "tolerance": 0.5},
+  "casestar_practice_items": "27-28 scored items in CaseStar's practice sittings; about 14 scored decisions in the real test (reported)",
+  "casestar_data_94_sittings": {"report_correct": 0.571, "mini_cases_correct": 0.674, "analysis_correct": 0.710, "median_score": 0.690, "clock_ran_out": 0.128},
+  "solveprep_loss_shares": {"written_report": 0.412, "analysis": 0.385, "chart_building": 0.304, "cases": 0.279},
+  "worked_examples": [
+    {"source": "casestar", "topic": "percent change", "numbers": "120 to 150", "answer": "25% (not 20%)"},
+    {"source": "casestar", "topic": "percentage points", "numbers": "14.4% to 18.0%", "answer": "+3.6 points = +25% relative"},
+    {"source": "casestar", "topic": "weighted average", "numbers": "densities 40/25/10 over areas 50/120/30", "answer": "26.5 per km2 (not 25)"},
+    {"source": "casestar", "topic": "CAGR", "numbers": "800 to 1,000 over 4 years", "answer": "about 5.74% per year"},
+    {"source": "casestar", "topic": "probability", "numbers": "30% tag rate, two independent sightings", "answer": "both tagged 0.09; at least one 0.51"},
+    {"source": "casestar", "topic": "share by region", "numbers": "96/640, 75/410, 60/520", "answer": "15.00%, 18.29%, 11.54%"},
+    {"source": "strategyu", "topic": "percent-point growth", "numbers": "Silverbrook 50 to 55 then +10 points", "answer": "66 hunts vs goal 75"}
+  ],
+  "mini_case_types_casestar": ["growth", "weighted average", "probability", "ratio comparison", "chart choice", "data judgement"]
+}

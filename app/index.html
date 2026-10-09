@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solve Practice Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky instrument bar on top; Redrock = work area + side panel (journal/exhibits/calculator); Sea Wolf = site brief above a five-step workspace. */
+:root{
+  --bg:#EBF0EF;--surface:#F7FAF9;--ink:#10262B;--mute:#566D71;--line:#C9D5D4;--tint:#DCE8E7;
+  --sea:#0A6C6C;--on-sea:#FFFFFF;--rr:#A3432A;--on-rr:#FFFFFF;
+  --accent:var(--sea);--on-accent:var(--on-sea);
+  --good:#1C7449;--bad:#B3261E;--warn:#9A5B08;
+  --f-display:"Bricolage Grotesque",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0A1215;--surface:#111E22;--ink:#E3EDED;--mute:#8CA2A5;--line:#24383D;--tint:#183036;
+  --sea:#4DBFBC;--on-sea:#06191A;--rr:#EA8A66;--on-rr:#1E0C06;
+  --good:#5CCB8F;--bad:#FF8A80;--warn:#E8A94A;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1215;--surface:#111E22;--ink:#E3EDED;--mute:#8CA2A5;--line:#24383D;--tint:#183036;
+  --sea:#4DBFBC;--on-sea:#06191A;--rr:#EA8A66;--on-rr:#1E0C06;
+  --good:#5CCB8F;--bad:#FF8A80;--warn:#E8A94A;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.rr-scope{--accent:var(--rr);--on-accent:var(--on-rr)}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:clamp(2rem,5vw,3.3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);font-weight:600}
+.mute{color:var(--mute)}
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:800;letter-spacing:-.01em}
+.crumb{color:var(--mute);font-size:.85rem}
+.clock{font-family:var(--f-mono);font-size:1.35rem;font-weight:500;font-variant-numeric:tabular-nums;min-width:4.4ch;text-align:right}
+.clockwrap.low .clock{color:var(--warn)}
+.clockwrap.urgent .clock{color:var(--bad)}
+.prog{height:3px;background:var(--line)}
+.prog i{display:block;height:100%;background:var(--accent);width:100%}
+/* controls */
+.btn{font:inherit;font-weight:600;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);padding:9px 16px;border-radius:6px;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:5px 10px;font-size:.85rem}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:7px 9px;min-width:0}
+input.num{width:9.5em;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+input.sm{width:4.5em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px}
+.card.flat{background:transparent}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:99px;padding:3px 11px;font-size:.85rem;background:var(--bg)}
+.chip.good{border-color:var(--good);color:var(--good)}
+.chip.bad{border-color:var(--bad);color:var(--bad)}
+.chip b{font-family:var(--f-mono);font-weight:500}
+.tblbox{overflow-x:auto;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);font-weight:600}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.clk{cursor:pointer;border-bottom:1.5px dashed var(--accent);color:var(--accent);font-weight:600}
+.clk:hover{background:var(--tint)}
+td.clk{border-bottom:1px solid var(--line);font-weight:500}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 72px);display:flex;flex-direction:column;gap:10px}
+@media(max-width:900px){.split{grid-template-columns:minmax(0,1fr)}.side{position:static}}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tab{font:inherit;background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;color:var(--mute);font-weight:600}
+.tab[aria-selected=true]{color:var(--ink);border-color:var(--accent)}
+.jrow{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.jrow span:last-child{font-family:var(--f-mono)}
+.calc-d{font-family:var(--f-mono);font-size:1.4rem;text-align:right;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:5px;min-height:3rem;overflow-x:auto;white-space:nowrap}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.keys button{font:inherit;font-family:var(--f-mono);padding:10px 0;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:5px;cursor:pointer}
+.keys button:hover{border-color:var(--accent)}
+.q{display:flex;flex-direction:column;gap:12px}
+.part{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}
+.part .lbl{flex:1 1 280px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:var(--bg)}
+.opt:has(input:checked){border-color:var(--accent);background:var(--tint)}
+.opt input{margin-top:3px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.mode{text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.mode:hover{border-color:var(--accent)}
+.mode .big{font-family:var(--f-mono);font-size:1.9rem;font-weight:500}
+.rr-t{color:var(--rr)} .sw-t{color:var(--sea)}
+.pace{font-size:.85rem;color:var(--mute);border-left:3px solid var(--line);padding-left:10px}
+/* sea wolf */
+.req{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps span{font-size:.8rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+.steps span.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.steps span.done{color:var(--ink)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.mb{text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:default}
+.mb.pick{cursor:pointer}
+.mb.pick:hover{border-color:var(--accent)}
+.mb.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.mb .nm{font-weight:600}
+.attr{display:grid;grid-template-columns:5.2em 1fr 1.6em;gap:8px;align-items:center;font-size:.8rem;color:var(--mute)}
+.bar2{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar2 i{display:block;height:100%;background:var(--accent)}
+.trait{align-self:flex-start;font-size:.78rem;padding:2px 9px;border-radius:99px;border:1px solid var(--line)}
+.trait.good{border-color:var(--good);color:var(--good)}
+.trait.bad{border-color:var(--bad);color:var(--bad)}
+.big-mb{max-width:340px;margin-inline:auto}
+.avgrow{display:grid;grid-template-columns:6.5em 1fr auto;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);align-items:center}
+.ok{color:var(--good);font-weight:600}.no{color:var(--bad);font-weight:600}
+.score{font-family:var(--f-mono);font-size:2.6rem;font-weight:500}
+.ptag{font-family:var(--f-mono)}
+.hide-sm{display:inline}
+@media(max-width:560px){.hide-sm{display:none}}
+@media(prefers-reduced-motion:no-preference){.flash{animation:fl .6s}@keyframes fl{from{background:var(--tint)}}}
+</style>
+<link rel="stylesheet" href="retro.css">
+</head>
+<body>
+<div id="app"></div>
+
+<script id="logic">
+const PACKS=["Silverbrook","Granite Hollow","Cedar Ridge","Ashfall","Marrow Creek","Hollow Pine","Stonebay","Ember Flats"];
+const REDROCK_THEMES=[
+  {name:"Wildlife territory",groups:"wolf packs",group:"pack",measure:"territory",unit:"km²",names:PACKS,context:"An elk herd is moving inland.",contextLabel:"Elk herd",contextUnit:"animals"},
+  {name:"Wetland restoration",groups:"wetland basins",group:"basin",measure:"restored habitat",unit:"hectares",names:["North Basin","Saltmeadow","Reed Bend","Tidal Flats","Willow Reach","South Marsh","Old Lagoon","Estuary Edge"],context:"Seasonal flooding is changing which basins need attention.",contextLabel:"Seedling count",contextUnit:"seedlings"},
+  {name:"Forest protection",groups:"forest corridors",group:"corridor",measure:"protected habitat",unit:"hectares",names:["North Ridge","Cedar Pass","Ash Hollow","Pine Edge","West Spur","River Gate","Granite Slope","High Meadow"],context:"Dry conditions have changed the highest-risk corridors.",contextLabel:"Survey trees",contextUnit:"trees"}
+];
+const TRAITS=["Heat Resistant","Pressure Resistant","Phosphorous Removal","Nitrogen Fixing","Salt Tolerant","Acid Tolerant","Light Sensitive","Biofilm Forming"];
+const ATTRS=["Permeability","Mobility","Energy"];
+const G1=["Lior","Ryn","Xylo","Orun","Kael","Vesk","Tavi","Ilo","Brun","Nyx","Zeph","Quor","Marl","Sev","Dren","Palo","Yarr","Oska","Tull","Evra"];
+const G2=["Volvox","Bacil","Phage","Nema","Spira","Coccus","Vibrio","Algae","Fungi","Archa","Diatom","Cyan"];
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function RNG(seed){const r=mulberry32(seed);return{f:r,int:(a,b)=>a+Math.floor(r()*(b-a+1)),pick:x=>x[Math.floor(r()*x.length)],chance:p=>r()<p,shuffle:x=>{const a=x.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}}}
+const f1=n=>Math.round(n*10)/10;
+const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:1});
+const num=v=>{const x=parseFloat(String(v==null?'':v).replace(/[,\s%€]/g,''));return isNaN(x)?null:x};
+const near=(v,ans,tol)=>{const x=num(v);return x!==null&&Math.abs(x-ans)<=tol+1e-9};
+
+/* ---------- Redrock ---------- */
+function genCases(R){
+  const L=['a','b','c','d'];const mc=(texts,rightIdx)=>{const o=R.shuffle(texts.map((t,i)=>({t,r:i===rightIdx})));return{options:o.map((x,i)=>({id:L[i],text:x.t})),ans:L[o.findIndex(x=>x.r)]}};
+  const out=[];
+  {const g=R.pick([10,12.5,15,20,25,30]),a=R.pick([8,10,12,14,16,18,20])*1000,b=a*(1+g/100);
+   const m=mc([g+'%',f1(g/(100+g)*100)+'%',fmt(b-a),(100+g)+'%'],0);
+   out.push({kind:'Growth',title:'Visitors at the ranger station',body:`<p>The ranger station logged <b>${fmt(a)}</b> visitors in Year 1 and <b>${fmt(b)}</b> in Year 2.</p>`,q:'By what percentage did visitors increase?',type:'mc',...m,explain:`(${fmt(b)} − ${fmt(a)}) ÷ ${fmt(a)} = ${g}%. Dividing by the Year 2 figure or reporting the raw change answers a different question.`})}
+  {const n1=R.pick([6000,8000,9000,12000]),p1=R.pick([10,12,14,15]),n2=R.pick([1500,2000,3000]),p2=R.pick([20,22,24,25]),ans=(n1*p1+n2*p2)/(n1+n2);
+   out.push({kind:'Weighted average',title:'Average ticket price',body:`<p>In the low season <b>${fmt(n1)}</b> visitors paid <b>€${p1}</b> each. In the high season <b>${fmt(n2)}</b> visitors paid <b>€${p2}</b> each.</p>`,q:'What was the average price paid per visitor over the year (€)?',type:'num',ans:f1(ans*100)/100,tol:0.05,explain:`Revenue €${fmt(n1*p1+n2*p2)} ÷ ${fmt(n1+n2)} visitors = €${(Math.round(ans*100)/100).toFixed(2)}. The simple average of the two prices ignores the visitor mix.`})}
+  {const p1=R.pick([70,75,80,85,90]),p2=R.pick([80,85,90,95]),ans=30*p1*p2/10000;
+   out.push({kind:'Probability',title:'Supply ferry crossings',body:`<p>The ferry sails only when the wind is calm (<b>${p1}%</b> of days) and the harbour is open (<b>${p2}%</b> of days). The two are independent.</p>`,q:'How many sailings should the island expect in a 30-day month?',type:'num',ans:f1(ans),tol:0.5,explain:`${p1}% × ${p2}% = ${f1(p1*p2/100)}% of days. 30 × that share = ${f1(ans)} sailings.`})}
+  {const cs=R.shuffle([300,330,360,390,420,450,480]).slice(0,3),ns=cs.map(()=>R.pick([100,150,200,250,300])),nm=['A','B','C'],best=cs.indexOf(Math.min(...cs));
+   const rows=nm.map((x,i)=>`<tr><td>Programme ${x}</td><td class="n">€${fmt(cs[i]*ns[i])}</td><td class="n">${ns[i]}</td></tr>`).join('');
+   out.push({kind:'Ratio',title:'Nesting programmes',body:`<div class="tblbox"><table><tr><th>Programme</th><th class="n">Budget</th><th class="n">Birds fledged</th></tr>${rows}</table></div>`,q:'Which programme produced the most fledged birds per euro spent?',type:'mc',options:nm.map((x,i)=>({id:'abc'[i],text:'Programme '+x})),ans:'abc'[best],explain:`Cost per bird: ${nm.map((x,i)=>x+' = €'+cs[i]).join(', ')}. The lowest cost per bird wins, regardless of budget size.`})}
+  {const T=R.pick([
+    ()=>{const s=R.pick([500,600,700])*1000,x=R.pick([20,30,40])*1000,y=R.pick([40,50,60])*1000,z=R.pick([30,50])*1000;return{t:`The conservation budget moved from €${fmt(s)} to €${fmt(s+x-y-z)}: staff costs rose by €${fmt(x)}, equipment fell by €${fmt(y)} and grants fell by €${fmt(z)}. Which chart best shows how the old total became the new total?`,a:'Waterfall'}},
+    ()=>({t:`Boat arrivals were logged every month for ${R.pick([18,24,36])} months. Which chart best shows how arrivals changed over time?`,a:'Line'}),
+    ()=>({t:'Visitor spending is split across lodging, food, guided tours and gifts, and sums to 100%. Which chart best shows each category as a share of the whole?',a:'Pie'}),
+    ()=>({t:`Elk counts were taken in ${R.pick([4,5,6])} sectors in both Year 1 and Year 2. Which chart best compares the two years sector by sector?`,a:'Clustered bar'})])();
+   const opts=['Pie','Line','Waterfall','Clustered bar'];const m=mc(opts,opts.indexOf(T.a));
+   out.push({kind:'Chart choice',title:'Choosing the chart',body:`<p>${T.t}</p>`,q:'Select the best chart.',type:'mc',...m,explain:`${T.a} fits the message: waterfalls show a bridge between totals, lines show change over time, pies show shares of a whole, clustered bars compare groups side by side.`})}
+  {const h1=R.pick([60,80,100]),h2=h1*1.5,r1=R.pick([2.5,3,3.5,4]),s1=r1*h1,s2=s1*1.25;
+   const texts=['Only statement 2','Statements 1 and 2','Only statement 1','Statements 1 and 3'];const m=mc(texts,0);
+   out.push({kind:'Data judgement',title:'What does the table prove?',body:`<div class="tblbox"><table><tr><th>Year</th><th class="n">Seal sightings</th><th class="n">Survey hours</th></tr><tr><td>Year 1</td><td class="n">${fmt(s1)}</td><td class="n">${h1}</td></tr><tr><td>Year 2</td><td class="n">${fmt(s2)}</td><td class="n">${h2}</td></tr></table></div><ol><li>The seal population grew by 25%.</li><li>Sightings per survey hour fell.</li><li>Extra survey hours caused more seals to appear.</li></ol>`,q:'Which statements does the table support?',type:'mc',...m,explain:`Sightings per hour fell from ${f1(r1)} to ${f1(s2/h2)}. Statement 1 compares counts taken with different effort; statement 3 claims a cause the table cannot show.`})}
+  {const old=R.pick([18,24,35,42,55]),now=old+R.pick([3,5,7,10]);out.push({kind:'Percentage points',title:'Wetland recovery rate',body:`<p>The share of wetland plots rated healthy rose from <b>${old}%</b> to <b>${now}%</b>.</p>`,q:'How many percentage points did the rate rise?',type:'num',ans:now-old,tol:0.1,explain:`Subtract the two percentages: ${now}% minus ${old}% = ${now-old} percentage points. A relative percent change would divide by the starting ${old}%.`})}
+  {const low=R.pick([20,30,40]),high=R.pick([70,80,90]),p=R.pick([20,25,40,50,60]);const ans=f1((p*high+(100-p)*low)/100);out.push({kind:'Expected value',title:'Storm-response planning',body:`<p>There is a <b>${p}%</b> chance that a storm requires <b>${high}</b> staff hours. Otherwise it requires <b>${low}</b> hours.</p>`,q:'What is the expected number of staff hours?',type:'num',ans,tol:0.1,explain:`Weight each outcome by its chance: (${p}% x ${high}) + (${100-p}% x ${low}) = ${ans} hours.`})}
+  {const start=R.pick([400,500,600]),a=R.pick([40,60,80]),b=R.pick([20,30,50]),c=R.pick([10,20,40]),ans=start+a-b-c;out.push({kind:'Waterfall entry',title:'Restoration budget bridge',body:`<p>A restoration fund opened at <b>${start}</b> thousand euros. Grants added <b>${a}</b>, equipment used <b>${b}</b>, and travel used <b>${c}</b> thousand euros.</p>`,q:'Enter the ending total (thousand euros) for the waterfall chart.',type:'num',ans,tol:0.1,explain:`Begin at ${start}; add ${a}, subtract ${b}, then subtract ${c}. Ending total = ${ans} thousand euros.`})}
+  return R.shuffle(out).slice(0,6);
+}
+function genRedrock(seed){
+  const R=RNG(seed*13+7);
+  const theme=R.pick(REDROCK_THEMES);
+  const names=R.shuffle(theme.names).slice(0,4);
+  const terr=names.map(()=>{let v=R.int(38,110);const r=[v];for(let y=1;y<4;y++){v=Math.round(v*(1+R.int(2,14)/100));r.push(v)}return r});
+  const totals=[0,1,2,3].map(y=>terr.reduce((s,r)=>s+r[y],0));
+  const y4=terr.map(r=>r[3]);
+  const pctA=names.map(()=>R.int(-10,20));let kmB=names.map(()=>R.int(-12,16));
+  const cA=()=>y4.reduce((s,v,i)=>s+v*(1+pctA[i]/100),0),cB=()=>y4.reduce((s,v,i)=>s+v+kmB[i],0);
+  let g=0;while(Math.abs(cA()-cB())<2&&g++<30)kmB[0]+=3;
+  const j=R.int(0,3),k=R.int(0,3),elk=R.pick([3800,4200,4600,5100]);
+  const maxY4=Math.max(...y4),largest=names.filter((n,i)=>y4[i]===maxY4);
+  const richer=cA()>cB()?'A':'B';
+  const an=[
+   {title:'Study totals',parts:[
+     {key:'an0a',text:`Using Exhibit 1, what was the total ${theme.measure} of all four ${theme.groups} in Year 4?`,unit:theme.unit,ans:totals[3]},
+     {key:'an0b',text:`What percentage of the Year 4 total did ${names[j]} hold?`,unit:'%',ans:f1(y4[j]/totals[3]*100)}]},
+   {title:'Growth',parts:[
+     {key:'an1a',text:`By what percentage did total ${theme.measure} change between Year 1 and Year 4?`,unit:'%',ans:f1((totals[3]-totals[0])/totals[0]*100)},
+     {key:'an1b',text:`On average, by how many ${theme.unit} per year did ${names[k]}'s ${theme.measure} grow between Year 1 and Year 4?`,unit:theme.unit+' / yr',ans:f1((terr[k][3]-terr[k][0])/3)}]},
+   {title:'Proposal comparison',parts:[
+     {key:'an2a',text:`Applying Proposal A (percentage change to each ${theme.group}'s Year 4 ${theme.measure}), what would the total be?`,unit:theme.unit,ans:f1(cA())},
+     {key:'an2b',text:`By how many ${theme.unit} does the larger proposal exceed the other?`,unit:theme.unit,ans:f1(Math.abs(cA()-cB()))}]}];
+  const kind=R.pick(['compare','share','trend','waterfall']);
+  const vis={kind,
+    instr:{compare:`Show how the four ${theme.groups} compare in Year 4 ${theme.measure} (${theme.unit}).`,share:`Show each ${theme.group}'s share of total Year 4 ${theme.measure} (%).`,trend:`Show how total ${theme.measure} changed from Year 1 to Year 4 (${theme.unit}).`,waterfall:`Show how the four Proposal B adjustments change the Year 4 total (${theme.unit}).`}[kind],
+    labels:kind==='trend'?['Year 1','Year 2','Year 3','Year 4']:names,
+    values:kind==='compare'?y4:kind==='share'?y4.map(v=>f1(v/totals[3]*100)):kind==='waterfall'?kmB:totals,
+    right:{compare:'bar',share:'pie',trend:'line',waterfall:'waterfall'}[kind]};
+  const blanks=[
+    {key:'rp0',type:'num',ans:totals[3],prompt:`Total ${theme.measure} in Year 4 (${theme.unit})`,why:'Add the four Year 4 figures.'},
+    {key:'rp1',type:'sel',ans:largest,options:names,prompt:`Largest ${theme.group} in Year 4`,why:'Compare the four Year 4 values.'},
+    {key:'rp2',type:'num',ans:an[1].parts[0].ans,prompt:`Change in total ${theme.measure}, Year 1 to Year 4 (%)`,why:'Subtract Year 1 from Year 4, divide by Year 1, then multiply by 100.'},
+    {key:'rp3',type:'sel',ans:[richer],options:['A','B'],prompt:'Proposal with the larger total',why:'Compute the total after each proposal and select the larger.'},
+    {key:'rp4',type:'num',ans:an[2].parts[1].ans,prompt:`Difference between proposal totals (${theme.unit})`,why:'Subtract the smaller proposal total from the larger.'},
+    {key:'rp5',type:'num',ans:totals[0],prompt:`Total ${theme.measure} in Year 1 (${theme.unit})`,why:'Add the four Year 1 figures.'},
+    {key:'rp6',type:'num',ans:f1(cB()),prompt:`Total after Proposal B (${theme.unit})`,why:'Add each fixed Proposal B adjustment to its Year 4 value, then total the four.'},
+    {key:'rp7',type:'num',ans:f1(cA()-totals[3]),prompt:`Change from Year 4 total under Proposal A (${theme.unit})`,why:'Compute Proposal A total, then subtract the Year 4 baseline.'}];
+  return{seed,theme,names,terr,totals,y4,pctA,kmB,elk,an,vis,blanks:R.shuffle(blanks).slice(0,5).map((b,i)=>({...b,key:'rp'+i})),cases:genCases(R)};
+}
+function scoreRedrock(d,A,tolerance=.5){
+  const items=[];const add=(sec,label,your,correct,pts,max)=>items.push({sec,label,your:your===''||your==null?'—':your,correct,pts,max});
+  d.an.forEach((q,qi)=>q.parts.forEach((p,pi)=>{const ok=near(A[p.key],p.ans,tolerance);add('Analysis',`Q${qi+1}${'ab'[pi]}`,A[p.key],`${fmt(p.ans)} ${p.unit}`,ok?10:0,10)}));
+  d.blanks.forEach((b,i)=>{const v=A[b.key];const ok=b.type==='num'?near(v,b.ans,tolerance):b.ans.includes(v);add('Report',`Written blank ${i+1}`,v,b.type==='num'?fmt(b.ans):b.ans.join(' / '),ok?5:0,5)});
+  const tOK=A.vtype===d.vis.right;add('Report','Chart type',A.vtype,d.vis.right,tOK?15:0,15);
+  d.vis.values.forEach((v,i)=>{add('Report','Chart '+d.vis.labels[i],A['v'+i],fmt(v),near(A['v'+i],v,tolerance)?3.75:0,3.75)});
+  d.cases.forEach((c,i)=>{const v=A['c'+i];const ok=c.type==='mc'?v===c.ans:near(v,c.ans,Math.min(c.tol,tolerance));
+    const yourTxt=c.type==='mc'?(c.options.find(o=>o.id===v)||{text:'—'}).text:v;const cor=c.type==='mc'?c.options.find(o=>o.id===c.ans).text:String(c.ans);
+    add('Cases',`Case ${i+1} · ${c.kind}`,yourTxt,cor,ok?10:0,10)});
+  return{items,total:items.reduce((s,x)=>s+x.pts,0),max:items.reduce((s,x)=>s+x.max,0)};
+}
+
+/* ---------- Sea Wolf ---------- */
+function genSeaWolf(seed){
+  const R=RNG(seed*17+3);const usedN=new Set();let nid=0;
+  const mk=(a,trait)=>{let name;do{name=R.pick(G1)+' '+R.pick(G2)}while(usedN.has(name));usedN.add(name);return{id:'m'+(nid++),name,a,trait}};
+  const cl=x=>Math.max(1,Math.min(10,x));
+  const contam=R.shuffle(['Hydrocarbon slick','Heavy-metal sediment','Plastic leachate','Nutrient runoff','Pesticide plume']).slice(0,3);
+  const drop=R.int(0,2),dropWhich=R.chance(.5)?'undesired':'desired';
+  const specs=[0,1,2].map(i=>{const tr=R.shuffle(TRAITS);const s={idx:i,name:'Site '+(i+1),contam:contam[i],desired:tr[0],undesired:tr[1]};if(i===drop)s[dropWhich]=null;
+    s.avg=[0,1,2].map(()=>R.int(2,9));s.ranges=s.avg.map(a=>[a-1,a+1]);return s});
+  const neutral=s=>R.pick(TRAITS.filter(t=>t!==s.undesired));
+  const triple=a=>{for(;;){const v=[0,1,2].map(()=>cl(a+R.int(-3,3)));if(Math.abs(v[0]+v[1]+v[2]-3*a)<=1)return v}};
+  const byId={};
+  specs.forEach((s,si)=>{
+    const vals=s.avg.map(triple);
+    const pl=[0,1,2].map(t=>mk([0,1,2].map(i=>vals[i][t]),t===0&&s.desired?s.desired:neutral(s)));
+    s.planted=pl.map(m=>m.id);
+    const rest=[];
+    for(let t=0;t<3;t++)rest.push(mk(s.avg.map(a=>cl(a+R.int(-1,1))),s.undesired||neutral(s)));
+    if(si<2){const nx=specs[si+1];rest.push(mk(nx.avg.map(a=>cl(a+R.int(-1,1))),neutral(nx)))}
+    while(rest.length+3<28)rest.push(mk([0,1,2].map(()=>R.int(1,10)),R.pick(TRAITS)));
+    const shuffled=R.shuffle(rest);const slots=R.shuffle([0,1,2,3,4,5]).slice(0,3);const pool=new Array(28);
+    slots.forEach((sl,t)=>pool[sl]=pl[t]);let ri=0;for(let i=0;i<28;i++)if(!pool[i])pool[i]=shuffled[ri++];
+    s.pool=pool;pool.forEach(m=>byId[m.id]=m);
+  });
+  return{seed,sites:specs,byId};
+}
+function scoreSite(site,trio){
+  const sums=[0,1,2].map(i=>trio[0].a[i]+trio[1].a[i]+trio[2].a[i]);const avg=sums.map(s=>s/3);const ded=[];
+  sums.forEach((s,i)=>{if(s<3*site.ranges[i][0]||s>3*site.ranges[i][1])ded.push(`${ATTRS[i]} average ${Math.round(avg[i]*100)/100} is outside ${site.ranges[i][0]}–${site.ranges[i][1]}`)});
+  if(site.desired&&!trio.some(m=>m.trait===site.desired))ded.push(`No microbe carries the desired trait (${site.desired})`);
+  if(site.undesired){const bad=trio.filter(m=>m.trait===site.undesired);bad.forEach(m=>ded.push(`${m.name} carries the undesired trait (${site.undesired})`))}
+  return{score:Math.max(0,100-20*ded.length),avg,ded};
+}
+function bestIn(site,pool){let best={score:-1,trio:null};const n=pool.length;
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)for(let k=j+1;k<n;k++){const t=[pool[i],pool[j],pool[k]];const s=scoreSite(site,t).score;if(s>best.score)best={score:s,trio:t};if(s===100)return best}
+  return best}
+function filterPool(site,pool,f){
+  return pool.filter(m=>{const hasR=f.r.some(x=>x[0]!==null||x[1]!==null);
+    const attrOK=!hasR||f.r.every((x,i)=>(x[0]===null||m.a[i]>=x[0])&&(x[1]===null||m.a[i]<=x[1]));
+    const pass=attrOK||(f.useD&&site.desired&&m.trait===site.desired);
+    return pass&&!(f.exU&&site.undesired&&m.trait===site.undesired)})}
+</script>
+
+<script src="features.js"></script>
+<script src="adaptive.js"></script>
+<script src="spaced.js"></script>
+<script src="sfl.js"></script>
+<script src="sfl-ui.js"></script>
+<script src="analytics-ui.js"></script>
+<script src="drills-ui.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
