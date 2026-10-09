@@ -19,6 +19,7 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 | Pool shown for categorising | first 10 simulator filter matches | Ten microbes shown is reported; deriving them from the profile is a practice choice (D4, D5) |
 | Microbe pool size | 28 per site | **This project's design choice** so filters have something to filter |
 | Range width | 2 | Matches worked examples (8-10, 6-8, 2-4) |
+| Starting Sea Wolf profile ranges | Each numeric site target expanded by one point, clamped to 1-10 | This project's search aid; profile ranges apply to individual microbes, while site targets apply to team averages |
 | Pacing hints | 2 min per case, 10 min per site | Coaching guidance, not official |
 
 ## Differences you should know about
@@ -38,6 +39,8 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 13. **Time-up handling** scores what is answered. The real game's behaviour at timeout is not documented.
 14. **AI variation** is replaced by a seed. McKinsey says AI varies parameters per candidate (FACTS F06).
 15. **Sea Wolf phase review** compares prospects by the best treatment available after changing one choice while holding later choices fixed. A midpoint tie-break helps study equal-scoring treatments. Neither is a published McKinsey scoring rule.
+16. **Sea Wolf filter drill** uses a visible sorting rule: reject a forbidden trait, then keep a desired-trait microbe or one with at least two individual values inside the site ranges. This teaches rapid categorisation; it is separate from the full game's three-microbe average scoring.
+17. **SFL Team Lab** shows all station requirements before assignment, and scores skill fit, constructive support, and a reflection derived from those two signals. Preference notes provide context but do not affect this original practice score.
 
 ## Keep in mind when interpreting results
 

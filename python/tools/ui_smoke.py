@@ -9,11 +9,29 @@ import re
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / "app"
 HARNESS = ROOT / "python" / "tools" / "ui_smoke.js"
+
+
+def verify_resources() -> None:
+    """Catch broken local script, art and font references before browser routes."""
+    sources = [APP / "index.html", APP / "retro.css", *APP.glob("*.js")]
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in sources)
+    scripts = re.findall(r'<script\s+src="([^"]+)"', (APP / "index.html").read_text(encoding="utf-8"))
+    assets = set(re.findall(r"assets/[A-Za-z0-9_.-]+", combined))
+    for relative in [*scripts, *assets, "retro.css"]:
+        target = (APP / relative).resolve()
+        if target.parent not in (APP.resolve(), (APP / "assets").resolve()) or not target.is_file() or not target.stat().st_size:
+            raise RuntimeError(f"Missing or empty local resource: {relative}")
+        if target.suffix == ".svg" and ET.parse(target).getroot().tag != "{http://www.w3.org/2000/svg}svg":
+            raise RuntimeError(f"Invalid SVG root: {relative}")
+        if target.suffix == ".ttf" and target.read_bytes()[:4] not in (b"\x00\x01\x00\x00", b"OTTO"):
+            raise RuntimeError(f"Invalid font header: {relative}")
+    print(f"Resources: {len(scripts)} scripts and {len(assets)} art/font references verified")
 
 
 def chrome_path() -> Path:
@@ -50,6 +68,7 @@ def run(width: int, page: Path, browser: Path) -> bool:
 
 
 def main() -> int:
+    verify_resources()
     browser = chrome_path()
     original = (APP / "index.html").read_text(encoding="utf-8")
     script = HARNESS.relative_to(APP.parent).as_posix()

@@ -1,5 +1,5 @@
 /* Loaded after app/ui.js by ui_smoke.py. Browser regression, not game content. */
-(() => {
+(async () => {
   const lines=[];
   const fail=(message)=>{throw Error(message)};
   const check=(value,message)=>{if(!value)fail(message)};
@@ -13,6 +13,23 @@
   };
   window.onerror=(message,source,line)=>lines.push('BROWSER ERROR '+message+' at '+line);
   const noOverflow=label=>check(document.documentElement.scrollWidth<=document.documentElement.clientWidth+1,label+' horizontal overflow');
+  const imageSources=new Set();
+  function auditScreen(){
+    const app=document.querySelector('#app');
+    check(app&&!/\b(?:undefined|NaN)\b|\[object Object\]/.test(app.textContent),'screen has no broken data placeholders: '+S.screen);
+    for(const image of app.querySelectorAll('img')){check(image.hasAttribute('alt'),'image has alt attribute: '+S.screen);imageSources.add(image.getAttribute('src'))}
+    for(const control of app.querySelectorAll('button,summary,[role="button"]')){
+      if(!control.getClientRects().length)continue;
+      check(!!(control.getAttribute('aria-label')||control.textContent.trim()),'control has a name: '+S.screen);
+    }
+    for(const field of app.querySelectorAll('input,select,textarea')){
+      if(!field.getClientRects().length||field.type==='hidden')continue;
+      check(!!(field.getAttribute('aria-label')||field.getAttribute('aria-labelledby')||field.labels?.length),'field has a label: '+S.screen+' '+(field.id||field.name||field.dataset.bind||field.outerHTML.slice(0,80)));
+    }
+  }
+  const originalRender=render;
+  render=function(...args){originalRender(...args);auditScreen()};
+  auditScreen();
   const luminance=color=>{
     const rgb=color.match(/[\d.]+/g)?.slice(0,3).map(Number);
     check(rgb?.length===3,'unreadable color '+color);
@@ -66,6 +83,9 @@
   }
   function seawolf(){
     check(S.screen==='sw-intro','Sea Wolf intro');ACT.swbegin();noOverflow('Sea Wolf site');
+    const first=S.sw.data.sites[0];
+    check(S.sw.cur.filter.r.every((range,i)=>range[0]===Math.max(1,first.ranges[i][0]-1)&&range[1]===Math.min(10,first.ranges[i][1]+1)),'Sea Wolf starting profile permits complementary individual values');
+    check(document.querySelector('#app').textContent.includes('Search ranges filter individual microbes'),'Sea Wolf explains profile ranges versus treatment averages');
     for(let siteIndex=0;siteIndex<3;siteIndex++){
       if(S.sw.cur.step===0)ACT['carry-done']();
       chooseFullProfile();
@@ -89,12 +109,14 @@
   }
   function project(){
     check(S.screen==='sfl-intro','Project intro');ACT['sfl-begin']();
+    check(document.querySelector('.crumb')?.textContent.includes('Decision 1/13'),'Project Lead header agrees with priority ranking step');
     const correct=SFL_RANK.slice().sort((a,b)=>a.rank-b.rank).map(x=>x.id);
     for(let i=0;i<correct.length;i++){
       let pos=S.sfl.rank.indexOf(correct[i]);
       while(pos>i){document.querySelector('[data-act="rank-up"][data-v="'+pos+'"]').click();pos--}
     }
     ACT['rank-done']();
+    check(document.querySelector('.crumb')?.textContent.includes('Decision 2/13'),'Project Lead header advances after ranking');
     for(let i=0;i<12;i++){
       const q=S.sfl.data.questions[S.sfl.step];
       ACT['sfl-answer'](q.options.find(x=>x.quality===2).id);ACT['sfl-next']();
@@ -106,13 +128,22 @@
     for(let day=0;day<3;day++){
       const f=S.sfl,record=f.records[day],data=f.data,stations=data.days[day].stations;
       data.people.slice(0,3).forEach(p=>ACT['team-ask'](p.id));ACT['team-next']();
+      check(document.querySelector('.team-notes')?.textContent.includes(data.people[0].name),'Team Lab field notes persist into assignments');
+      check(document.querySelectorAll('.team-station').length===4&&stations.every(w=>document.querySelector('.team-stations').textContent.includes(w.skill)),'Team Lab shows every station requirement');
+      noOverflow('Team Lab assignments');
       for(const p of data.people){fill('[data-team-assign="'+p.id+'"]',stations.find(x=>x.skill===p.skill).id);fill('[data-team-reason="'+p.id+'"]','Skill fit')}
       ACT['team-next']();
       for(let i=0;i<2;i++)ACT['team-support'](data.days[day].requests[i].options.findIndex(x=>x.quality===2));
+      check(document.querySelector('.team-notes')?.textContent.includes(data.people[0].name)&&document.querySelector('.pace')?.textContent.includes('skill mismatch'),'Team Lab reflection retains notes and explains states');
       for(const p of data.people)fill('[data-team-reflect="'+p.id+'"]',sflTeamState(p,stations.find(x=>x.id===record.assign[p.id]),4));
       ACT['team-next']();
     }
     check(S.res.sfl.score.total===100,'SFL team 100/100');
+    const altered=S.res.sfl.records.map(r=>({...r,assign:{...r.assign},reasons:{...r.reasons}}));
+    const person=S.res.sfl.data.people[0],wrong=S.res.sfl.data.days[0].stations.find(w=>w.skill!==person.skill);
+    altered[0].assign[person.id]=wrong.id;
+    const alteredScore=scoreSFLTeam(S.res.sfl.data,altered);
+    check(alteredScore.items.find(x=>x.label==='Day 1 · Assign').pts===12,'false Skill fit reason does not earn an assignment point');
   }
   function fullRun(mode){
     home(mode==='full20'?12345:mode==='full30'?34567:56789);
@@ -151,14 +182,14 @@
     }else if(d.family==='sfl'){
       while(!d.done)adaptiveChoice(d.items[d.i].q.options.find(x=>x.quality===2).id);
     }else{
+      check(document.querySelector('.sw-drill')?.textContent.includes('Sorting rule'),'filter drill displays its scoring rule');
       chooseFullProfile();
       applyDrillFilter();
-      const useful=new Set(),p=d.site.pool,s=d.site;
-      for(let a=0;a<p.length-2;a++)for(let b=a+1;b<p.length-1;b++)for(let c=b+1;c<p.length;c++)
-        if(scoreSite(s,[p[a],p[b],p[c]]).score===100)[p[a],p[b],p[c]].forEach(m=>useful.add(m.id));
-      while(!d.done)drillCategorise(useful.has(d.shown[d.i])?'keep':'reject');
+      check(document.querySelector('#app')?.textContent.includes('Sorting rule'),'classification keeps its scoring rule visible');
+      while(!d.done)drillCategorise(filterDrillKeep(d.site,d.data.byId[d.shown[d.i]])?'keep':'reject');
     }
     check(d.done&&d.results.max>0&&d.results.total===d.results.max,d.kind+' '+d.focus?.id+' perfect drill');
+    if(d.family==='filter')check(d.results.max===d.shown.length&&!document.querySelector('#app').textContent.includes('Reference candidate hidden'),'filter drill grades only visible candidates');
   }
   function spaced(){
     const now=Date.now();let card=spacedBlank(now).percent;
@@ -247,6 +278,17 @@
     document.querySelector('#drill-answer').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
     check(S.drill.i===2&&sessionMetrics().actions>0,'Enter shortcut and telemetry');
     finishDrill();
+    const precisionSeed=Array.from({length:30},(_,i)=>i+1).find(seed=>genRedrock(seed).cases.some(c=>c.type==='num'&&c.tol>=.5));
+    check(precisionSeed!==undefined,'case seed with broad numeric tolerance exists');
+    for(const [difficulty,expected] of [['standard',true],['hard',false]]){
+      home(precisionSeed);S.difficulty=difficulty;startDrill('cases');
+      const c=S.drill.items.find(x=>x.type==='num'&&x.tol>=.5);S.drill.items[0]=c;render(false);
+      check(document.querySelector('#app').textContent.includes('±'+(difficulty==='hard'?'0.25':'0.5')),'case drill displays '+difficulty+' tolerance');
+      document.querySelector('#drill-answer').value=c.ans+.3;
+      drillAnswer();finishDrill();
+      check(S.drill.results.items[0].ok===expected,'case drill applies '+difficulty+' tolerance');
+    }
+    log('case drill tolerance matches selected difficulty');
     home();ACT.start('rr');ACT.rrbegin();ACT['to-an']();
     const numeric=document.querySelector('input.num[data-bind]');
     fill('input.num[data-bind]','5xyz');check(numeric.getAttribute('aria-invalid')==='true'&&numeric.getAttribute('aria-describedby')&&numeric.parentElement.querySelector('.field-error')?.textContent.includes('complete number'),'invalid Redrock answer flagged while typing');
@@ -273,6 +315,9 @@
   try{
     localStorage.removeItem(HISTORY_KEY);localStorage.removeItem(SPACED_KEY);
     fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();spaced();edgeCases();
+    const images=await Promise.all([...imageSources].map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve([src,image.naturalWidth>0]);image.onerror=()=>resolve([src,false]);image.src=src})));
+    check(images.every(([,ok])=>ok),'all referenced game images load');
+    log('every visited screen has named controls, labeled fields, and loading images');
   }catch(error){lines.push('FAIL '+(error.stack||error))}
   const pre=document.createElement('pre');pre.id='qa-output';pre.textContent=lines.join('\n');document.body.append(pre);
 })();

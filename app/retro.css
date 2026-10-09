@@ -341,13 +341,20 @@ tr:nth-child(even) td {background:color-mix(in srgb,var(--surface) 65%,transpare
 .rank-controls {display:flex;gap:7px}
 .rank-controls .btn {min-width:42px;min-height:42px;padding:4px;font-size:1.05rem}
 .team-questions {grid-template-columns:repeat(2,minmax(0,1fr))}
+.team-notes {gap:6px;border-left:5px solid var(--sfl);background:var(--tint)}
+.team-notes p {margin:0}
+.team-stations {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.team-station {display:flex;flex-direction:column;gap:4px;min-width:0;padding:10px;border:2px solid var(--line);background:var(--bg)}
+.team-station b {font-family:var(--f-display);font-size:1.1rem;line-height:1.1}
+.team-station span {font-size:.82rem;font-weight:700;color:var(--sfl)}
+.team-station small {color:var(--mute)}
 .team-assign {display:flex;flex-direction:column;gap:12px}
 .team-row {display:grid;grid-template-columns:minmax(100px,1fr) minmax(170px,1.5fr) minmax(150px,1fr);align-items:center;gap:12px;border:2px solid var(--line);background:var(--bg);padding:12px}
 .team-row small {display:block;color:var(--mute)}
 .team-row label {display:flex;flex-direction:column;gap:5px;font-size:.88rem;color:var(--mute)}
 .team-row select {width:100%;font-size:.92rem}
 .team-row:has(>select) {grid-template-columns:140px minmax(0,1fr)}
-@media (max-width:750px) {.team-row {grid-template-columns:1fr}.team-questions {grid-template-columns:1fr}}
+@media (max-width:750px) {.team-row {grid-template-columns:1fr}.team-questions {grid-template-columns:1fr}.team-stations {grid-template-columns:repeat(2,minmax(0,1fr))}}
 details>summary {cursor:pointer}
 @media (max-width:850px) {
   .site-brief-grid {grid-template-columns:1fr}

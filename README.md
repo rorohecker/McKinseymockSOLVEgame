@@ -52,6 +52,7 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 | `docs/IDEAS.md` | 19 development ideas with brief how-to notes and a suggested order. |
 | `docs/ARCHITECTURE.md` | How the code is organised and the change workflow. |
 | `docs/KNOWN_DEVIATIONS.md` | Where the simulator differs from the real test and where every number came from. |
+| `docs/GAME_AUDIT_2026-10-08.md` | Game-by-game content, interface and regression audit. |
 
 ## The most important findings (details and sources in `research/`)
 
@@ -71,7 +72,7 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 | Perfect Redrock answer sheet | scores 175 on 500 seeds; empty sheet scores 0 |
 | Sea Wolf sites | planted team scores 100, perfect team found by brute force, unique names, 28-microbe pools on 1,500 sites |
 | Unit tests | 11 pass |
-| Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes plus every standalone game using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast across all game palettes; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
+| Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes plus every standalone game using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast, control labels, broken placeholders and local image loading; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
 
 ## Interface notes
 
@@ -79,7 +80,7 @@ The DAY/NIGHT control saves your theme preference locally. The Keys menu lists s
 
 Extended sittings use 85 minutes (Redrock + Sea Wolf + 20-minute SFL Project Lead) or 95 minutes (with the 30-minute SFL Team Lab). A break screen pauses between games. The SFL tasks, timing and scoring are practice reconstructions because official details are limited.
 
-Short sessions cover mental math, six Redrock cases at two minutes each, and Sea Wolf filtering. The five-minute adaptive drill reads recent missed skills from local history and chooses focused math, Redrock data, Sea Wolf filtering, or SFL decisions; a first run starts with percent math. Scores, phase time and mistake summaries are saved in this browser. Standard/Hard changes Sea Wolf range widths and distractors plus Redrock numeric tolerance; learning hints can be switched on. Personal difficulty comparisons remain on this device.
+Short sessions cover mental math, six Redrock cases at two minutes each, and Sea Wolf filtering. The Sea Wolf filter drill shows its sorting rule beside every candidate; final treatments still use three-microbe averages. The five-minute adaptive drill reads recent missed skills from local history and chooses focused math, Redrock data, Sea Wolf filtering, or SFL decisions; a first run starts with percent math. Scores, phase time and mistake summaries are saved in this browser. Standard/Hard changes Sea Wolf range widths and distractors plus Redrock numeric tolerance; learning hints can be switched on. Personal difficulty comparisons remain on this device.
 
 Spaced practice uses the same five-minute skill drills on a local calendar schedule. A strong review moves a skill through 1, 3, 7, 14 and 30-day intervals; missed work returns the next day. Completed runs feed the schedule, including existing saved history when the plan is first created. The home and history screens show due skills, and the plan exports to CSV. This schedule is a study aid, not a McKinsey scoring rule.
 
@@ -93,7 +94,7 @@ Each game has its own dark and light palette: earthy Redrock, kelp and warm cora
 - More languages and screen-reader testing with human players.
 - A scenario editor and downloadable weekly practice packs.
 
-The interface uses original pixel art inspired by classic game screens and ocean exploration. Pixelify Sans is bundled for offline use; body fonts fall back to system fonts when Google Fonts is unavailable.
+The interface uses original pixel art inspired by classic game screens and ocean exploration. Pixelify Sans is bundled for offline use; body text uses system fonts.
 
 ## Research caveats
 

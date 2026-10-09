@@ -278,7 +278,7 @@ function profileTraits(site){
 }
 function profileBlank(site){
   const traitModes={};for(const trait of profileTraits(site))traitModes[trait]=trait===site.undesired?'no':'yes';
-  return{selected:[],r:site.ranges.map(x=>x.slice()),traitModes};
+  return{selected:[],r:site.ranges.map(([lo,hi])=>[Math.max(1,lo-1),Math.min(10,hi+1)]),traitModes};
 }
 function profileError(site,f){
   const allowed=new Set(['a0','a1','a2',...profileTraits(site).map(x=>'t:'+x)]),selected=f?.selected||[];

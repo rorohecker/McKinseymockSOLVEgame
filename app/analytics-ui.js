@@ -57,7 +57,7 @@ function feedbackHTML(){
 }
 function shareHTML(){
   const share=challengeShareText(S.seed,S.mode),same=readHistory().filter(x=>x.seed===S.seed&&x.mode===S.mode),best=same.length?Math.max(...same.map(x=>(x.rr||0)+(x.sw||0)+(x.sfl||0))):null;
-  return`<section class="card stack"><h2>Seed challenge</h2><p class="mute">${location.protocol==='file:'?'Share this seed and mode with a friend who has their own copy of the lab.':'Share this link so a friend can play the same seed and mode.'} Your local runs on this seed: ${same.length}${best!==null?' · best combined points '+best:''}.</p><div class="row"><input id="challenge-url" readonly value="${esc(share)}" style="flex:1;min-width:220px"><button class="btn ghost" data-act="copy-challenge">Copy challenge</button></div><p id="share-status" class="mute"></p></section>`;
+  return`<section class="card stack"><h2>Seed challenge</h2><p class="mute">${location.protocol==='file:'?'Share this seed and mode with a friend who has their own copy of the lab.':'Share this link so a friend can play the same seed and mode.'} Your local runs on this seed: ${same.length}${best!==null?' · best combined points '+best:''}.</p><label for="challenge-url" class="eyebrow">Challenge to share</label><div class="row"><input id="challenge-url" readonly value="${esc(share)}" style="flex:1;min-width:220px"><button class="btn ghost" data-act="copy-challenge">Copy challenge</button></div><p id="share-status" class="mute"></p></section>`;
 }
 function rrStepForItem(item,index){
   const d=S.rr.d;

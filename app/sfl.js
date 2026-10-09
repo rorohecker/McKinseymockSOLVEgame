@@ -143,17 +143,20 @@ function sflTeamState(person,station,support){
   if(station.skill!==person.skill)return"strained";
   return support>=3?"confident":"steady";
 }
+function sflTeamSupportScore(day,choices){
+  return(choices||[]).reduce((sum,j,k)=>sum+(day.requests[k]?.options[j]?.quality||0),0);
+}
 function scoreSFLTeam(data,records){
   const items=[];let points=0,max=0;
   data.days.forEach((day,i)=>{
     const r=records[i]||{},asked=(r.asked||[]).length;
     const explore=Math.min(3,asked);points+=explore;max+=3;items.push({label:"Day "+(i+1)+" · Explore",pts:explore,max:3,why:"Use up to three questions to reduce uncertainty."});
-    let fit=0;for(const p of data.people){const station=day.stations.find(x=>x.id===r.assign?.[p.id]);if(station?.skill===p.skill)fit+=3;if(station&&r.reasons?.[p.id]==="Skill fit")fit+=1}
+    let fit=0;for(const p of data.people){const station=day.stations.find(x=>x.id===r.assign?.[p.id]);if(station?.skill===p.skill){fit+=3;if(r.reasons?.[p.id]==="Skill fit")fit+=1}}
     points+=fit;max+=16;items.push({label:"Day "+(i+1)+" · Assign",pts:fit,max:16,
       your:data.people.map(p=>p.name+" → "+(day.stations.find(w=>w.id===r.assign?.[p.id])?.name||"unassigned")).join("; "),
       correct:data.people.map(p=>p.name+" → "+day.stations.find(w=>w.skill===p.skill)?.name).join("; "),
       why:"Match each person's strongest skill to the station's requirement; choose Skill fit as the reason."});
-    const support=(r.support||[]).reduce((sum,j,k)=>sum+(day.requests[k]?.options[j]?.quality||0),0);
+    const support=sflTeamSupportScore(day,r.support);
     points+=support;max+=4;items.push({label:"Day "+(i+1)+" · Support",pts:support,max:4,
       your:day.requests.map((q,j)=>q.options[r.support?.[j]]?.text||"No response").join("; "),
       correct:day.requests.map(q=>q.options.find(x=>x.quality===2)?.text).join("; "),
