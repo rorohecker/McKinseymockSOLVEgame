@@ -127,6 +127,17 @@ h3 {font-size:1.4rem;line-height:1.1}
 .shortcut-menu[open] div {position:absolute;right:0;top:100%;z-index:9;width:min(330px,80vw);padding:12px;border:2px solid var(--line);background:var(--surface);box-shadow:4px 4px 0 var(--shadow);line-height:1.7}
 .theme-toggle {font-family:var(--f-mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;padding:7px 11px;border:2px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:3px 3px 0 var(--shadow);cursor:pointer}
 .theme-toggle:hover {border-color:var(--sea);color:var(--sea)}
+.run-control {min-height:38px;padding:6px 11px;border:2px solid var(--accent);background:var(--surface);color:var(--ink);box-shadow:3px 3px 0 var(--shadow);font:600 .78rem var(--f-mono);text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.run-control:hover {background:var(--tint)}
+.run-control.quit-control {border-color:var(--bad)}
+.run-overlay {position:fixed;inset:0;z-index:50;display:grid;place-items:center;overflow:auto;padding:22px;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.run-dialog {width:min(100%,620px);padding:32px;border-width:3px;box-shadow:8px 8px 0 var(--shadow)}
+.run-dialog h2 {font-size:clamp(2.3rem,6vw,3.5rem)}
+.run-dialog p {font-size:1.06rem;max-width:52ch}
+.run-dialog .row {flex-wrap:wrap}
+.run-dialog .btn {min-height:46px}
+.pause-clock {width:max-content;min-width:6ch;padding:12px 18px;border:3px solid var(--accent);background:var(--bg);color:var(--accent);font-size:clamp(2.5rem,7vw,4rem);font-weight:600;line-height:1}
+body:has(.run-overlay) {overflow:hidden}
 .clock {font-family:var(--f-display);font-size:1.65rem;line-height:1;min-width:5.2ch;color:var(--ink)}
 .clockwrap {border-left:2px solid var(--line);padding-left:14px}
 .prog {height:6px;background:var(--tint)}
@@ -283,6 +294,28 @@ tr:nth-child(even) td {background:color-mix(in srgb,var(--surface) 65%,transpare
 .rule-help {font-size:.94rem;color:var(--mute)}
 .rule-help summary {color:var(--sea);font-family:var(--f-mono)}
 .rule-help summary:hover {text-decoration:underline}
+.sw-review-site {padding:0;overflow:hidden}
+.sw-review-site>summary {padding:15px 19px;background:var(--tint);font:600 1.35rem var(--f-display);cursor:pointer}
+.sw-review-site>summary:hover {color:var(--accent)}
+.sw-review-site>.stack {padding:18px}
+.phase-review {padding:17px;border:2px solid var(--line);background:var(--bg)}
+.phase-review h4 {font:600 1.4rem var(--f-display);margin:0 0 9px;color:var(--accent)}
+.phase-review p {margin:8px 0}
+.review-buckets {display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.review-bucket {min-width:0;padding:11px;border:2px solid var(--line);background:var(--surface)}
+.review-bucket b {font-family:var(--f-mono);font-size:.86rem}
+.review-bucket p {font-size:.88rem;overflow-wrap:anywhere}
+.review-round {padding:8px 0;border-bottom:1px dashed var(--line)}
+.review-round:last-child {border-bottom:0}
+.review-teams {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin-top:12px}
+.review-teams>div {min-width:0}
+.review-teams h5 {font:600 1.18rem var(--f-display);margin:0 0 8px}
+.review-teams .mgrid {grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}
+.review-teams .mb {padding:9px}
+.review-teams .mb .attr {grid-template-columns:4.7em 1fr 1.4em;gap:4px;font-size:.74rem}
+.review-teams .mb .nm {font-size:1.1rem}
+.review-teams .row {margin-top:10px;gap:6px}
+.review-teams .chip {font-size:.72rem}
 .trend {display:block;width:100%;max-height:125px;color:var(--sea);background:var(--bg);border:1px solid var(--line)}
 .calc-d[draggable="true"] {cursor:grab}
 .practice-options label {display:inline-flex;align-items:center;gap:9px;font-family:var(--f-mono);font-size:.86rem}
@@ -312,6 +345,7 @@ details>summary {cursor:pointer}
   .hero {height:345px}
   .profile-layout {grid-template-columns:1fr}
   .profile-panel+.profile-panel {border-left:0;border-top:3px solid var(--line)}
+  .review-teams {grid-template-columns:1fr}
 }
 @media (max-width:620px) {
   .wrap {padding:20px 13px 60px}
@@ -320,6 +354,8 @@ details>summary {cursor:pointer}
   .brand small,.crumb {display:none}
   .top-actions {gap:8px}
   .theme-toggle {padding:6px 8px;font-size:.7rem}
+  .run-control {padding:5px 7px;font-size:.7rem;min-height:34px}
+  .run-dialog {padding:22px}
   .shortcut-menu {font-size:.7rem}
   .shortcut-menu summary {padding:6px}
   .clock {font-size:1.25rem}

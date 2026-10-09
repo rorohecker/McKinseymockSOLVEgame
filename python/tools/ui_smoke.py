@@ -58,7 +58,7 @@ def main() -> int:
         handle.write(generated)
         page = Path(handle.name)
     try:
-        return 0 if all(run(width, page, browser) for width in (1280, 500)) else 1
+        return 0 if all(run(width, page, browser) for width in (1280, 500, 360)) else 1
     finally:
         if page.resolve().parent != APP.resolve():
             raise RuntimeError("Refusing to remove a page outside app/")

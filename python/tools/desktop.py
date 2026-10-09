@@ -32,6 +32,18 @@ class LocalServer(ThreadingHTTPServer):
     allow_reuse_address = True
 
 
+class DesktopActions:
+    def __init__(self) -> None:
+        self._window = None
+        self._quit_called = threading.Event()
+
+    def quit(self) -> bool:
+        self._quit_called.set()
+        if self._window is not None:
+            self._window.destroy()
+        return True
+
+
 def make_server(port: int = PORT) -> LocalServer:
     if not (APP / "index.html").is_file():
         raise FileNotFoundError(f"Game assets are missing from {APP}")
@@ -93,6 +105,7 @@ def main() -> int:
 
         profile = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "SolvePracticeLab" / "WebView"
         profile.mkdir(parents=True, exist_ok=True)
+        actions = DesktopActions()
         window = webview.create_window(
             "Solve Practice Lab",
             f"http://{HOST}:{PORT}/index.html",
@@ -101,7 +114,9 @@ def main() -> int:
             min_size=(360, 560),
             background_color="#1b2724",
             text_select=True,
+            js_api=actions,
         )
+        actions._window = window
         result = {"status": "Desktop window did not finish loading"}
         def probe() -> None:
             try:
@@ -110,10 +125,21 @@ def main() -> int:
                 loaded = window.evaluate_js("document.title === 'Solve Practice Lab' && typeof startDrill === 'function' && !!document.querySelector('.spaced-panel')")
                 if not loaded:
                     raise RuntimeError("Game interface or practice scripts did not load")
+                bridge = window.evaluate_js("typeof window.pywebview?.api?.quit === 'function'")
+                if not bridge:
+                    raise RuntimeError("Desktop quit control is unavailable")
+                exit_button = window.evaluate_js("!!document.querySelector('[data-act=\"exit-app\"]')")
+                if not exit_button:
+                    raise RuntimeError("Desktop exit button is unavailable")
                 storage = window.evaluate_js("localStorage.setItem('solve-lab-desktop-smoke','ok'); var saved=localStorage.getItem('solve-lab-desktop-smoke'); localStorage.removeItem('solve-lab-desktop-smoke'); saved")
                 if storage != "ok":
                     raise RuntimeError("Desktop local storage is unavailable")
-                result["status"] = "OK: desktop window, game scripts and local storage"
+                window.evaluate_js("setTimeout(() => document.querySelector('[data-act=\"exit-app\"]').click(), 10); true")
+                if not actions._quit_called.wait(8):
+                    raise RuntimeError("Desktop exit button did not call the quit bridge")
+                if not window.events.closed.wait(8):
+                    raise RuntimeError("Desktop quit bridge did not close the window")
+                result["status"] = "OK: desktop window, exit button, quit bridge, game scripts and local storage"
             except Exception as exc:
                 result["status"] = str(exc)
             finally:

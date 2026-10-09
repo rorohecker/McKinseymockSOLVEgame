@@ -1,6 +1,6 @@
 /* Session telemetry, local history, review and exports. No data leaves the browser. */
-function startSession(){S.session={started:Date.now(),screenAt:Date.now(),screenTimes:{},log:[],saved:false}}
-function track(type,data={}){if(!S.session||S.session.log.length>=500)return;S.session.log.push({at:Date.now()-S.session.started,screen:S.screen,type,data})}
+function startSession(){S.session={started:Date.now(),screenAt:Date.now(),screenTimes:{},pausedMs:0,log:[],saved:false}}
+function track(type,data={}){if(!S.session||S.session.log.length>=500)return;const now=Date.now(),openPause=S.clock?.paused?Math.max(0,now-S.clock.pausedAt):0;S.session.log.push({at:now-S.session.started-(S.session.pausedMs||0)-openPause,screen:S.screen,type,data})}
 function recordScreenTime(){if(!S.session)return;const now=Date.now(),key=S.screen;S.session.screenTimes[key]=(S.session.screenTimes[key]||0)+Math.max(0,now-S.session.screenAt);S.session.screenAt=now}
 function sessionMetrics(){
   const log=S.session?.log||[],times=S.session?.screenTimes||{};
@@ -16,7 +16,7 @@ function finalizeSession(){
   const entry={id:Date.now()+'-'+S.seed,date:new Date().toISOString(),seed:S.seed,mode:S.mode,difficulty:S.difficulty,
     rr:S.res.rr?.total??null,sw:S.res.sw?S.res.sw.reduce((a,x)=>a+x.sc.score,0):null,
     sfl:S.res.sfl?.score.total??null,math:S.res.math?.total??null,drill:S.drill?.results?.total??null,drillMax:S.drill?.results?.max??null,
-    durationSeconds:Math.round((Date.now()-S.session.started)/1000),source:'local',metrics:sessionMetrics(),skillStats:sessionSkillStats(),adaptiveFocus:S.drill?.kind==='adaptive'?S.drill.focus.id:null,spacedFocus:S.drill?.kind==='spaced'?S.drill.focus.id:null,
+    durationSeconds:Math.round((Date.now()-S.session.started-(S.session.pausedMs||0))/1000),source:'local',metrics:sessionMetrics(),skillStats:sessionSkillStats(),adaptiveFocus:S.drill?.kind==='adaptive'?S.drill.focus.id:null,spacedFocus:S.drill?.kind==='spaced'?S.drill.focus.id:null,
     phaseSeconds:Object.fromEntries(S.marks.map(x=>[x.game+' '+x.name,Math.round(x.ms/1000)])),
     mistakes:{redrock:S.res.rr?.items.filter(x=>x.pts<x.max).reduce((a,x)=>(a[x.sec]=(a[x.sec]||0)+1,a),{})||{},
       seaWolf:S.res.sw?.flatMap(x=>x.sc.ded).length||0,sfl:S.res.sfl?.score.items.filter(x=>x.pts<x.max).length||0,drill:S.drill?.results?.items.filter(x=>!x.ok).length||0},
@@ -73,9 +73,50 @@ function rrStepForItem(item,index){
   if(item.sec==='Cases'){const i=Number(item.label.match(/Case (\d+)/)?.[1])-1;return d.cases[i]?.explain||"Recheck the inputs and units."}
   return"Revisit the source figures and calculation.";
 }
+function reviewPool(ids){return[...new Set(ids)].map(id=>S.sw?.data.byId[id]).filter(Boolean)}
+function midpointGap(site,trio){return[0,1,2].reduce((sum,i)=>sum+Math.abs(trio.reduce((n,m)=>n+m.a[i],0)/3-(site.ranges[i][0]+site.ranges[i][1])/2),0)}
+function bestReviewTreatment(site,ids){
+  const pool=reviewPool(ids);let best={score:0,trio:null,gap:Infinity};
+  for(let a=0;a<pool.length-2;a++)for(let b=a+1;b<pool.length-1;b++)for(let c=b+1;c<pool.length;c++){
+    const trio=[pool[a],pool[b],pool[c]],score=scoreSite(site,trio).score,gap=midpointGap(site,trio);
+    if(!best.trio||score>best.score||score===best.score&&gap<best.gap)best={score,trio,gap};
+  }
+  return best;
+}
+function treatmentReviewHTML(site,trio){
+  if(!trio?.length)return'<p class="mute">No treatment submitted.</p>';
+  const cards=`<div class="mgrid">${trio.map(m=>mbHTML(m,site)).join('')}</div>`;
+  if(trio.length!==3)return cards+'<p class="mute">A treatment needs three microbes.</p>';
+  const summary=ATTRS.map((name,i)=>{const sum=trio.reduce((n,m)=>n+m.a[i],0),avg=sum/3,[lo,hi]=site.ranges[i],ok=avg>=lo&&avg<=hi;return`<span class="chip ${ok?'good':'bad'}">${esc(name)} ${fmt(avg)} / target ${lo}–${hi}</span>`}).join('');
+  return cards+`<div class="row">${summary}</div>`;
+}
+function seaWolfReplayHTML(r,i){
+  const v=r.review||{},site=r.site,byId=S.sw?.data.byId||{},selected=v.filter?.selected||[];
+  const chosen=selected.map(key=>key[0]==='a'?`${ATTRS[Number(key[1])]} ${v.filter.r[Number(key[1])].join('–')}`:`${key.slice(2)}: ${v.filter.traitModes[key.slice(2)]==='no'?'Avoid':'Include'}`);
+  const hidden=v.filtered?site.planted.filter(id=>!v.filtered.includes(id)):[],shown=v.shown||[];
+  const categories=[['cur','This site'],['next','Next site'],['rej','Returned'],['','Unsorted']].map(([key,label])=>{const ids=shown.filter(id=>(v.cat?.[id]||'')===key);return`<div class="review-bucket"><b>${label} · ${ids.length}</b><p>${ids.length?ids.map(id=>esc(byId[id]?.name||id)).join(', '):'None'}</p></div>`}).filter((_,j)=>j<3||shown.some(id=>!v.cat?.[id])).join('');
+  const moved=shown.filter(id=>site.planted.includes(id)&&v.cat?.[id]!=='cur');
+  const core=shown.filter(id=>v.cat?.[id]==='cur').concat(v.kept||[]),picks=v.picks||[],poolIds=core.concat(picks),best=bestReviewTreatment(site,poolIds);
+  const rounds=picks.map((id,j)=>{
+    const offer=v.offerHistory?.[j]||[],other=core.concat(picks.filter((_,k)=>k!==j));
+    const candidates=offer.map(candidate=>({id:candidate,score:bestReviewTreatment(site,other.concat(candidate)).score}));
+    const picked=candidates.find(x=>x.id===id)?.score??0,better=candidates.filter(x=>x.id!==id&&x.score>picked).sort((a,b)=>b.score-a.score)[0];
+    return`<div class="review-round"><b>Round ${j+1} · ${esc(byId[id]?.name||id)}</b><p>${better?`With your other choices fixed, ${esc(byId[better.id]?.name||better.id)} would raise the best available treatment from ${picked} to ${better.score}/100.`:'No offered alternative improves the best available practice score with your other choices fixed.'}</p></div>`;
+  }).join('');
+  let comparison='';
+  if(best.trio&&r.trio.length===3){const yourGap=midpointGap(site,r.trio);comparison=best.score>r.sc.score?`Your available pool contained a ${best.score}/100 treatment.`:best.score===r.sc.score&&best.gap+0.001<yourGap?'Both treatments earn the same practice score. The example is closer to the target midpoints; that closeness is a study aid, not an extra scoring rule.':'Your treatment matches the best available practice score and midpoint alignment.'}
+  const missed=r.sc.ded||[];
+  return`<details class="card sw-review-site" ${i===0?'open':''}><summary>${esc(site.name)} · ${r.sc.score}/100 · ${v.timeMs!==undefined?mmss(v.timeMs/1000):'not reached'}</summary><div class="stack">
+    <div class="phase-review"><h4>01 · Profile</h4><p>${chosen.length?`Selected: <b>${chosen.map(esc).join(' + ')}</b>.`:'No profile submitted.'} ${v.filtered?`${v.filtered.length} of ${site.pool.length} microbes matched; ${shown.length} were shown.`:''}</p><p class="mute">${!v.filtered?'No match comparison is available.':hidden.length?`${hidden.length} microbe${hidden.length===1?'':'s'} from one reference 100-point trio did not match. Another strong trio may still exist.`:'One reference 100-point trio remained available after profiling.'} This pool matching is specific to this practice model.</p></div>
+    <div class="phase-review"><h4>02 · Categorise</h4><div class="review-buckets">${categories}</div><p class="mute">${!shown.length?'No categorisation recorded.':moved.length?`Reference-trio microbes sent elsewhere: ${moved.map(id=>esc(byId[id]?.name||id)).join(', ')}. This is one possible strong trio, not the only valid choice.`:'No members of one reference trio were sent elsewhere.'}</p></div>
+    <div class="phase-review"><h4>03 · Prospects</h4>${rounds||'<p class="mute">No prospect rounds completed.</p>'}</div>
+    <div class="phase-review"><h4>04 · Treatment</h4><p>${comparison||'No three-microbe comparison is available.'}</p><div class="review-teams"><div><h5>Your treatment</h5>${treatmentReviewHTML(site,r.trio)}</div><div><h5>Best available example</h5>${treatmentReviewHTML(site,best.trio)}</div></div>${missed.length?`<ul>${missed.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="ok">All practice treatment requirements met.</p>'}</div>
+    ${v.timeMs>600000?'<p class="pace">This site took over ten minutes; protect time for later sites.</p>':''}
+  </div></details>`;
+}
 function workedReviewHTML(){
   let out='';
   if(S.res.rr){const misses=S.res.rr.items.map((x,i)=>[x,i]).filter(([x])=>x.pts<x.max);out+=`<section class="card stack rr-scope"><h2>Redrock worked review</h2>${misses.length?misses.map(([x,i])=>`<div class="card flat"><b>${esc(x.sec)} · ${esc(x.label)}</b><p>Your answer: ${esc(x.your)} · Correct: ${esc(x.correct)}</p><p class="mute">${esc(rrStepForItem(x,i))}</p></div>`).join(''):'<p class="ok">No missed Redrock items.</p>'}</section>`}
-  if(S.res.sw)out+=`<section class="card stack"><h2>Sea Wolf decision replay</h2>${S.res.sw.map((r,i)=>{const v=r.review||{},site=r.site,hidden=v.filtered?site.planted.filter(id=>!v.filtered.includes(id)):[],misfiled=(v.shown||[]).filter(id=>site.planted.includes(id)&&v.cat?.[id]!=='cur'),miss=r.sc.ded||[],calcs=r.trio.length===3?'<div class="pace">'+ATTRS.map((name,j)=>{const vals=r.trio.map(m=>m.a[j]),sum=vals.reduce((a,b)=>a+b,0),range=site.ranges[j];return '<p>'+esc(name)+': '+vals.join(' + ')+' = '+sum+'; / 3 = '+fmt(sum/3)+' (target '+range.join('-')+')</p>'}).join('')+'</div>':'';return`<div class="card flat stack"><h3>${esc(site.name)} · ${r.sc.score}/100</h3><p>${v.timeMs!==undefined?'Time: '+mmss(v.timeMs/1000)+' · ':''}Filtered matches: ${v.filtered?.length??'—'} · Categorised: ${v.shown?.length??'—'} · Prospects kept: ${v.picks?.length??'—'}.</p><p>Reference-team microbes hidden by your filter: <b>${hidden.length}</b>${hidden.length?' ('+hidden.map(id=>esc(S.sw.data.byId[id].name)).join(', ')+')':''}. Promising microbes sent away: <b>${misfiled.length}</b>${misfiled.length?' ('+misfiled.map(id=>esc(S.sw.data.byId[id].name)+' → '+esc(v.cat[id])).join(', ')+')':''}.</p><p>Best treatment available from your choices: <b>${r.bestPool.score}</b>/100. ${r.bestPool.score>r.sc.score?'Recheck the three final selections; the pool contained a stronger trio.':''}</p>${calcs}${miss.length?`<ul>${miss.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="ok">All treatment requirements met.</p>'}${v.timeMs>600000?'<p class="pace">This site took over ten minutes; protect time for later sites.</p>':''}</div>`}).join('')}</section>`;
+  if(S.res.sw)out+=`<section class="card stack"><h2>Sea Wolf phase review</h2><p class="mute">Practice feedback for profiling, categorising, prospects and treatment. The midpoint comparison breaks ties for study only.</p>${S.res.sw.map(seaWolfReplayHTML).join('')}</section>`;
   return out;
 }

@@ -11,23 +11,66 @@ const isSFL=()=>S.screen.startsWith('sfl-');
 const gameKey=()=>isRR()?'rr':isSW()?'sw':isSFL()?'sfl':'';
 
 /* clock */
-function startClock(min,onEnd){S.clock={end:Date.now()+min*60000,total:min*60000,onEnd,done:false,announced:[]};S.lastMark=Date.now();S.marks=S.marks.filter(m=>m.game!==gameKey());tick()}
+function startClock(min,onEnd){S.clock={end:Date.now()+min*60000,total:min*60000,onEnd,done:false,announced:[],paused:false,pausedMs:0};S.lastMark=Date.now();S.marks=S.marks.filter(m=>m.game!==gameKey());tick()}
 function stopClock(){S.clock=null}
 function mark(game,name){const now=Date.now();S.marks.push({game,name,ms:now-S.lastMark});S.lastMark=now}
-function tick(){const c=S.clock,el=$('#clk');if(!c||!el)return;const rem=Math.max(0,c.end-Date.now());el.textContent=mmss(rem/1000);
+function tick(){const c=S.clock,el=$('#clk');if(!c||!el)return;const rem=c.paused?c.remaining:Math.max(0,c.end-Date.now());el.textContent=mmss(rem/1000);
   const w=el.parentElement;w.classList.toggle('low',rem<300000&&rem>=60000);w.classList.toggle('urgent',rem<60000);
   const p=$('#prog');if(p)p.style.width=(rem/c.total*100)+'%';
   const due=[10,5,1].filter(m=>rem<=m*60000&&!c.announced.includes(m));
-  if(rem>0&&due.length){c.announced.push(...due);const m=due[due.length-1],live=$('#time-announcement');if(live)live.textContent=m+' minute'+(m===1?'':'s')+' remaining'}
-  if(rem<=0&&!c.done){c.done=true;c.onEnd()}}
+  if(!c.paused&&rem>0&&due.length){c.announced.push(...due);const m=due[due.length-1],live=$('#time-announcement');if(live)live.textContent=m+' minute'+(m===1?'':'s')+' remaining'}
+  if(!c.paused&&rem<=0&&!c.done){c.done=true;c.onEnd()}}
 setInterval(tick,250);
+
+function freezeClock(){
+  const c=S.clock;if(!c||c.paused)return;
+  const now=Date.now();c.remaining=Math.max(0,c.end-now);c.pausedAt=now;c.paused=true;
+  recordScreenTime();track('pause');tick();
+}
+function unfreezeClock(){
+  const c=S.clock;if(!c||!c.paused)return;
+  const now=Date.now(),elapsed=Math.max(0,now-c.pausedAt);
+  c.end=now+c.remaining;c.paused=false;c.pausedAt=null;
+  c.pausedMs+=elapsed;
+  S.lastMark+=elapsed;
+  if(S.session){S.session.pausedMs=(S.session.pausedMs||0)+elapsed;S.session.screenAt=now}
+  track('resume');tick();
+}
+function runOverlayHTML(){
+  if(S.quitConfirm)return`<section class="run-dialog card stack" role="dialog" aria-modal="true" aria-labelledby="run-dialog-title"><span class="eyebrow">Leave practice</span><h2 id="run-dialog-title">Quit this run?</h2><p>Your unfinished run will be discarded. Completed runs in your practice history stay saved.</p><div class="row"><button class="btn ghost" data-act="quit-cancel">Keep playing</button><button class="btn" data-act="quit-confirm">Quit to menu</button>${window.pywebview?.api?.quit?'<button class="btn ghost" data-act="exit-app">Close desktop app</button>':''}</div></section>`;
+  return`<section class="run-dialog card stack" role="dialog" aria-modal="true" aria-labelledby="run-dialog-title"><span class="eyebrow">Break in progress</span><h2 id="run-dialog-title">Practice paused</h2><p>The clock and phase timing are stopped. Resume when you are ready.</p><div class="pause-clock mono">${mmss(S.clock.remaining/1000)}</div><div class="row"><button class="btn" data-act="resume">Resume practice</button><button class="btn ghost" data-act="quit">Quit run</button></div></section>`;
+}
+function showRunOverlay(){
+  let overlay=$('#run-overlay');if(!overlay){S.overlayReturnFocus=document.activeElement;overlay=document.createElement('div');overlay.id='run-overlay';overlay.className='run-overlay';document.body.append(overlay)}
+  overlay.innerHTML=runOverlayHTML();$('#app').inert=true;overlay.querySelector('button')?.focus();
+}
+function hideRunOverlay(restoreFocus=true){const overlay=$('#run-overlay'),prior=S.overlayReturnFocus;if(overlay)overlay.remove();$('#app').inert=false;S.overlayReturnFocus=null;if(restoreFocus&&prior?.isConnected)prior.focus({preventScroll:true})}
+function pauseRun(){if(!S.clock||S.clock.paused)return;freezeClock();S.quitConfirm=false;showRunOverlay()}
+function resumeRun(){if(!S.clock?.paused||S.quitConfirm)return;unfreezeClock();hideRunOverlay()}
+function requestQuit(){
+  S.quitResume=!!(S.clock&&!S.clock.paused);
+  if(S.quitResume)freezeClock();
+  S.quitConfirm=true;showRunOverlay();
+}
+function cancelQuit(){
+  const resume=S.quitResume;S.quitConfirm=false;S.quitResume=false;
+  if(resume){unfreezeClock();hideRunOverlay()}
+  else if(S.clock?.paused)showRunOverlay();
+  else hideRunOverlay();
+}
+function discardRun(){
+  hideRunOverlay(false);stopClock();S.quitConfirm=false;S.quitResume=false;
+  S.session=null;S.res={};S.rr=null;S.sw=null;S.sfl=null;S.drill=null;S.pendingGame=null;S.marks=[];
+  go('home');
+}
 
 function go(s){recordScreenTime();track('screen',{to:s});S.screen=s;if(s==='results'||s==='drill-results')finalizeSession();render(true)}
 function topbar(){
   const game=isRR()?'Redrock Study':isSW()?'Sea Wolf':isSFL()?'Sustainable Futures Lab':'';
   const timed=S.clock&&(isRR()&&S.screen!=='rr-intro'||isSW()&&S.screen==='sw-site'||isSFL()&&S.screen!=='sfl-intro'||S.screen.startsWith('drill-')&&S.screen!=='drill-results');
+  const active=!!S.session&&!S.session.saved&&!['home','history','results','drill-results'].includes(S.screen);
   const theme=document.documentElement.dataset.theme;
-  return`<div class="bar"><div class="bar-in"><div class="row" style="gap:14px"><span class="brand">SOLVE LAB<small>FIELD TERMINAL</small></span>${game?`<span class="crumb">${game}${crumb()}</span>`:''}</div><div class="top-actions"><details class="shortcut-menu"><summary>Keys</summary><div>Tab and Enter work on all controls.<br>Redrock: Alt+1 Journal, Alt+2 Exhibits, Alt+3 Calculator.<br>Sea Wolf: 1–3 to categorise or choose prospects.<br>SFL: A–C for decisions.<br>Drills: Enter to submit, 1–2 to categorise.</div></details><button class="theme-toggle" type="button" data-act="theme" aria-label="Switch to ${theme==='dark'?'day':'night'} mode">${theme==='dark'?'☀ DAY':'☾ NIGHT'}</button>${timed?`<div class="clockwrap row" style="gap:8px"><span class="eyebrow hide-sm">Time left</span><span class="clock" id="clk" role="timer">--:--</span><span id="time-announcement" class="sr-only" aria-live="polite"></span></div>`:''}</div></div>${timed?'<div class="prog"><i id="prog"></i></div>':''}</div>`}
+  return`<div class="bar"><div class="bar-in"><div class="row" style="gap:14px"><span class="brand">SOLVE LAB<small>FIELD TERMINAL</small></span>${game?`<span class="crumb">${game}${crumb()}</span>`:''}</div><div class="top-actions"><details class="shortcut-menu"><summary>Keys</summary><div>Tab and Enter work on all controls.<br>Alt+P pauses or resumes. Escape resumes or closes the quit prompt.<br>Redrock: Alt+1 Journal, Alt+2 Exhibits, Alt+3 Calculator.<br>Sea Wolf: 1–3 to categorise or choose prospects.<br>SFL: A–C for decisions.<br>Drills: Enter to submit, 1–2 to categorise.</div></details><button class="theme-toggle" type="button" data-act="theme" aria-label="Switch to ${theme==='dark'?'day':'night'} mode">${theme==='dark'?'☀ DAY':'☾ NIGHT'}</button>${active?`${timed?'<button class="run-control" type="button" data-act="pause">Ⅱ Pause</button>':''}<button class="run-control quit-control" type="button" data-act="quit">Quit</button>`:''}${timed?`<div class="clockwrap row" style="gap:8px"><span class="eyebrow hide-sm">Time left</span><span class="clock" id="clk" role="timer">--:--</span><span id="time-announcement" class="sr-only" aria-live="polite"></span></div>`:''}</div></div>${timed?'<div class="prog"><i id="prog"></i></div>':''}</div>`}
 function crumb(){
   const m={'rr-intro':' · Briefing','rr-inv':' · Investigation','rr-an':` · Analysis ${S.rr?S.rr.an+1:''}/3`,'rr-rep1':' · Report 1/2','rr-rep2':' · Report 2/2','rr-case':` · Case ${S.rr?S.rr.ci+1:''}/6`,'sw-intro':' · Briefing','sfl-intro':' · Briefing','sfl-project':S.sfl?` · Decision ${Math.min(13,S.sfl.step+2)}/13`:'','sfl-team':S.sfl?` · Day ${S.sfl.day+1}/3`:''};
   if(m[S.screen])return m[S.screen];if(S.screen==='sw-site'&&S.sw)return` · ${S.sw.data.sites[S.sw.i].name} of 3`;return''}
@@ -38,7 +81,13 @@ function render(scroll){
   const game=gameKey()||drillGame;
   document.documentElement.dataset.game=game;
   $('#app').innerHTML=topbar()+`<div class="wrap ${game==='rr'?'rr-scope':game==='sfl'?'sfl-scope':''}">${map[S.screen]()}</div>`;
-  tick();if($('#fcount'))updateCount();if(scroll)window.scrollTo(0,0)}
+  showDesktopExit();tick();if($('#fcount'))updateCount();if(scroll)window.scrollTo(0,0)}
+function showDesktopExit(){
+  if(S.screen!=='home'||!window.pywebview?.api?.quit)return;
+  const actions=$('.top-actions');if(!actions||actions.querySelector('[data-act="exit-app"]'))return;
+  const button=document.createElement('button');button.className='run-control quit-control';button.type='button';button.dataset.act='exit-app';button.textContent='Exit app';actions.append(button);
+}
+window.addEventListener('pywebviewready',showDesktopExit);
 
 /* ---------- home ---------- */
 function homeHTML(){const rec=adaptiveRecommendation();return`<div class="stack home-screen" style="gap:25px">
@@ -152,8 +201,8 @@ function profileFilterHTML(site,f,notice='',drill=false){
   }).join('');
   return`<section class="profile-shell"><div class="profile-lede"><div><span class="eyebrow">Step 01 // microbe profile</span><h3>Choose two characteristics</h3><p>Pick any two numbers or traits. A number uses a 1–10 range; a trait can be included or avoided.</p></div><div class="profile-meter"><b>${chosen} / 2</b><span>selected</span></div></div><div class="profile-layout"><div class="profile-panel"><div class="profile-panel-title"><span class="profile-glyph">01</span><h4>Numeric attributes</h4></div>${numbers}</div><div class="profile-panel"><div class="profile-panel-title"><span class="profile-glyph">02</span><h4>Traits</h4></div><div class="profile-traits">${traitRows}</div></div></div><div class="profile-foot"><div><p class="mono" id="fcount" aria-live="polite"></p>${notice?'<p class="no" role="alert">'+esc(notice)+'</p>':''}<small class="mute">Practice matching: two numbers combine; an included trait can widen a match; an avoided trait removes matches. Exact assessment pool logic is unpublished.</small></div><button class="btn" data-act="${drill?'drill-filter-go':'filter-go'}" ${chosen===2?'':'disabled'}>Show matching microbes →</button></div></section>`;
 }
-function newCur(site){return{step:1,filter:profileBlank(site),notice:'',shown:[],cat:{},ci:0,rounds:0,offer:[],offered:new Set(),picks:[],keep:new Set(),carry:[],sel:[],done:false}}
-function enterSite(i){const sw=S.sw;sw.i=i;sw.cur=newCur(sw.data.sites[i]);sw.cur.started=Date.now();sw.cur.carry=sw.nextCarry.slice();sw.nextCarry=[];sw.cur.step=sw.cur.carry.length?0:1}
+function newCur(site){return{step:1,filter:profileBlank(site),notice:'',shown:[],cat:{},ci:0,rounds:0,offer:[],offerHistory:[],offered:new Set(),picks:[],keep:new Set(),carry:[],sel:[],done:false}}
+function enterSite(i){const sw=S.sw;sw.i=i;sw.cur=newCur(sw.data.sites[i]);sw.cur.started=Date.now();sw.cur.pauseBase=S.clock?.pausedMs||0;sw.cur.carry=sw.nextCarry.slice();sw.nextCarry=[];sw.cur.step=sw.cur.carry.length?0:1}
 function swHTML(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;let body='';
   if(c.step===0){body=`<div class="card stack"><h3>Confirm carry-overs</h3><p class="mute">These microbes were tagged “Next site”. Keep the ones that fit ${s.name}; the rest are dropped.</p><div class="mgrid">${c.carry.map(id=>mbHTML(D.byId[id],s,{pick:true,act:'keep',sel:c.keep.has(id)})).join('')}</div></div><div class="row"><button class="btn" data-act="carry-done">Continue to profile</button><span class="mute">${c.keep.size} kept</span></div>`}
   else if(c.step===1){body=profileFilterHTML(s,c.filter,c.notice)}
@@ -173,7 +222,7 @@ function finalPool(){const c=S.sw.cur,D=S.sw.data,ids=[...c.shown.filter(x=>c.ca
 function makeOffer(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;const R=RNG(D.seed*7+sw.i*31+c.rounds*5+1);
   const seen=new Set([...c.shown,...c.offered]);const un=s.pool.filter(m=>!seen.has(m.id));let cand=R.shuffle(un).slice(0,3);
   const pl=un.filter(m=>s.planted.includes(m.id));if(pl.length&&R.chance(.5)){const p=R.pick(pl);if(!cand.includes(p))cand[0]=p}
-  cand.forEach(m=>c.offered.add(m.id));c.offer=cand}
+  cand.forEach(m=>c.offered.add(m.id));c.offer=cand;c.offerHistory.push(cand.map(m=>m.id))}
 function activeProfile(){
   if(S.screen==='sw-site'&&S.sw?.cur.step===1){const site=S.sw.data.sites[S.sw.i];return{site,filter:S.sw.cur.filter,owner:S.sw.cur}}
   if(S.screen.startsWith('drill-')&&S.drill?.family==='filter'&&S.drill.phase==='filter')return{site:S.drill.site,filter:S.drill.filter,owner:S.drill};
@@ -200,7 +249,7 @@ function updateCount(){
   el.textContent=`${n} of ${site.pool.length} microbes match · ${Math.min(10,n)} will be shown${n===0?' · adjust the profile':''}.`;
 }
 function scoreCurrent(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;const trio=c.sel.map(id=>D.byId[id]);const pool=finalPool();
-  sw.results[sw.i]={site:s,trio,sc:trio.length===3?scoreSite(s,trio):{score:0,avg:[0,0,0],ded:['No treatment was submitted before time ran out']},bestPool:pool.length>=3?bestIn(s,pool):{score:0,trio:null},bestFull:bestIn(s,s.pool),review:{filtered:c.filtered||[],shown:c.shown.slice(),cat:{...c.cat},picks:c.picks.slice(),filter:JSON.parse(JSON.stringify(c.filter)),timeMs:Date.now()-c.started}};
+  sw.results[sw.i]={site:s,trio,sc:trio.length===3?scoreSite(s,trio):{score:0,avg:[0,0,0],ded:['No treatment was submitted before time ran out']},bestPool:pool.length>=3?bestIn(s,pool):{score:0,trio:null},bestFull:bestIn(s,s.pool),review:{filtered:c.filtered||[],shown:c.shown.slice(),cat:{...c.cat},picks:c.picks.slice(),kept:[...c.keep],offerHistory:c.offerHistory.map(x=>x.slice()),filter:JSON.parse(JSON.stringify(c.filter)),timeMs:Math.max(0,Date.now()-c.started-((S.clock?.pausedMs||0)-c.pauseBase))}};
   mark('sw',s.name);c.done=true}
 function finishSW(){const sw=S.sw;if(sw.fin)return;sw.fin=true;for(let i=sw.i;i<3;i++){if(i===sw.i){if(!sw.results[i])scoreCurrent()}else{const s=sw.data.sites[i];sw.results[i]={site:s,trio:[],sc:{score:0,avg:[0,0,0],ded:['Site not reached']},bestPool:{score:0,trio:null},bestFull:bestIn(s,s.pool)}}}
   S.res.sw=sw.results;stopClock();if(S.mode==='full20'||S.mode==='full30'){S.pendingGame=S.mode==='full20'?'sfl20':'sfl30';go('break')}else go('results')}
@@ -230,6 +279,12 @@ ${r.sc.ded.length?`<ul style="margin:0;padding-left:1.1rem">${r.sc.ded.map(d=>`<
 function setBind(k,v){S.rr.ans[k]=v}
 function randomSeed(){return Math.floor(Math.random()*90000)+10000}
 const ACT={
+  pause(){pauseRun()},
+  resume(){resumeRun()},
+  quit(){requestQuit()},
+  'quit-cancel'(){cancelQuit()},
+  'quit-confirm'(){discardRun()},
+  'exit-app'(){const api=window.pywebview?.api;if(api?.quit)Promise.resolve(api.quit()).catch(()=>{const message=$('#run-dialog-title');if(message)message.textContent='Could not close the app';});else discardRun()},
   history(){stopClock();go('history')},
   'history-csv'(){downloadText('solve-lab-history.csv',historyCSV(readHistory()),'text/csv;charset=utf-8')},
   'spaced-csv'(){downloadText('solve-lab-review-plan.csv',spacedCSV(),'text/csv;charset=utf-8')},
@@ -244,7 +299,7 @@ const ACT={
   'profile-toggle'(v){profileToggle(v)},
   'drill-cat'(v){drillCategorise(v)},
   'adaptive-choice'(v){adaptiveChoice(v)},
-  home(){stopClock();go('home')},
+  home(){if(S.session&&!S.session.saved&&S.screen!=='home')discardRun();else{stopClock();go('home')}},
   'new-scenario'(){stopClock();S.seed=randomSeed();S.challengeMode=null;go('home')},
   reseed(){S.seed=randomSeed();S.challengeMode=null;render(false)},
   theme(){const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('solve-lab-theme',next)}catch{}render(false)},
@@ -320,6 +375,12 @@ document.addEventListener('dragstart',e=>{if(e.target.id==='cd'&&e.dataTransfer)
 document.addEventListener('dragover',e=>{if(e.target.matches?.('input.num[data-bind]'))e.preventDefault()});
 document.addEventListener('drop',e=>{if(!e.target.matches?.('input.num[data-bind]'))return;e.preventDefault();const raw=e.dataTransfer?.getData('text/plain');if(raw&&Number.isFinite(Number(raw))){e.target.value=raw;e.target.dispatchEvent(new Event('input',{bubbles:true}));track('calculator-drop',{field:e.target.dataset.bind})}});
 document.addEventListener('keydown',e=>{
+  if($('#run-overlay')){
+    if(e.key==='Escape'){e.preventDefault();S.quitConfirm?cancelQuit():resumeRun()}
+    else if(e.altKey&&e.key.toLowerCase()==='p'&&!S.quitConfirm){e.preventDefault();resumeRun()}
+    return;
+  }
+  if(e.altKey&&e.key.toLowerCase()==='p'&&S.clock){e.preventDefault();pauseRun();return}
   const j=e.target.closest&&e.target.closest('[data-j]');
   if(j&&(e.key==='Enter'||e.key===' ')){e.preventDefault();j.click();return}
   if(e.altKey&&isRR()&&S.rr&&['1','2','3'].includes(e.key)){const tab={1:'journal',2:'exh',3:'calc'}[e.key];if(tab==='exh'&&S.screen==='rr-inv')return;e.preventDefault();track('tab',{value:tab,keyboard:true});S.tab=tab;const side=$('#side');if(side)side.innerHTML=panelHTML();return}

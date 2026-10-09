@@ -71,11 +71,11 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 | Perfect Redrock answer sheet | scores 175 on 500 seeds; empty sheet scores 0 |
 | Sea Wolf sites | planted team scores 100, perfect team found by brute force, unique names, 28-microbe pools on 1,500 sites |
 | Unit tests | 11 pass |
-| Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes plus every standalone game using browser input events; it checks all six spaced skill targets, review scheduling, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at desktop and narrow widths. It checks text contrast across all game palettes; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
+| Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes plus every standalone game using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast across all game palettes; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
 
 ## Interface notes
 
-The DAY/NIGHT control saves your theme preference locally. The Keys menu lists shortcuts. Redrock uses Alt+1/2/3 for Journal, Exhibits and Calculator; drag a calculator result to a numeric answer or focus the answer and use the transfer button. Sea Wolf uses 1/2/3 for categorisation and prospects. SFL decisions use A/B/C. The results screen shows worked review, process metrics, a seed challenge link, CSV and print-to-PDF controls.
+The DAY/NIGHT control saves your theme preference locally. The Keys menu lists shortcuts. Pause freezes the active timer and hides the game; Alt+P or Escape resumes. Quit asks before discarding an unfinished run, while saved history stays. In the Windows build, the quit prompt also offers Close desktop app. Redrock uses Alt+1/2/3 for Journal, Exhibits and Calculator; drag a calculator result to a numeric answer or focus the answer and use the transfer button. Sea Wolf uses 1/2/3 for categorisation and prospects. SFL decisions use A/B/C. The results screen shows worked review, process metrics, a seed challenge link, CSV and print-to-PDF controls. Sea Wolf's review follows its four main phases and compares your treatment with the best available practice example.
 
 Extended sittings use 85 minutes (Redrock + Sea Wolf + 20-minute SFL Project Lead) or 95 minutes (with the 30-minute SFL Team Lab). A break screen pauses between games. The SFL tasks, timing and scoring are practice reconstructions because official details are limited.
 

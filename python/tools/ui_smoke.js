@@ -114,6 +114,12 @@
     ACT['break-next']();seawolf();
     if(mode!=='full'){check(S.screen==='break','break after Sea Wolf');ACT['break-next']();(mode==='full20'?project:team)()}
     check(S.screen==='results','combined results');
+    check(document.querySelectorAll('.sw-review-site').length===3&&document.querySelectorAll('.sw-review-site .phase-review').length===12,'Sea Wolf four-phase review for each site');
+    for(const result of S.res.sw){
+      check(result.review.offerHistory.length===4,'prospect offers retained for review');
+      const v=result.review,ids=v.shown.filter(id=>v.cat[id]==='cur').concat(v.kept,v.picks);
+      check(bestReviewTreatment(result.site,ids).score===result.bestPool.score,'review comparison matches treatment scorer');
+    }
     check(readHistory()[0].mode===mode,'history mode');
     check(readSpaced().percent.reviews>=1,'combined run updates review plan');
     check(resultsCSV().includes('Redrock'),'results CSV');
@@ -182,6 +188,30 @@
     check(historyCSV(readHistory()).includes('spacedFocus'),'history CSV focus');
   }
   function edgeCases(){
+    home();startDrill('math');
+    const answer=document.querySelector('#drill-answer');answer.value='37';
+    const savedCount=readHistory().length;
+    document.querySelector('[data-act="pause"]').click();
+    check(S.clock.paused&&document.querySelector('#app').inert&&document.querySelector('[role="dialog"]')?.textContent.includes('Practice paused'),'pause dialog blocks game');
+    const remaining=S.clock.remaining;S.clock.end=Date.now()-1000;S.clock.pausedAt-=12000;tick();
+    check(S.screen==='drill-math'&&S.drill.i===0&&document.querySelector('#drill-answer').value==='37','pause freezes timer and preserves typed answer');
+    ACT.resume();
+    check(!S.clock.paused&&!document.querySelector('#run-overlay')&&Math.abs(S.clock.end-Date.now()-remaining)<1000,'resume restores remaining time');
+    check(S.session.pausedMs>=12000&&document.querySelector('#drill-answer').value==='37','pause excluded from metrics and form retained');
+    answer.focus();answer.dispatchEvent(new KeyboardEvent('keydown',{key:'p',altKey:true,bubbles:true}));
+    check(S.clock.paused,'Alt+P pauses while an answer is focused');
+    document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+    check(!S.clock.paused&&document.activeElement===answer,'Escape resumes and restores answer focus');
+    noOverflow('timed header with pause and quit');
+    document.querySelector('[data-act="quit"]').click();
+    check(S.clock.paused&&S.quitConfirm&&document.querySelector('[role="dialog"]')?.textContent.includes('Quit this run'),'quit confirmation pauses timer');
+    ACT['quit-cancel']();check(!S.clock.paused&&document.querySelector('#drill-answer').value==='37','cancel quit resumes run');
+    ACT.pause();ACT.quit();ACT['quit-cancel']();
+    check(S.clock.paused&&document.querySelector('[role="dialog"]')?.textContent.includes('Practice paused'),'cancel quit returns to paused state');
+    ACT.resume();ACT.quit();ACT['quit-confirm']();
+    check(S.screen==='home'&&!S.clock&&!S.session&&readHistory().length===savedCount,'quit discards unfinished run without saving');
+    home();ACT.start('rr');ACT.quit();check(S.quitConfirm&&!S.clock,'quit works from untimed briefing');ACT['quit-confirm']();
+    log('pause, resume, quit, form retention and timing');
     home();ACT.start('sw');ACT.swbegin();
     check(document.querySelector('[data-act="filter-go"]').disabled,'profile needs two choices');
     const site=S.sw.data.sites[0],traits=profileTraits(site);

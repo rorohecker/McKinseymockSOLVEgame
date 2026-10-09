@@ -37,6 +37,7 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 12. **SFL** has original 20-minute Project Lead and 30-minute Team Lab reconstructions. Their content and scoring are not official. Reports disagree on whether every 95-minute invite contains a 30-minute SFL or includes survey time. Legacy Ecosystem Building is not implemented.
 13. **Time-up handling** scores what is answered. The real game's behaviour at timeout is not documented.
 14. **AI variation** is replaced by a seed. McKinsey says AI varies parameters per candidate (FACTS F06).
+15. **Sea Wolf phase review** compares prospects by the best treatment available after changing one choice while holding later choices fixed. A midpoint tie-break helps study equal-scoring treatments. Neither is a published McKinsey scoring rule.
 
 ## Keep in mind when interpreting results
 
