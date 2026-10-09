@@ -24,7 +24,21 @@ python3 tools/parity_check.py 1 300       # Python port == JS in the HTML
 python3 tools/ui_smoke.py                 # full browser routes, spaced reviews and timeouts
 ```
 
-No installs needed: open `app/index.html` with its adjacent CSS and assets. Python uses only the standard library.
+For the browser version, no installs are needed: open `app/index.html` with its adjacent CSS and assets. The Python toolkit uses only the standard library.
+
+## Windows desktop executable
+
+Double-click [`dist/SolvePracticeLab.exe`](dist/SolvePracticeLab.exe) to open the game in its own window. It is a single-file, 64-bit Windows build with the HTML, scripts, pixel assets and Python runtime bundled. Python is not needed to play. The desktop window uses Microsoft Edge WebView2 Runtime, which is already present on many Windows 10/11 computers. The app keeps its WebView profile under `%LOCALAPPDATA%\SolvePracticeLab\WebView` so history and spaced reviews survive restarts. It serves only on `127.0.0.1:8765`; close another Solve Practice Lab window before opening a second copy.
+
+To rebuild the executable on Windows:
+
+```powershell
+py -3.14 -m venv .venv
+.venv\Scripts\python -m pip install -r python\tools\requirements-desktop.txt
+.venv\Scripts\python python\tools\build_windows.py
+```
+
+The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLab.sha256`. For a desktop window smoke check, run `dist\SolvePracticeLab.exe --ui-smoke build\ui-smoke-exe.txt` and read the generated report. The executable has a locally generated pixel globe icon and is unsigned.
 
 ## What is in the box
 
