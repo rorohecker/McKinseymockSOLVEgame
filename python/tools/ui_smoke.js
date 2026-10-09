@@ -70,6 +70,13 @@
       if(S.sw.cur.step===0)ACT['carry-done']();
       chooseFullProfile();
       ACT['filter-go']();
+      const nextSite=S.sw.data.sites[siteIndex+1],nextBrief=document.querySelector('.next-site-brief');
+      if(nextSite){
+        check(nextBrief?.textContent.includes(nextSite.name)&&nextBrief.textContent.includes(nextSite.contam),'upcoming Sea Wolf site description shown while categorising');
+        check(nextSite.ranges.every(range=>nextBrief.textContent.includes(range.join('–'))),'upcoming Sea Wolf numeric targets shown');
+        check((!nextSite.desired||nextBrief.textContent.includes(nextSite.desired))&&(!nextSite.undesired||nextBrief.textContent.includes(nextSite.undesired)),'upcoming Sea Wolf trait rules shown');
+      }else check(!nextBrief,'no next-site brief on final site');
+      noOverflow('Sea Wolf categorisation with next-site brief');
       while(S.sw.cur.step===2){
         const id=S.sw.cur.shown[S.sw.cur.ci];
         ACT.cat(S.sw.data.sites[siteIndex].planted.includes(id)?'cur':'rej');

@@ -234,6 +234,15 @@ tr:nth-child(even) td {background:color-mix(in srgb,var(--surface) 65%,transpare
 .req-banner h2 {font-size:clamp(1.8rem,3vw,2.7rem)}
 .req-banner .chip {font-size:.9rem;padding:6px 11px}
 .req-banner .row {gap:20px}
+.site-brief-grid {display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.9fr);gap:13px}
+.site-brief {min-width:0;padding:14px;border:2px solid var(--line);background:var(--surface)}
+.current-site-brief {background:var(--tint)}
+.next-site-brief {border-color:var(--sea);box-shadow:inset 0 4px 0 var(--sea)}
+.site-brief .eyebrow {display:block;margin-bottom:9px;color:var(--ink)}
+.site-brief h3 {font-size:1.35rem;margin:0 0 10px;color:var(--sea)}
+.site-brief .req {gap:6px}
+.site-brief .chip {font-size:.78rem;padding:4px 7px}
+.site-brief p {margin:10px 0 0;font-size:.88rem}
 .profile-shell {border:3px solid var(--line);background:var(--surface);box-shadow:6px 6px 0 var(--shadow);overflow:hidden}
 .profile-lede {display:flex;justify-content:space-between;align-items:center;gap:24px;padding:24px 28px;background:var(--tint);border-bottom:3px solid var(--line)}
 .profile-lede h3 {font-size:clamp(1.8rem,3vw,2.6rem);margin:4px 0 6px}
@@ -341,6 +350,7 @@ tr:nth-child(even) td {background:color-mix(in srgb,var(--surface) 65%,transpare
 @media (max-width:750px) {.team-row {grid-template-columns:1fr}.team-questions {grid-template-columns:1fr}}
 details>summary {cursor:pointer}
 @media (max-width:850px) {
+  .site-brief-grid {grid-template-columns:1fr}
   .modes {grid-template-columns:1fr 1fr}
   .spaced-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
   .mode-full {grid-column:1/-1}
