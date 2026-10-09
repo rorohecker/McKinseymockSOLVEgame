@@ -62,7 +62,7 @@ def main():
                 problems.append(f"seed {seed} {s['name']}: no perfect team found")
             perfect_counts.append(count_perfect(s, s["pool"]))
             for pad, counter in ((1, "tight"), (2, "wide")):
-                f = {"r": [[a - pad, b + pad] for a, b in s["ranges"]], "useD": True, "exU": True}
+                f = {"selected": ["a0", "a1"], "r": [[max(1, a - pad), min(10, b + pad)] for a, b in s["ranges"]], "traitModes": {}}
                 shown = [m["id"] for m in filter_pool(s, s["pool"], f)[:10]]
                 if not all(p in shown for p in s["planted"]):
                     if counter == "tight":

@@ -29,13 +29,13 @@ def make_icon(path: Path) -> None:
             if distance > 54:
                 rgba = (0, 0, 0, 0)
             elif distance > 43:
-                rgba = (9, 26, 41, 255)
+                rgba = (36, 62, 53, 255)
             elif (3 <= a <= 6 and 3 <= b <= 5) or (8 <= a <= 12 and 7 <= b <= 10) or (4 <= a <= 7 and 11 <= b <= 12):
                 rgba = (182, 227, 130, 255)
             elif (a, b) in {(10, 3), (11, 3), (11, 4), (12, 4)}:
-                rgba = (255, 154, 119, 255)
+                rgba = (238, 173, 126, 255)
             else:
-                rgba = (101, 220, 233, 255)
+                rgba = (98, 145, 113, 255)
             pixels.extend(rgba)
 
     def chunk(kind: bytes, data: bytes) -> bytes:

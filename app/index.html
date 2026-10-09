@@ -266,11 +266,37 @@ function scoreSite(site,trio){
 function bestIn(site,pool){let best={score:-1,trio:null};const n=pool.length;
   for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)for(let k=j+1;k<n;k++){const t=[pool[i],pool[j],pool[k]];const s=scoreSite(site,t).score;if(s>best.score)best={score:s,trio:t};if(s===100)return best}
   return best}
+function profileTraits(site){
+  const chosen=[site.desired,site.undesired].filter(Boolean);
+  for(const trait of TRAITS)if(!chosen.includes(trait)&&site.pool.some(m=>m.trait===trait))chosen.push(trait);
+  return chosen.slice(0,4);
+}
+function profileBlank(site){
+  const traitModes={};for(const trait of profileTraits(site))traitModes[trait]=trait===site.undesired?'no':'yes';
+  return{selected:[],r:site.ranges.map(x=>x.slice()),traitModes};
+}
+function profileError(site,f){
+  const allowed=new Set(['a0','a1','a2',...profileTraits(site).map(x=>'t:'+x)]),selected=f?.selected||[];
+  if(selected.length!==2||new Set(selected).size!==2||selected.some(x=>!allowed.has(x)))return'Choose exactly two characteristics.';
+  for(const key of selected){
+    if(key[0]==='a'){
+      const [lo,hi]=f.r?.[Number(key[1])]||[];
+      if(!Number.isInteger(lo)||!Number.isInteger(hi)||lo<1||hi>10||lo>hi)return'Each selected number needs a valid 1–10 range.';
+    }else if(!['yes','no'].includes(f.traitModes?.[key.slice(2)]))return'Choose Include or Avoid for each selected trait.';
+  }
+  return'';
+}
 function filterPool(site,pool,f){
-  return pool.filter(m=>{const hasR=f.r.some(x=>x[0]!==null||x[1]!==null);
-    const attrOK=!hasR||f.r.every((x,i)=>(x[0]===null||m.a[i]>=x[0])&&(x[1]===null||m.a[i]<=x[1]));
-    const pass=attrOK||(f.useD&&site.desired&&m.trait===site.desired);
-    return pass&&!(f.exU&&site.undesired&&m.trait===site.undesired)})}
+  if(profileError(site,f))return[];
+  const numbers=f.selected.filter(x=>x[0]==='a').map(x=>Number(x[1]));
+  const wanted=f.selected.filter(x=>x.startsWith('t:')&&f.traitModes[x.slice(2)]==='yes').map(x=>x.slice(2));
+  const avoided=f.selected.filter(x=>x.startsWith('t:')&&f.traitModes[x.slice(2)]==='no').map(x=>x.slice(2));
+  return pool.filter(m=>{
+    const numeric=numbers.every(i=>m.a[i]>=f.r[i][0]&&m.a[i]<=f.r[i][1]);
+    const match=numbers.length&&wanted.length?numeric||wanted.includes(m.trait):numbers.length?numeric:wanted.length?wanted.includes(m.trait):true;
+    return match&&!avoided.includes(m.trait);
+  });
+}
 </script>
 
 <script src="features.js"></script>

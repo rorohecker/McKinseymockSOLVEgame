@@ -76,13 +76,20 @@ class SeaWolf(unittest.TestCase):
         floor = [mk([1, 1, 1], "Phosphorous Removal")] * 3
         self.assertEqual(score_site(site, floor)["score"], 0)
 
-    def test_filter_or_rule(self):
+    def test_two_characteristic_profiles(self):
         site = {"ranges": [[5, 7]] * 3, "desired": "A", "undesired": "B"}
         pool = [{"a": [6, 6, 6], "trait": "C"}, {"a": [1, 1, 1], "trait": "A"},
                 {"a": [6, 6, 6], "trait": "B"}, {"a": [1, 1, 1], "trait": "C"}]
-        f = {"r": [[5, 7]] * 3, "useD": True, "exU": True}
-        got = filter_pool(site, pool, f)
-        self.assertEqual([m["trait"] for m in got], ["C", "A"])
+        f = {"selected": ["a0", "a1"], "r": [[5, 7]] * 3, "traitModes": {"A": "yes", "B": "no", "C": "yes"}}
+        self.assertEqual([m["trait"] for m in filter_pool(site, pool, f)], ["C", "B"])
+        f["selected"] = ["a0", "t:A"]
+        self.assertEqual([m["trait"] for m in filter_pool(site, pool, f)], ["C", "A", "B"])
+        f["selected"] = ["a0", "t:B"]
+        self.assertEqual([m["trait"] for m in filter_pool(site, pool, f)], ["C"])
+        f["selected"] = ["t:A", "t:B"]
+        self.assertEqual([m["trait"] for m in filter_pool(site, pool, f)], ["A"])
+        f["selected"] = ["a0"]
+        self.assertEqual(filter_pool(site, pool, f), [])
 
 
 @unittest.skipUnless(shutil.which("node") or find_chrome(), "Node.js or Chrome not installed")

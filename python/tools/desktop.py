@@ -96,10 +96,10 @@ def main() -> int:
         window = webview.create_window(
             "Solve Practice Lab",
             f"http://{HOST}:{PORT}/index.html",
-            width=1220,
-            height=820,
+            width=1360,
+            height=860,
             min_size=(360, 560),
-            background_color="#091a29",
+            background_color="#1b2724",
             text_select=True,
         )
         result = {"status": "Desktop window did not finish loading"}

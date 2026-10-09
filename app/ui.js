@@ -38,7 +38,7 @@ function render(scroll){
   const game=gameKey()||drillGame;
   document.documentElement.dataset.game=game;
   $('#app').innerHTML=topbar()+`<div class="wrap ${game==='rr'?'rr-scope':game==='sfl'?'sfl-scope':''}">${map[S.screen]()}</div>`;
-  tick();if(scroll)window.scrollTo(0,0)}
+  tick();if($('#fcount'))updateCount();if(scroll)window.scrollTo(0,0)}
 
 /* ---------- home ---------- */
 function homeHTML(){const rec=adaptiveRecommendation();return`<div class="stack home-screen" style="gap:25px">
@@ -61,7 +61,7 @@ ${S.challengeMode?`<div class="card row"><span class="eyebrow">Shared seed #${S.
 <div class="row"><button class="btn ghost" data-act="history">Practice history</button></div><div class="card stack"><h3>Difficulty calibration</h3>${calibrationHTML()}</div>
 <div class="card flat stack field-note" style="gap:8px;max-width:900px"><h3>Field guide // practice model</h3>
 <p class="mute">Redrock: 6 analysis answers (10 points each, ±0.5 tolerance), a 5-blank written review, a chart choice with data, and six standalone cases. 175 points in total. Journal, on-screen calculator and exhibits are included.</p>
-<p class="mute">Sea Wolf: each site starts at 100 and loses 20 for every average outside its range, 20 for a missing desired trait, and 20 per microbe with the undesired trait. Carry-overs, a filter with an OR rule on the desired trait, and 4 rounds of pick-one-of-three prospects are all in. 300 points in total.</p>
+<p class="mute">Sea Wolf: each site starts at 100 and loses 20 for every average outside its range, 20 for a missing desired trait, and 20 per microbe with the undesired trait. Each profile asks for two characteristics, followed by categorising, four prospect rounds, and treatment. 300 practice points in total.</p>
 <p class="mute">McKinsey does not publish scoring, so point values come from candidate reports. This is not affiliated with McKinsey, and tools like it are not allowed during the real assessment.</p></div></div>`}
 
 /* ---------- Redrock ---------- */
@@ -131,7 +131,7 @@ function swIntroHTML(){return`<div class="stack mission-intro" style="max-width:
 <p>You command a research vessel. Three ocean sites are contaminated. For each site you build a treatment of three microbes whose combined profile fits the site brief. One 30-minute clock covers all three sites.</p>
 <div class="card stack" style="gap:8px"><h3>Per site, five steps</h3>
 <p><b>Carry-overs.</b> Microbes you tagged “Next site” earlier return for a keep-or-reject check.</p>
-<p><b>Filters.</b> Set attribute ranges and trait rules. A microbe passes if it fits the ranges <i>or</i> has the desired trait (when included), unless it has the undesired trait (when excluded). The first 10 matches are shown.</p>
+<p><b>Profile.</b> Choose exactly two characteristics: two numbers, two traits, or one of each. Set a 1–10 range for a number; mark a trait Include or Avoid. This practice model shows the first ten matches.</p>
 <p><b>Categorise.</b> Send each one to this site, the next site, or reject it.</p>
 <p><b>Prospects.</b> Four rounds of three microbes. Pick one each time.</p>
 <p><b>Treatment.</b> Choose the final three. Their <i>averages</i> must land in the site's ranges.</p></div>
@@ -140,18 +140,23 @@ function swIntroHTML(){return`<div class="stack mission-intro" style="max-width:
 function mbHTML(m,site,o={}){const t=m.trait===site.desired?'good':m.trait===site.undesired?'bad':'';
   const tag=o.pick?'button':'div';
   return`<${tag} class="mb ${o.pick?'pick':''} ${o.sel?'sel':''}" ${o.pick?`data-act="${o.act}" data-v="${m.id}" aria-pressed="${!!o.sel}"`:''}><span class="mb-head"><span class="microbe-sprite ${t}" aria-hidden="true"></span><span class="nm">${esc(m.name)}</span></span><span class="trait ${t}">${esc(m.trait)}${t==='good'?' · desired':t==='bad'?' · undesired':''}</span>${ATTRS.map((a,i)=>`<span class="attr"><span>${a.slice(0,5)}.</span><span class="bar2"><i style="width:${m.a[i]*10}%"></i></span><span class="mono">${m.a[i]}</span></span>`).join('')}</${tag}>`}
-function reqHTML(s){return`<div class="card stack req-banner" style="gap:10px"><div class="row" style="justify-content:space-between"><div><span class="eyebrow">${s.name}</span><h2>${esc(s.contam)}</h2></div><div class="steps">${['Carry-overs','Filters','Categorise','Prospects','Treatment'].map((x,i)=>{const st=S.sw.cur.step;return`<span class="${i===st?'on':i<st?'done':''}">${x}</span>`}).join('')}</div></div>
-<div class="req">${s.ranges.map((r,i)=>`<span class="chip" title="The average of the three selected microbes must fall within this range.">${ATTRS[i]} avg <b>${r[0]}–${r[1]}</b></span>`).join('')}${s.desired?`<span class="chip good" title="At least one selected microbe needs this trait.">Desired: <b>${esc(s.desired)}</b></span>`:''}${s.undesired?`<span class="chip bad" title="Every selected microbe with this trait loses 20 practice points.">Avoid: <b>${esc(s.undesired)}</b></span>`:''}</div><details class="rule-help"><summary>Explain these rules</summary><p>For each attribute, average the three selected values and compare it with the displayed interval. Include at least one desired trait if listed. Avoid the forbidden trait on every selected microbe. Filtering uses an OR for the desired trait and an exclusion for the forbidden trait.</p></details></div>`}
-function newCur(){return{step:1,filter:{r:[[null,null],[null,null],[null,null]],useD:false,exU:false},shown:[],cat:{},ci:0,rounds:0,offer:[],offered:new Set(),picks:[],keep:new Set(),carry:[],sel:[],done:false}}
-function enterSite(i){const sw=S.sw;sw.i=i;sw.cur=newCur();sw.cur.started=Date.now();sw.cur.carry=sw.nextCarry.slice();sw.nextCarry=[];sw.cur.step=sw.cur.carry.length?0:1}
+function reqHTML(s){return`<div class="card stack req-banner" style="gap:10px"><div class="row" style="justify-content:space-between"><div><span class="eyebrow">${s.name}</span><h2>${esc(s.contam)}</h2></div><div class="steps">${['Carry-overs','Profile','Categorise','Prospects','Treatment'].map((x,i)=>{const st=S.sw.cur.step;return`<span class="${i===st?'on':i<st?'done':''}">${x}</span>`}).join('')}</div></div>
+<div class="req">${s.ranges.map((r,i)=>`<span class="chip" title="The average of the three selected microbes must fall within this range.">${ATTRS[i]} avg <b>${r[0]}–${r[1]}</b></span>`).join('')}${s.desired?`<span class="chip good" title="At least one selected microbe needs this trait.">Desired: <b>${esc(s.desired)}</b></span>`:''}${s.undesired?`<span class="chip bad" title="Every selected microbe with this trait loses 20 practice points.">Avoid: <b>${esc(s.undesired)}</b></span>`:''}</div><details class="rule-help"><summary>Explain these rules</summary><p>For each attribute, average the three selected values and compare it with the displayed interval. Include at least one desired trait if listed. Avoid the forbidden trait on every selected microbe. The profile step lets you choose two characteristics to inspect the pool; its matching rule is a practice model.</p></details></div>`}
+function profileFilterHTML(site,f,notice='',drill=false){
+  const traits=profileTraits(site),chosen=f.selected.length;
+  const numbers=ATTRS.map((name,i)=>{const key='a'+i,on=f.selected.includes(key),range=f.r[i];
+    return`<div class="profile-option ${on?'selected':''}"><button class="profile-pick" type="button" data-act="profile-toggle" data-v="${key}" aria-pressed="${on}" aria-label="${on?'Remove':'Choose'} ${esc(name)}"><span class="profile-check">${on?'✓':'+'}</span><span><b>${esc(name)}</b><small>Site target ${site.ranges[i].join('–')}</small></span></button><div class="profile-controls"><label>From <input type="number" min="1" max="10" step="1" inputmode="numeric" data-profile-range="${i}:min" value="${range[0]??''}" ${on?'':'disabled'}></label><label>To <input type="number" min="1" max="10" step="1" inputmode="numeric" data-profile-range="${i}:max" value="${range[1]??''}" ${on?'':'disabled'}></label></div></div>`;
+  }).join('');
+  const traitRows=traits.map(trait=>{const key='t:'+trait,on=f.selected.includes(key),mode=f.traitModes[trait],cue=trait===site.desired?'Desired here':trait===site.undesired?'Avoid here':'Other trait';
+    return`<div class="profile-option ${on?'selected':''}"><button class="profile-pick" type="button" data-act="profile-toggle" data-v="${esc(key)}" aria-pressed="${on}" aria-label="${on?'Remove':'Choose'} ${esc(trait)}"><span class="profile-check">${on?'✓':'+'}</span><span><b>${esc(trait)}</b><small>${cue}</small></span></button><div class="profile-controls"><label>Preference <select data-profile-trait="${esc(trait)}" aria-label="${esc(trait)} preference" ${on?'':'disabled'}><option value="yes" ${mode==='yes'?'selected':''}>Include</option><option value="no" ${mode==='no'?'selected':''}>Avoid</option></select></label></div></div>`;
+  }).join('');
+  return`<section class="profile-shell"><div class="profile-lede"><div><span class="eyebrow">Step 01 // microbe profile</span><h3>Choose two characteristics</h3><p>Pick any two numbers or traits. A number uses a 1–10 range; a trait can be included or avoided.</p></div><div class="profile-meter"><b>${chosen} / 2</b><span>selected</span></div></div><div class="profile-layout"><div class="profile-panel"><div class="profile-panel-title"><span class="profile-glyph">01</span><h4>Numeric attributes</h4></div>${numbers}</div><div class="profile-panel"><div class="profile-panel-title"><span class="profile-glyph">02</span><h4>Traits</h4></div><div class="profile-traits">${traitRows}</div></div></div><div class="profile-foot"><div><p class="mono" id="fcount" aria-live="polite"></p>${notice?'<p class="no" role="alert">'+esc(notice)+'</p>':''}<small class="mute">Practice matching: two numbers combine; an included trait can widen a match; an avoided trait removes matches. Exact assessment pool logic is unpublished.</small></div><button class="btn" data-act="${drill?'drill-filter-go':'filter-go'}" ${chosen===2?'':'disabled'}>Show matching microbes →</button></div></section>`;
+}
+function newCur(site){return{step:1,filter:profileBlank(site),notice:'',shown:[],cat:{},ci:0,rounds:0,offer:[],offered:new Set(),picks:[],keep:new Set(),carry:[],sel:[],done:false}}
+function enterSite(i){const sw=S.sw;sw.i=i;sw.cur=newCur(sw.data.sites[i]);sw.cur.started=Date.now();sw.cur.carry=sw.nextCarry.slice();sw.nextCarry=[];sw.cur.step=sw.cur.carry.length?0:1}
 function swHTML(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;let body='';
-  if(c.step===0){body=`<div class="card stack"><h3>Confirm carry-overs</h3><p class="mute">These microbes were tagged “Next site”. Keep the ones that fit ${s.name}; the rest are dropped.</p><div class="mgrid">${c.carry.map(id=>mbHTML(D.byId[id],s,{pick:true,act:'keep',sel:c.keep.has(id)})).join('')}</div></div><div class="row"><button class="btn" data-act="carry-done">Continue to filters</button><span class="mute">${c.keep.size} kept</span></div>`}
-  else if(c.step===1){const f=c.filter;body=`<div class="card stack"><h3>Set filters</h3><p class="mute">Leave a range blank to ignore it. Tight ranges can hide microbes that only work as part of a team average.</p>
-${ATTRS.map((a,i)=>`<div class="row"><span style="width:7.5em">${a}</span><input class="num sm" inputmode="numeric" id="fmin${i}" data-f="min${i}" placeholder="min" value="${f.r[i][0]??''}" aria-label="${a} minimum"><span>to</span><input class="num sm" inputmode="numeric" id="fmax${i}" data-f="max${i}" placeholder="max" value="${f.r[i][1]??''}" aria-label="${a} maximum"></div>`).join('')}
-${s.desired?`<label class="row"><input type="checkbox" data-f="useD" ${f.useD?'checked':''}> Also let through microbes with <b>${esc(s.desired)}</b></label>`:''}
-${s.undesired?`<label class="row"><input type="checkbox" data-f="exU" ${f.exU?'checked':''}> Exclude microbes with <b>${esc(s.undesired)}</b></label>`:''}
-${S.learning?`<p class="pace">Hint: include the desired trait with the OR rule to avoid filtering out helpful microbes. ${s.undesired?'Exclude the undesired trait before applying the filter.':''}</p>`:''}
-<p class="mono" id="fcount"></p></div><div class="row"><button class="btn" data-act="filter-go">Apply filters</button></div>`}
+  if(c.step===0){body=`<div class="card stack"><h3>Confirm carry-overs</h3><p class="mute">These microbes were tagged “Next site”. Keep the ones that fit ${s.name}; the rest are dropped.</p><div class="mgrid">${c.carry.map(id=>mbHTML(D.byId[id],s,{pick:true,act:'keep',sel:c.keep.has(id)})).join('')}</div></div><div class="row"><button class="btn" data-act="carry-done">Continue to profile</button><span class="mute">${c.keep.size} kept</span></div>`}
+  else if(c.step===1){body=profileFilterHTML(s,c.filter,c.notice)}
   else if(c.step===2){const id=c.shown[c.ci],m=D.byId[id],n=k=>c.shown.filter(x=>c.cat[x]===k).length;
     body=`<div class="card stack"><div class="row" style="justify-content:space-between"><h3>Categorise · ${c.ci+1} of ${c.shown.length}</h3><span class="mono mute">This site ${n('cur')} · Next ${n('next')} · Rejected ${n('rej')}</span></div><div class="big-mb" style="width:100%">${mbHTML(m,s)}</div>
 <div class="row" style="justify-content:center"><button class="btn" data-act="cat" data-v="cur">This site <span class="hide-sm">(1)</span></button>${sw.i<2?'<button class="btn ghost" data-act="cat" data-v="next">Next site <span class="hide-sm">(2)</span></button>':''}<button class="btn ghost" data-act="cat" data-v="rej">Reject <span class="hide-sm">(3)</span></button></div></div>`}
@@ -169,7 +174,31 @@ function makeOffer(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;const R=RN
   const seen=new Set([...c.shown,...c.offered]);const un=s.pool.filter(m=>!seen.has(m.id));let cand=R.shuffle(un).slice(0,3);
   const pl=un.filter(m=>s.planted.includes(m.id));if(pl.length&&R.chance(.5)){const p=R.pick(pl);if(!cand.includes(p))cand[0]=p}
   cand.forEach(m=>c.offered.add(m.id));c.offer=cand}
-function updateCount(){const sw=S.sw,s=sw.data.sites[sw.i],c=sw.cur,el=$('#fcount');if(!el)return;const n=filterPool(s,s.pool,c.filter).length;el.textContent=`${n} of ${s.pool.length} microbes match. The first ${Math.min(10,n)} will be shown.`}
+function activeProfile(){
+  if(S.screen==='sw-site'&&S.sw?.cur.step===1){const site=S.sw.data.sites[S.sw.i];return{site,filter:S.sw.cur.filter,owner:S.sw.cur}}
+  if(S.screen.startsWith('drill-')&&S.drill?.family==='filter'&&S.drill.phase==='filter')return{site:S.drill.site,filter:S.drill.filter,owner:S.drill};
+  return null;
+}
+function profileToggle(key){
+  const current=activeProfile();if(!current)return;
+  const {site,filter,owner}=current,allowed=['a0','a1','a2',...profileTraits(site).map(x=>'t:'+x)];
+  if(!allowed.includes(key))return;
+  const at=filter.selected.indexOf(key);
+  if(at>=0)filter.selected.splice(at,1);
+  else if(filter.selected.length<2)filter.selected.push(key);
+  else owner.notice='Remove one choice before adding another.';
+  if(at>=0||filter.selected.includes(key))owner.notice='';
+  render(false);
+  [...document.querySelectorAll('[data-act="profile-toggle"]')].find(button=>button.dataset.v===key)?.focus({preventScroll:true});
+}
+function updateCount(){
+  const current=activeProfile(),el=$('#fcount');if(!el||!current)return;
+  const {site,filter}=current,problem=profileError(site,filter);
+  if(filter.selected.length<2){el.textContent='Choose '+(2-filter.selected.length)+' more characteristic'+(filter.selected.length===1?'':'s')+'.';return}
+  if(problem){el.textContent=problem;return}
+  const n=filterPool(site,site.pool,filter).length;
+  el.textContent=`${n} of ${site.pool.length} microbes match · ${Math.min(10,n)} will be shown${n===0?' · adjust the profile':''}.`;
+}
 function scoreCurrent(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;const trio=c.sel.map(id=>D.byId[id]);const pool=finalPool();
   sw.results[sw.i]={site:s,trio,sc:trio.length===3?scoreSite(s,trio):{score:0,avg:[0,0,0],ded:['No treatment was submitted before time ran out']},bestPool:pool.length>=3?bestIn(s,pool):{score:0,trio:null},bestFull:bestIn(s,s.pool),review:{filtered:c.filtered||[],shown:c.shown.slice(),cat:{...c.cat},picks:c.picks.slice(),filter:JSON.parse(JSON.stringify(c.filter)),timeMs:Date.now()-c.started}};
   mark('sw',s.name);c.done=true}
@@ -212,6 +241,7 @@ const ACT={
   'drill-answer'(){drillAnswer()},
   'drill-skip'(){drillAnswer(true)},
   'drill-filter-go'(){applyDrillFilter()},
+  'profile-toggle'(v){profileToggle(v)},
   'drill-cat'(v){drillCategorise(v)},
   'adaptive-choice'(v){adaptiveChoice(v)},
   home(){stopClock();go('home')},
@@ -247,7 +277,9 @@ const ACT={
   swbegin(){S.screen='sw-site';startClock(30,()=>{if(S.sw&&!S.sw.fin){finishSW()}});enterSite(0);render(true)},
   keep(v){const k=S.sw.cur.keep;k.has(v)?k.delete(v):k.add(v);render(false)},
   'carry-done'(){S.sw.cur.step=1;render(true)},
-  'filter-go'(){const sw=S.sw,s=sw.data.sites[sw.i],c=sw.cur;c.filtered=filterPool(s,s.pool,c.filter).map(m=>m.id);c.shown=c.filtered.slice(0,10);c.ci=0;c.cat={};
+  'filter-go'(){const sw=S.sw,s=sw.data.sites[sw.i],c=sw.cur,problem=profileError(s,c.filter);if(problem){c.notice=problem;render(false);return}
+    c.filtered=filterPool(s,s.pool,c.filter).map(m=>m.id);if(!c.filtered.length){c.notice='No microbes match. Widen a range or change a trait preference.';render(false);return}
+    c.notice='';c.shown=c.filtered.slice(0,10);c.ci=0;c.cat={};
     if(c.shown.length){c.step=2}else{c.step=3;makeOffer()}render(true)},
   cat(v){const sw=S.sw,c=sw.cur,id=c.shown[c.ci];c.cat[id]=v;if(v==='next')sw.nextCarry.push(id);c.ci++;
     if(c.ci>=c.shown.length){c.step=3;c.rounds=0;makeOffer();if(!c.offer.length){c.step=4}}render(false)},
@@ -272,14 +304,15 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-act]');if(!t||t.disabled)return;track(t.dataset.act==='tab'?'tab':'action',{name:t.dataset.act,value:t.dataset.v||'',site:S.sw?.i,day:S.sfl?.day});const a=ACT[t.dataset.act];if(a)a(t.dataset.v,t,e)});
 function onInput(e){const t=e.target;
   if(t.dataset.jname!==undefined&&S.rr){const entry=S.rr.journal[Number(t.dataset.jname)];if(entry)entry.k=t.value;return}
-  if(t.dataset.drillFilter&&S.drill){const f=S.drill.filter,k=t.dataset.drillFilter;if(k==='useD')f.useD=t.checked;else if(k==='exU')f.exU=t.checked;else{const i=+k.slice(3),v=t.value.trim()===''?null:Number(t.value);f.r[i][k.startsWith('min')?0:1]=Number.isFinite(v)?v:null}track('filter',{field:k});return}
+  if(t.dataset.profileRange!==undefined||t.dataset.profileTrait!==undefined){const current=activeProfile();if(!current)return;
+    if(t.dataset.profileRange!==undefined){const [index,end]=t.dataset.profileRange.split(':'),v=t.value.trim()===''?null:Number(t.value);current.filter.r[Number(index)][end==='min'?0:1]=Number.isFinite(v)?v:null}
+    else current.filter.traitModes[t.dataset.profileTrait]=t.value;
+    current.owner.notice='';track('filter',{field:t.dataset.profileRange||t.dataset.profileTrait});updateCount();return}
   if(t.dataset.pref){if(t.dataset.pref==='difficulty')S.difficulty=t.value;else S.learning=t.checked;try{localStorage.setItem('solve-lab-settings',JSON.stringify({difficulty:S.difficulty,learning:S.learning}))}catch{}}
   else if(t.dataset.teamAssign&&S.sfl){S.sfl.records[S.sfl.day].assign[t.dataset.teamAssign]=t.value}
   else if(t.dataset.teamReason&&S.sfl){S.sfl.records[S.sfl.day].reasons[t.dataset.teamReason]=t.value}
   else if(t.dataset.teamReflect&&S.sfl){S.sfl.records[S.sfl.day].reflect[t.dataset.teamReflect]=t.value}
   else if(t.dataset.bind&&S.rr){if(t.type==='radio'&&!t.checked)return;setBind(t.dataset.bind,t.value);track('answer',{field:t.dataset.bind})}
-  else if(t.dataset.f&&S.sw){const f=S.sw.cur.filter,k=t.dataset.f;track('filter',{field:k});
-    if(k==='useD')f.useD=t.checked;else if(k==='exU')f.exU=t.checked;else{const i=+k.slice(3),v=t.value.trim()===''?null:parseFloat(t.value);f.r[i][k.startsWith('min')?0:1]=isNaN(v)?null:v}updateCount()}
   else if(t.dataset.notes!==undefined&&S.rr){S.rr.notes=t.value}}
 document.addEventListener('input',onInput);document.addEventListener('change',onInput);
 document.addEventListener('focusin',e=>{if(e.target.matches&&e.target.matches('input.num')&&e.target.dataset.bind)S.lastInput=e.target;if(S.screen==='sw-site'&&S.sw&&S.sw.cur.step===1)updateCount()});

@@ -20,13 +20,15 @@ Shortcut taught by several guides: work with sums. If the average range is 4.0-6
 
 | Step | What the player does |
 |---|---|
-| Profile / filters | Set filters or choose which site characteristics to match. Some sources say this step is not scored and does not change the starting pool. |
+| Profile / filters | Choose exactly two characteristics: two numeric attributes, two traits, or one of each. Several guides describe 3 attribute and 4 trait choices. Whether this changes later microbes is disputed. |
 | Categorise | Sort microbes as this site, a later site, or reject. About 10 microbes shown. |
 | Prospect | Four rounds of three microbes, pick one each round. Reported to add 4 to the pool. |
 | Treatment | Choose the final three. |
 | Confirm carry-overs (SolvePrep only) | Microbes you saved for "next site" return for a keep/reject check. |
 
 The "later site" tag makes the games linked: a microbe that is poor for site 1 may be ideal for site 2.
+
+The simulator shows seven profile choices and applies the selected pair to its generated pool. Two numeric ranges combine; an included trait widens a numeric match, while an avoided trait excludes it. This matching rule is a practice design. [MConsultingPrep](https://mconsultingprep.com/mckinsey-solve-seawolf-deep-dive) describes the two-choice combinations and says the step does not affect later phases. [CaseBasix](https://www.casebasix.com/pages/mckinsey-problem-solving-game-solve-full-guide) says the filters generate the initial pool, while [SolveGamesGuide](https://solvegamesguide.com/mckinsey-sea-wolf) says its practice model keeps the later microbes unchanged. No public McKinsey rule resolves the conflict.
 
 ## Scoring as reported
 

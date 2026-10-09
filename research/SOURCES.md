@@ -43,6 +43,11 @@ Fetched 2026-10-08 unless noted. "Type" tells you how much weight to give each.
 | V27 | https://www.casebasix.com/solve-copy | Product page (search snippet) | 16 practice simulations, free starter |
 | V28 | https://strategycase.com/product/mckinsey-digital-assessment-guide-2/ | Product page (search snippet) | Suite description, 6 months access |
 | V29 | https://CaseInterview.com/mck-game | Product page (search snippet) | "McK Game" practice mini-games, not a clone |
+| V30 | https://mconsultingprep.com/mckinsey-solve-seawolf-deep-dive | Coaching guide | Explicit two-characteristic combinations; says profile does not affect later steps |
+| V31 | https://www.casebasix.com/pages/mckinsey-problem-solving-game-solve-full-guide | Coaching guide | Exactly two characteristics; says they generate the initial pool |
+| V32 | https://strategycase.com/mckinsey-sea-wolf/ | Coaching guide | Exactly two characteristic choices; describes a seven-choice panel |
+| V33 | https://www.hackingthecaseinterview.com/pages/mckinsey-sea-wolf-game | Coaching guide | Three numeric attributes plus four traits; two selected |
+| V34 | https://solvegamesguide.com/mckinsey-sea-wolf | Vendor guide | Profile choice does not change later microbes in its own practice model |
 
 ## Forums (candidate and coach posts)
 

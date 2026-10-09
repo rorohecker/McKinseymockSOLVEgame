@@ -59,6 +59,7 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 - **Not published by McKinsey:** the scoring model, pass mark, weighting between games and which games a given invite length contains.
 - **Reported lineup (2026):** Redrock Study (35 min) then Sea Wolf (30 min) on a 65-minute invite; plus Sustainable Futures Lab on 85 minutes; about 95 minutes since late Aug 2026 with a 30-minute SFL (thin evidence). Ecosystem Building is retired from the default mix (date disputed).
 - **Sea Wolf rules (corroborated):** per site choose 3 microbes; their **averages** must sit inside each attribute range, with at least one desired-trait microbe and none with the forbidden trait. Vendor models start at 100 and take 20 per miss.
+- **Sea Wolf profile:** choose exactly two characteristics from three numbers and four traits. Reports agree on the two-choice format but conflict on whether this changes later microbes; the simulator labels its pool matching as a practice model.
 - **Sources disagree** on Sea Wolf attribute names, number of steps, how the forbidden trait is penalised, Redrock report size and raw-score deciles. See `research/DISCREPANCIES.md`.
 - **Practice data (vendor, self-selected users):** median first-to-best gains of +20.3 points on Redrock, +10.4 on SFL and +6.7 on Sea Wolf, about half of which looks like noise after controls.
 
@@ -70,7 +71,7 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 | Perfect Redrock answer sheet | scores 175 on 500 seeds; empty sheet scores 0 |
 | Sea Wolf sites | planted team scores 100, perfect team found by brute force, unique names, 28-microbe pools on 1,500 sites |
 | Unit tests | 11 pass |
-| Interface | `python tools/ui_smoke.py` completes the 65, 85 and 95-minute routes plus every standalone game using browser input events; it checks all six spaced skill targets, review scheduling, timeouts and keyboard shortcuts at desktop and narrow widths. It checks text contrast across all game palettes; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
+| Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes plus every standalone game using browser input events; it checks all six spaced skill targets, review scheduling, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at desktop and narrow widths. It checks text contrast across all game palettes; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
 
 ## Interface notes
 
@@ -82,7 +83,7 @@ Short sessions cover mental math, six Redrock cases at two minutes each, and Sea
 
 Spaced practice uses the same five-minute skill drills on a local calendar schedule. A strong review moves a skill through 1, 3, 7, 14 and 30-day intervals; missed work returns the next day. Completed runs feed the schedule, including existing saved history when the plan is first created. The home and history screens show due skills, and the plan exports to CSV. This schedule is a study aid, not a McKinsey scoring rule.
 
-Each game has its own dark and light palette: earthy Redrock, deep-blue Sea Wolf, and forest-green Sustainable Futures. The body text uses a plain sans-serif face while headings and controls carry the pixel-art treatment. The mobile layout keeps the game controls usable at narrow widths.
+Each game has its own dark and light palette: earthy Redrock, kelp and warm coral Sea Wolf, and forest-green Sustainable Futures. The home screen uses a hand-drawn pixel shoreline. The body text uses a plain sans-serif face while headings and controls carry the pixel-art treatment. The wider desktop layout and mobile layout keep the game controls readable.
 
 ## Further features
 

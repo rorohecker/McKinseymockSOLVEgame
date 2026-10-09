@@ -16,7 +16,7 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 | Sea Wolf team size and attribute scale | 3 microbes, values 1-10 | CORROBORATED |
 | Attribute names | Permeability, Mobility, Energy | One vendor; names UNVERIFIED (D1) |
 | Prospect rounds | 4 rounds, pick 1 of 3 | REPORTED by several vendors |
-| Pool shown for categorising | first 10 filter matches | REPORTED (D5) |
+| Pool shown for categorising | first 10 simulator filter matches | Ten microbes shown is reported; deriving them from the profile is a practice choice (D4, D5) |
 | Microbe pool size | 28 per site | **This project's design choice** so filters have something to filter |
 | Range width | 2 | Matches worked examples (8-10, 6-8, 2-4) |
 | Pacing hints | 2 min per case, 10 min per site | Coaching guidance, not official |
@@ -24,7 +24,7 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 ## Differences you should know about
 
 1. **Hidden facts are unknown.** Process scoring, weights between games and the true raw-score scale cannot be reproduced. The results page shows a practice score and self-review process metrics.
-2. **Sea Wolf filter** uses three optional ranges and two trait toggles with an OR rule for the desired trait. Other sources describe a simpler "pick two characteristics" step (D4).
+2. **Sea Wolf profile** requires exactly two choices from three numeric attributes and four selectable traits. The simulator filters its generated pool using a disclosed practice rule. Sources disagree about whether the real profile choice affects later microbes, and its matching operator is unpublished (D4).
 3. **Carry-over step** appears only from site 2 and is a keep/reject screen. Some sources do not mention it (D2).
 4. **Pool design** (28 microbes with planted solutions, traps and carry-over bait) is invented to guarantee full-pool solvability. Candidate reports of 80% and 60% Sea Wolf ceilings do not establish whether the full pool was unsolvable or earlier choices removed a perfect team. The results screen shows both the best available from your choices and the full-pool reference.
 5. **Redrock report** selects 5 prompts from an 8-prompt bank plus a chart; CaseStar describes 8-10 blanks (D8).

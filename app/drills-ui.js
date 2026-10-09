@@ -9,7 +9,7 @@ function startDrill(kind){
   else if(family==='sfl'){const data=genSFLProject(S.seed);d.items=RNG(S.seed*41+9).shuffle(data.questions).slice(0,6).map(q=>({q,theme:data.theme}))}
   else{
     const data=genSeaWolf(S.seed);if(S.difficulty==='hard')hardenSeaWolf(data);
-    d.data=data;d.site=data.sites[0];d.filter={r:[[null,null],[null,null],[null,null]],useD:false,exU:false};d.shown=null;d.answers={};d.phase='filter';
+    d.data=data;d.site=data.sites[0];d.filter=profileBlank(d.site);d.shown=null;d.answers={};d.phase='filter';d.notice='';
   }
   S.drill=d;go('drill-'+kind);startClock(kind==='cases'?2:5,()=>kind==='cases'?advanceCase(true):finishDrill());render(false);
 }
@@ -18,7 +18,7 @@ function caseDrillHTML(){const d=S.drill,c=d.items[d.i],options=c.type==='mc'?`<
   return `<div class="stack mission-intro"><span class="eyebrow">${d.kind==='spaced'?'Scheduled case review':d.kind==='adaptive'?'Five-minute focused case set':'Two-minute mini-case'} · ${d.i+1}/${d.items.length}</span><h1>${esc(d.focus?.label||'Redrock cases')}</h1><div class="card stack"><h2>${esc(c.title)}</h2>${c.body}<p><b>${esc(c.q)}</b></p>${options}<p class="no" id="drill-notice" role="alert"></p><div class="row"><button class="btn" data-act="drill-answer">Lock answer</button><button class="btn ghost" data-act="drill-skip">Skip</button></div></div></div>`}
 function adaptiveDrillHTML(){const d=S.drill;if(d.family==='math')return mathDrillHTML();if(d.family==='cases')return caseDrillHTML();if(d.family==='filter')return filterDrillHTML();
   const item=d.items[d.i],q=item.q;return `<div class="stack mission-intro sfl-scope"><span class="eyebrow">${d.kind==='spaced'?'Scheduled decision review':'Adaptive decision practice'} · ${d.i+1}/${d.items.length}</span><h1>${esc(item.theme.title)}</h1><div class="card stack"><span class="chip">${esc(q.phase)}</span><h2>${esc(q.prompt)}</h2><div class="stack">${q.options.map((o,i)=>`<button class="choice" data-act="adaptive-choice" data-v="${o.id}"><b>${'ABC'[i]}.</b> ${esc(o.text)}</button>`).join('')}</div><button class="btn ghost" data-act="adaptive-choice" data-v="">Skip decision</button></div></div>`}
-function filterDrillHTML(){const d=S.drill,s=d.site,f=d.filter;if(d.phase==='filter')return `<div class="stack mission-intro"><span class="eyebrow">${d.kind==='spaced'?'Scheduled filter review':'Five-minute filter drill'}</span><h1>${esc(s.name)}</h1><div class="card stack"><h2>${esc(s.contam)}</h2><p>Target averages: ${s.ranges.map((r,i)=>ATTRS[i]+' '+r.join('–')).join(' · ')}. Desired: ${esc(s.desired||'none')}. Avoid: ${esc(s.undesired||'none')}.</p><p class="mute">Set a filter that keeps good candidates. Then classify the first ten matches.</p>${ATTRS.map((a,i)=>`<div class="row"><label>${a} min <input class="num sm" data-drill-filter="min${i}" type="number"></label><label>max <input class="num sm" data-drill-filter="max${i}" type="number"></label></div>`).join('')}${s.desired?`<label><input type="checkbox" data-drill-filter="useD"> Include desired trait with OR rule</label>`:''}${s.undesired?`<label><input type="checkbox" data-drill-filter="exU"> Exclude undesired trait</label>`:''}<button class="btn" data-act="drill-filter-go">Apply filter</button></div></div>`;
+function filterDrillHTML(){const d=S.drill,s=d.site;if(d.phase==='filter')return `<div class="stack mission-intro sw-drill"><span class="eyebrow">${d.kind==='spaced'?'Scheduled filter review':'Five-minute filter drill'}</span><h1>${esc(s.name)}</h1><p class="mute">Choose two characteristics, then classify the matching microbes.</p>${profileFilterHTML(s,d.filter,d.notice,true)}</div>`;
   const m=d.data.byId[d.shown[d.i]];return `<div class="stack mission-intro"><span class="eyebrow">Categorise ${d.i+1}/${d.shown.length}</span><h1>${esc(s.name)}</h1><div class="card stack"><p>Choose whether this microbe could help this site.</p>${mbHTML(m,s)}<div class="row"><button class="btn" data-act="drill-cat" data-v="keep">Keep (1)</button><button class="btn ghost" data-act="drill-cat" data-v="reject">Reject (2)</button></div></div></div>`}
 function drillAnswer(skip=false){
   const d=S.drill;if(!d||d.done)return;
@@ -41,8 +41,10 @@ function advanceCase(timedOut){
   go('drill-cases');startClock(2,()=>advanceCase(true));
 }
 function applyDrillFilter(){
-  const d=S.drill,s=d.site;d.shown=filterPool(s,s.pool,d.filter).slice(0,10).map(m=>m.id);d.i=0;
-  if(!d.shown.length){d.phase='done';finishDrill();return}
+  const d=S.drill,s=d.site,problem=profileError(s,d.filter);if(problem){d.notice=problem;render(false);return}
+  d.shown=filterPool(s,s.pool,d.filter).slice(0,10).map(m=>m.id);d.i=0;
+  if(!d.shown.length){d.notice='No microbes match. Widen a range or change a trait preference.';render(false);return}
+  d.notice='';
   d.phase='classify';render(true);
 }
 function drillCategorise(v){

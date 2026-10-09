@@ -54,7 +54,7 @@ For each site the generator first **plants** a perfect team: target averages `a`
 - 1 microbe that suits the next site (carry-over bait),
 - random fillers up to 28.
 
-Planted microbes sit in the first 6 pool slots, so any permissive filter shows them within the first 10 results. A tight filter can hide them (58% of sites at range +/-1, none at +/-2 in the 400-seed run), which is deliberate.
+Planted microbes sit in the first 6 pool slots, so any permissive profile shows them within the first 10 results. With two numeric choices, a tight profile can hide them (62% of sites at range +/-1, none at +/-2 in the 500-seed run), which is deliberate.
 
 ### Redrock generation
 
@@ -77,7 +77,7 @@ Order of random calls matters. If you add a call to the RNG anywhere, every late
 
 ## Theming
 
-The original CSS in `index.html` provides the base layout; `retro.css` applies the pixel art theme and responsive overrides. The page starts in dark mode. The DAY/NIGHT control sets `data-theme` on `:root` and saves the choice in `localStorage`. `render()` also sets `data-game`, which selects earthy Redrock, ocean-blue Sea Wolf or forest-green SFL colors in either theme. Pixelify Sans is reserved for display and game controls; body copy uses IBM Plex Sans with a system fallback.
+The original CSS in `index.html` provides the base layout; `retro.css` applies the pixel art theme and responsive overrides. The page starts in dark mode. The DAY/NIGHT control sets `data-theme` on `:root` and saves the choice in `localStorage`. `render()` also sets `data-game`, which selects earthy Redrock, kelp and coral Sea Wolf, or forest-green SFL colors in either theme. Pixelify Sans is reserved for display and game controls; body copy uses IBM Plex Sans with a system fallback.
 
 ## Dependencies
 

@@ -34,6 +34,15 @@
     log('all mission palettes meet 4.5:1 text contrast');
   }
   const home=(seed=12345)=>{stopClock();S.seed=seed;S.screen='home';render(false);document.querySelector('#seed').value=seed;noOverflow('home')};
+  function chooseFullProfile(){
+    check(document.querySelector('[data-act="profile-toggle"]'),'profile choices visible');
+    document.querySelector('[data-act="profile-toggle"][data-v="a0"]').click();
+    document.querySelector('[data-act="profile-toggle"][data-v="a1"]').click();
+    for(const i of [0,1]){fill('[data-profile-range="'+i+':min"]',1);fill('[data-profile-range="'+i+':max"]',10)}
+    const count=activeProfile().site.pool.length;
+    check(document.querySelector('#fcount')?.textContent.includes(count+' of '+count),'all microbes matched');
+    noOverflow('Sea Wolf profile');
+  }
   function redrock(){
     check(S.screen==='rr-intro','Redrock intro');ACT.rrbegin();noOverflow('Redrock investigation');
     const clickTarget=document.querySelector('[data-j]');
@@ -59,6 +68,7 @@
     check(S.screen==='sw-intro','Sea Wolf intro');ACT.swbegin();noOverflow('Sea Wolf site');
     for(let siteIndex=0;siteIndex<3;siteIndex++){
       if(S.sw.cur.step===0)ACT['carry-done']();
+      chooseFullProfile();
       ACT['filter-go']();
       while(S.sw.cur.step===2){
         const id=S.sw.cur.shown[S.sw.cur.ci];
@@ -128,6 +138,7 @@
     }else if(d.family==='sfl'){
       while(!d.done)adaptiveChoice(d.items[d.i].q.options.find(x=>x.quality===2).id);
     }else{
+      chooseFullProfile();
       applyDrillFilter();
       const useful=new Set(),p=d.site.pool,s=d.site;
       for(let a=0;a<p.length-2;a++)for(let b=a+1;b<p.length-1;b++)for(let c=b+1;c<p.length;c++)
@@ -171,6 +182,26 @@
     check(historyCSV(readHistory()).includes('spacedFocus'),'history CSV focus');
   }
   function edgeCases(){
+    home();ACT.start('sw');ACT.swbegin();
+    check(document.querySelector('[data-act="filter-go"]').disabled,'profile needs two choices');
+    const site=S.sw.data.sites[0],traits=profileTraits(site);
+    check(traits.length===4&&document.querySelectorAll('[data-act="profile-toggle"][data-v^="t:"]').length===4,'four selectable traits shown');
+    const traitKey='t:'+traits[0];
+    document.querySelector('[data-act="profile-toggle"][data-v="a0"]').click();
+    document.querySelectorAll('[data-act="profile-toggle"]').forEach(el=>{if(el.dataset.v===traitKey)el.click()});
+    check(S.sw.cur.filter.selected.length===2&&!document.querySelector('[data-act="filter-go"]').disabled,'numeric plus trait selected');
+    document.querySelector('[data-act="profile-toggle"][data-v="a1"]').click();
+    check(S.sw.cur.filter.selected.length===2&&document.querySelector('[role="alert"]')?.textContent.includes('Remove one'),'third choice blocked');
+    document.querySelector('[data-profile-trait]').value='no';
+    fill('[data-profile-trait="'+traits[0]+'"]','no');
+    const expected=filterPool(site,site.pool,S.sw.cur.filter).length;
+    ACT['filter-go']();check(S.sw.cur.step===2&&S.sw.cur.filtered.length===expected,'mixed profile applied');
+    home();ACT.start('sw');ACT.swbegin();
+    for(const t of profileTraits(S.sw.data.sites[0]).slice(0,2)){
+      const button=[...document.querySelectorAll('[data-act="profile-toggle"]')].find(x=>x.dataset.v==='t:'+t);button.click();
+    }
+    check(S.sw.cur.filter.selected.length===2&&S.sw.cur.filter.selected.every(x=>x.startsWith('t:')),'two-trait profile');
+    log('two-choice Sea Wolf profile variants and limit');
     home();startDrill('math');drillAnswer();
     check(S.drill.i===0&&document.querySelector('#drill-notice').textContent,'blank drill answer blocked');
     drillAnswer(true);check(S.drill.i===1,'drill skip');

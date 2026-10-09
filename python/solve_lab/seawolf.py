@@ -125,15 +125,52 @@ def count_perfect(site, pool):
     return sum(1 for t in combinations(pool, 3) if score_site(site, list(t))["score"] == 100)
 
 
+def profile_traits(site, pool=None):
+    """Four profile traits: site cues first, then observed alternatives."""
+    chosen = [t for t in (site.get("desired"), site.get("undesired")) if t]
+    for trait in TRAITS:
+        if trait not in chosen and any(m["trait"] == trait for m in (pool or site.get("pool", []))):
+            chosen.append(trait)
+    return chosen[:4]
+
+
+def profile_error(site, f, pool=None):
+    allowed = {"a0", "a1", "a2", *("t:" + t for t in profile_traits(site, pool))}
+    selected = f.get("selected", [])
+    if len(selected) != 2 or len(set(selected)) != 2 or any(k not in allowed for k in selected):
+        return "Choose exactly two characteristics."
+    for key in selected:
+        if key.startswith("a"):
+            try:
+                lo, hi = f["r"][int(key[1])]
+            except (IndexError, KeyError, TypeError, ValueError):
+                return "Each selected number needs a valid 1–10 range."
+            if type(lo) is not int or type(hi) is not int or not (1 <= lo <= hi <= 10):
+                return "Each selected number needs a valid 1–10 range."
+        elif f.get("traitModes", {}).get(key[2:]) not in ("yes", "no"):
+            return "Choose Include or Avoid for each selected trait."
+    return ""
+
+
 def filter_pool(site, pool, f):
-    """f = {'r': [[min|None, max|None] x3], 'useD': bool, 'exU': bool}"""
+    """Two profile choices; numeric matches combine, positive traits widen, negatives exclude."""
+    if profile_error(site, f, pool):
+        return []
+    selected = f["selected"]
+    numbers = [int(k[1]) for k in selected if k.startswith("a")]
+    wanted = [k[2:] for k in selected if k.startswith("t:") and f["traitModes"][k[2:]] == "yes"]
+    avoided = [k[2:] for k in selected if k.startswith("t:") and f["traitModes"][k[2:]] == "no"]
     out = []
-    has_range = any(x[0] is not None or x[1] is not None for x in f["r"])
     for m in pool:
-        attr_ok = (not has_range) or all(
-            (x[0] is None or m["a"][i] >= x[0]) and (x[1] is None or m["a"][i] <= x[1])
-            for i, x in enumerate(f["r"]))
-        passed = attr_ok or (f["useD"] and site["desired"] and m["trait"] == site["desired"])
-        if passed and not (f["exU"] and site["undesired"] and m["trait"] == site["undesired"]):
+        numeric = all(f["r"][i][0] <= m["a"][i] <= f["r"][i][1] for i in numbers)
+        if numbers and wanted:
+            match = numeric or m["trait"] in wanted
+        elif numbers:
+            match = numeric
+        elif wanted:
+            match = m["trait"] in wanted
+        else:
+            match = True
+        if match and m["trait"] not in avoided:
             out.append(m)
     return out
