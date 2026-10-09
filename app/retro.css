@@ -138,6 +138,8 @@ h3 {font-size:1.4rem;line-height:1.1}
 .run-dialog .btn {min-height:46px}
 .pause-clock {width:max-content;min-width:6ch;padding:12px 18px;border:3px solid var(--accent);background:var(--bg);color:var(--accent);font-size:clamp(2.5rem,7vw,4rem);font-weight:600;line-height:1}
 body:has(.run-overlay) {overflow:hidden}
+input.num[aria-invalid="true"] {border-color:var(--bad);outline:2px solid var(--bad);outline-offset:1px}
+.field-error {display:block;flex-basis:100%;color:var(--bad);font-size:.82rem;font-weight:600}
 .clock {font-family:var(--f-display);font-size:1.65rem;line-height:1;min-width:5.2ch;color:var(--ink)}
 .clockwrap {border-left:2px solid var(--line);padding-left:14px}
 .prog {height:6px;background:var(--tint)}

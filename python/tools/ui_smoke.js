@@ -188,6 +188,7 @@
     check(historyCSV(readHistory()).includes('spacedFocus'),'history CSV focus');
   }
   function edgeCases(){
+    check(num('5xyz')===null&&num('1,2')===null&&num('1,250')===1250&&num('12.5%')===12.5,'numeric answers require one complete number');
     home();startDrill('math');
     const answer=document.querySelector('#drill-answer');answer.value='37';
     const savedCount=readHistory().length;
@@ -238,11 +239,19 @@
     document.querySelector('#drill-answer').value=S.drill.items[1].ans;
     document.querySelector('#drill-answer').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
     check(S.drill.i===2&&sessionMetrics().actions>0,'Enter shortcut and telemetry');
-    finishDrill();log('input validation and shortcuts');
+    finishDrill();
+    home();ACT.start('rr');ACT.rrbegin();ACT['to-an']();
+    const numeric=document.querySelector('input.num[data-bind]');
+    fill('input.num[data-bind]','5xyz');check(numeric.getAttribute('aria-invalid')==='true'&&numeric.getAttribute('aria-describedby')&&numeric.parentElement.querySelector('.field-error')?.textContent.includes('complete number'),'invalid Redrock answer flagged while typing');
+    ACT['an-next']();check(S.rr.an===0&&document.activeElement===numeric,'invalid Redrock answer blocks locking the question');
+    fill('input.num[data-bind]','5');check(numeric.getAttribute('aria-invalid')==='false'&&!numeric.parentElement.querySelector('.field-error'),'corrected Redrock answer clears warning');
+    ACT['an-next']();check(S.rr.an===1,'corrected Redrock answer can advance');
+    ACT.quit();ACT['quit-confirm']();log('input validation and shortcuts');
     home();ACT.start('rr');ACT.rrbegin();S.clock.end=Date.now()-1;tick();
     check(S.screen==='results'&&S.res.rr.total===0,'Redrock timeout');
     home();ACT.start('sw');ACT.swbegin();S.clock.end=Date.now()-1;tick();
     check(S.screen==='results'&&S.res.sw.length===3,'Sea Wolf timeout');
+    check(S.res.sw[0].review.filtered===null&&document.querySelector('.sw-review-site .phase-review')?.textContent.includes('No profile was submitted'),'Sea Wolf timeout review reports no submitted profile');
     check(!swResults().includes('−20 · Site not reached')&&!resultsCSV().includes('"-20"'),'unplayed site is not shown as a 20-point deduction');
     check(sessionSkillStats().range.missed===9,'unplayed range work enters practice history');
     home();ACT.start('sfl30');ACT['sfl-begin']();S.clock.end=Date.now()-1;tick();

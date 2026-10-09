@@ -31,6 +31,10 @@ class JsNumbers(unittest.TestCase):
         self.assertTrue(near("1,250 km", 1250, 0.5) is False)  # letters are not stripped
         self.assertTrue(near("12.4%", 12.5, 0.5))
         self.assertFalse(near("", 1, 0.5))
+        self.assertTrue(near("€1,250", 1250, 0.5))
+        self.assertFalse(near("5xyz", 5, 0.5))
+        self.assertFalse(near("1,2", 12, 0.5))
+        self.assertFalse(near("1e309", 1, 0.5))
 
 
 class Rng(unittest.TestCase):

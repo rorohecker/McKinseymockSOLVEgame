@@ -10,7 +10,7 @@ scenario text must match the JS byte for byte, so these helpers mimic:
 import math
 import re
 
-_NUM = re.compile(r"[,\s%€]")
+_NUM = re.compile(r"^[+-]?(?:(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 
 
 def js_round(x: float) -> int:
@@ -45,9 +45,17 @@ def num(v):
     """Parse a user answer like the JS ``num`` helper. Returns None if blank."""
     if v is None:
         return None
+    raw = str(v).strip()
+    if raw.startswith("€"):
+        raw = raw[1:].strip()
+    if raw.endswith("%"):
+        raw = raw[:-1].strip()
+    if not _NUM.fullmatch(raw):
+        return None
     try:
-        return float(_NUM.sub("", str(v)))
-    except ValueError:
+        value = float(raw.replace(",", ""))
+        return value if math.isfinite(value) else None
+    except (ValueError, OverflowError):
         return None
 
 

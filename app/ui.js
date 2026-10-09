@@ -81,7 +81,23 @@ function render(scroll){
   const game=gameKey()||drillGame;
   document.documentElement.dataset.game=game;
   $('#app').innerHTML=topbar()+`<div class="wrap ${game==='rr'?'rr-scope':game==='sfl'?'sfl-scope':''}">${map[S.screen]()}</div>`;
-  showDesktopExit();tick();if($('#fcount'))updateCount();if(scroll)window.scrollTo(0,0)}
+  showDesktopExit();document.querySelectorAll('input.num[data-bind]').forEach(updateNumericValidity);tick();if($('#fcount'))updateCount();if(scroll)window.scrollTo(0,0)}
+function updateNumericValidity(field){
+  const invalid=field.value.trim()!==''&&num(field.value)===null;
+  field.setAttribute('aria-invalid',String(invalid));
+  field.title=invalid?'Enter one complete number, such as 12.5 or 1,250. Clear the field to skip.':'';
+  let note=field.parentElement.querySelector('.field-error[data-for="'+field.id+'"]');
+  if(invalid){
+    if(!note){note=document.createElement('span');note.className='field-error';note.dataset.for=field.id;note.id=field.id+'-error';field.parentElement.append(note)}
+    note.textContent='Enter one complete number, such as 12.5 or 1,250. Clear to skip.';
+    field.setAttribute('aria-describedby',note.id);
+  }else{note?.remove();field.removeAttribute('aria-describedby')}
+}
+function preventInvalidNumericAdvance(){
+  const invalid=[...document.querySelectorAll('input.num[data-bind]')].find(field=>field.value.trim()!==''&&num(field.value)===null);
+  if(!invalid)return false;
+  updateNumericValidity(invalid);invalid.focus();return true;
+}
 function showDesktopExit(){
   if(S.screen!=='home'||!window.pywebview?.api?.quit)return;
   const actions=$('.top-actions');if(!actions||actions.querySelector('[data-act="exit-app"]'))return;
@@ -249,7 +265,7 @@ function updateCount(){
   el.textContent=`${n} of ${site.pool.length} microbes match · ${Math.min(10,n)} will be shown${n===0?' · adjust the profile':''}.`;
 }
 function scoreCurrent(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;const trio=c.sel.map(id=>D.byId[id]);const pool=finalPool();
-  sw.results[sw.i]={site:s,trio,sc:trio.length===3?scoreSite(s,trio):{score:0,avg:[0,0,0],ded:['No treatment was submitted before time ran out']},bestPool:pool.length>=3?bestIn(s,pool):{score:0,trio:null},bestFull:bestIn(s,s.pool),review:{filtered:c.filtered||[],shown:c.shown.slice(),cat:{...c.cat},picks:c.picks.slice(),kept:[...c.keep],offerHistory:c.offerHistory.map(x=>x.slice()),filter:JSON.parse(JSON.stringify(c.filter)),timeMs:Math.max(0,Date.now()-c.started-((S.clock?.pausedMs||0)-c.pauseBase))}};
+  sw.results[sw.i]={site:s,trio,sc:trio.length===3?scoreSite(s,trio):{score:0,avg:[0,0,0],ded:['No treatment was submitted before time ran out']},bestPool:pool.length>=3?bestIn(s,pool):{score:0,trio:null},bestFull:bestIn(s,s.pool),review:{filtered:c.filtered?c.filtered.slice():null,shown:c.shown.slice(),cat:{...c.cat},picks:c.picks.slice(),kept:[...c.keep],offerHistory:c.offerHistory.map(x=>x.slice()),filter:JSON.parse(JSON.stringify(c.filter)),timeMs:Math.max(0,Date.now()-c.started-((S.clock?.pausedMs||0)-c.pauseBase))}};
   mark('sw',s.name);c.done=true}
 function finishSW(){const sw=S.sw;if(sw.fin)return;sw.fin=true;for(let i=sw.i;i<3;i++){if(i===sw.i){if(!sw.results[i])scoreCurrent()}else{const s=sw.data.sites[i];sw.results[i]={site:s,trio:[],sc:{score:0,avg:[0,0,0],ded:['Site not reached']},bestPool:{score:0,trio:null},bestFull:bestIn(s,s.pool)}}}
   S.res.sw=sw.results;stopClock();if(S.mode==='full20'||S.mode==='full30'){S.pendingGame=S.mode==='full20'?'sfl20':'sfl30';go('break')}else go('results')}
@@ -325,10 +341,10 @@ const ACT={
   key(v){calcKey(v)},
   usecalc(){const el=S.lastInput;if(el&&document.contains(el)){const x=calcValue();if(x!==null){el.value=String(Math.round(x*100)/100);el.dispatchEvent(new Event('input',{bubbles:true}))}}},
   'to-an'(){mark('rr','Investigation');S.rr.an=0;go('rr-an')},
-  'an-next'(){if(S.rr.an<2){S.rr.an++;render(true)}else{mark('rr','Analysis');go('rr-rep1')}},
-  'to-rep2'(){go('rr-rep2')},
-  'to-cases'(){mark('rr','Report');S.rr.ci=0;S.calc={expr:'',fresh:false};S.rr.journal=[];go('rr-case')},
-  'case-next'(){if(S.rr.ci<5){S.rr.ci++;render(true)}else finishRR(false)},
+  'an-next'(){if(preventInvalidNumericAdvance())return;if(S.rr.an<2){S.rr.an++;render(true)}else{mark('rr','Analysis');go('rr-rep1')}},
+  'to-rep2'(){if(preventInvalidNumericAdvance())return;go('rr-rep2')},
+  'to-cases'(){if(preventInvalidNumericAdvance())return;mark('rr','Report');S.rr.ci=0;S.calc={expr:'',fresh:false};S.rr.journal=[];go('rr-case')},
+  'case-next'(){if(preventInvalidNumericAdvance())return;if(S.rr.ci<5){S.rr.ci++;render(true)}else finishRR(false)},
   swbegin(){S.screen='sw-site';startClock(30,()=>{if(S.sw&&!S.sw.fin){finishSW()}});enterSite(0);render(true)},
   keep(v){const k=S.sw.cur.keep;k.has(v)?k.delete(v):k.add(v);render(false)},
   'carry-done'(){S.sw.cur.step=1;render(true)},
@@ -367,7 +383,7 @@ function onInput(e){const t=e.target;
   else if(t.dataset.teamAssign&&S.sfl){S.sfl.records[S.sfl.day].assign[t.dataset.teamAssign]=t.value}
   else if(t.dataset.teamReason&&S.sfl){S.sfl.records[S.sfl.day].reasons[t.dataset.teamReason]=t.value}
   else if(t.dataset.teamReflect&&S.sfl){S.sfl.records[S.sfl.day].reflect[t.dataset.teamReflect]=t.value}
-  else if(t.dataset.bind&&S.rr){if(t.type==='radio'&&!t.checked)return;setBind(t.dataset.bind,t.value);track('answer',{field:t.dataset.bind})}
+  else if(t.dataset.bind&&S.rr){if(t.type==='radio'&&!t.checked)return;if(t.matches('input.num'))updateNumericValidity(t);setBind(t.dataset.bind,t.value);track('answer',{field:t.dataset.bind})}
   else if(t.dataset.notes!==undefined&&S.rr){S.rr.notes=t.value}}
 document.addEventListener('input',onInput);document.addEventListener('change',onInput);
 document.addEventListener('focusin',e=>{if(e.target.matches&&e.target.matches('input.num')&&e.target.dataset.bind)S.lastInput=e.target;if(S.screen==='sw-site'&&S.sw&&S.sw.cur.step===1)updateCount()});
