@@ -1,5 +1,5 @@
 """Redrock Study scenario generator and scorer (port of app/index.html)."""
-from .jsnum import f1, fmt, js_round, jstr, near
+from .jsnum import f1, fmt, js_round, jstr, num
 from .rng import RNG
 
 PACKS = ["Silverbrook", "Granite Hollow", "Cedar Ridge", "Ashfall",
@@ -218,18 +218,29 @@ def score_redrock(d, A, tolerance=0.5):
         items.append({"sec": sec, "label": label, "your": "—" if your in ("", None) else your,
                       "correct": correct, "pts": pts, "max": mx})
 
+    def numeric_points(value, answer, tol, maximum):
+        parsed = num(value)
+        if parsed is None:
+            return 0
+        error = abs(parsed - answer)
+        if error <= tol + 1e-9:
+            return maximum
+        limit = max(4 * tol, abs(answer) * .02)
+        return 0 if error >= limit else js_round(maximum * .6 * (limit - error) / (limit - tol) * 10) / 10
+
     for qi, q in enumerate(d["an"]):
         for pi, p in enumerate(q["parts"]):
-            ok = near(A.get(p["key"]), p["ans"], tolerance)
-            add("Analysis", f"Q{qi + 1}{'ab'[pi]}", A.get(p["key"]), f"{fmt(p['ans'])} {p['unit']}", 10 if ok else 0, 10)
+            pts = numeric_points(A.get(p["key"]), p["ans"], tolerance, 10)
+            add("Analysis", f"Q{qi + 1}{'ab'[pi]}", A.get(p["key"]), f"{fmt(p['ans'])} {p['unit']}", pts, 10)
     for i, b in enumerate(d["blanks"]):
         v = A.get(b["key"])
-        ok = near(v, b["ans"], tolerance) if b["type"] == "num" else v in b["ans"]
-        add("Report", f"Written blank {i + 1}", v, fmt(b["ans"]) if b["type"] == "num" else " / ".join(b["ans"]), 5 if ok else 0, 5)
+        pts = numeric_points(v, b["ans"], tolerance, 5) if b["type"] == "num" else 5 if v in b["ans"] else 0
+        add("Report", f"Written blank {i + 1}", v, fmt(b["ans"]) if b["type"] == "num" else " / ".join(b["ans"]), pts, 5)
     vis = d["vis"]
     add("Report", "Chart type", A.get("vtype"), vis["right"], 15 if A.get("vtype") == vis["right"] else 0, 15)
     for i, v in enumerate(vis["values"]):
-        add("Report", "Chart " + vis["labels"][i], A.get(f"v{i}"), fmt(v), 3.75 if near(A.get(f"v{i}"), v, tolerance) else 0, 3.75)
+        pts = numeric_points(A.get(f"v{i}"), v, tolerance, 3.75)
+        add("Report", "Chart " + vis["labels"][i], A.get(f"v{i}"), fmt(v), js_round(pts * (1 if A.get("vtype") == vis["right"] else .5) * 100) / 100, 3.75)
     for i, c in enumerate(d["cases"]):
         v = A.get(f"c{i}")
         if c["type"] == "mc":
@@ -237,7 +248,8 @@ def score_redrock(d, A, tolerance=0.5):
             your = next((o["text"] for o in c["options"] if o["id"] == v), "—")
             correct = next(o["text"] for o in c["options"] if o["id"] == c["ans"])
         else:
-            ok = near(v, c["ans"], min(c["tol"], tolerance))
             your, correct = v, jstr(c["ans"])
-        add("Cases", f"Case {i + 1} · {c['kind']}", your, correct, 10 if ok else 0, 10)
-    return {"items": items, "total": sum(x["pts"] for x in items), "max": sum(x["max"] for x in items)}
+        pts = (10 if ok else 0) if c["type"] == "mc" else numeric_points(v, c["ans"], min(c["tol"], tolerance), 10)
+        add("Cases", f"Case {i + 1} · {c['kind']}", your, correct, pts, 10)
+    return {"items": items, "total": js_round(sum(x["pts"] for x in items) * 100) / 100,
+            "max": sum(x["max"] for x in items)}

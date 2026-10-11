@@ -225,14 +225,16 @@ function genRedrock(seed){
 }
 function scoreRedrock(d,A,tolerance=.5){
   const items=[];const add=(sec,label,your,correct,pts,max)=>items.push({sec,label,your:your===''||your==null?'—':your,correct,pts,max});
-  d.an.forEach((q,qi)=>q.parts.forEach((p,pi)=>{const ok=near(A[p.key],p.ans,tolerance);add('Analysis',`Q${qi+1}${'ab'[pi]}`,A[p.key],`${fmt(p.ans)} ${p.unit}`,ok?10:0,10)}));
-  d.blanks.forEach((b,i)=>{const v=A[b.key];const ok=b.type==='num'?near(v,b.ans,tolerance):b.ans.includes(v);add('Report',`Written blank ${i+1}`,v,b.type==='num'?fmt(b.ans):b.ans.join(' / '),ok?5:0,5)});
+  const numericPoints=(value,answer,tol,max)=>{const parsed=num(value);if(parsed===null)return 0;const error=Math.abs(parsed-answer);if(error<=tol+1e-9)return max;
+    const limit=Math.max(4*tol,Math.abs(answer)*.02);return error>=limit?0:Math.round(max*.6*(limit-error)/(limit-tol)*10)/10};
+  d.an.forEach((q,qi)=>q.parts.forEach((p,pi)=>add('Analysis',`Q${qi+1}${'ab'[pi]}`,A[p.key],`${fmt(p.ans)} ${p.unit}`,numericPoints(A[p.key],p.ans,tolerance,10),10)));
+  d.blanks.forEach((b,i)=>{const v=A[b.key],pts=b.type==='num'?numericPoints(v,b.ans,tolerance,5):b.ans.includes(v)?5:0;add('Report',`Written blank ${i+1}`,v,b.type==='num'?fmt(b.ans):b.ans.join(' / '),pts,5)});
   const tOK=A.vtype===d.vis.right;add('Report','Chart type',A.vtype,d.vis.right,tOK?15:0,15);
-  d.vis.values.forEach((v,i)=>{add('Report','Chart '+d.vis.labels[i],A['v'+i],fmt(v),near(A['v'+i],v,tolerance)?3.75:0,3.75)});
-  d.cases.forEach((c,i)=>{const v=A['c'+i];const ok=c.type==='mc'?v===c.ans:near(v,c.ans,Math.min(c.tol,tolerance));
+  d.vis.values.forEach((v,i)=>{add('Report','Chart '+d.vis.labels[i],A['v'+i],fmt(v),Math.round(numericPoints(A['v'+i],v,tolerance,3.75)*(tOK?1:.5)*100)/100,3.75)});
+  d.cases.forEach((c,i)=>{const v=A['c'+i];const ok=c.type==='mc'&&v===c.ans;
     const yourTxt=c.type==='mc'?(c.options.find(o=>o.id===v)||{text:'—'}).text:v;const cor=c.type==='mc'?c.options.find(o=>o.id===c.ans).text:String(c.ans);
-    add('Cases',`Case ${i+1} · ${c.kind}`,yourTxt,cor,ok?10:0,10)});
-  return{items,total:items.reduce((s,x)=>s+x.pts,0),max:items.reduce((s,x)=>s+x.max,0)};
+    add('Cases',`Case ${i+1} · ${c.kind}`,yourTxt,cor,c.type==='mc'?(ok?10:0):numericPoints(v,c.ans,Math.min(c.tol,tolerance),10),10)});
+  return{items,total:Math.round(items.reduce((s,x)=>s+x.pts,0)*100)/100,max:items.reduce((s,x)=>s+x.max,0)};
 }
 
 /* ---------- Sea Wolf ---------- */
@@ -266,7 +268,8 @@ function scoreSite(site,trio){
   sums.forEach((s,i)=>{if(s<3*site.ranges[i][0]||s>3*site.ranges[i][1])ded.push(`${ATTRS[i]} average ${Math.round(avg[i]*100)/100} is outside ${site.ranges[i][0]}–${site.ranges[i][1]}`)});
   if(site.desired&&!trio.some(m=>m.trait===site.desired))ded.push(`No microbe carries the desired trait (${site.desired})`);
   if(site.undesired){const bad=trio.filter(m=>m.trait===site.undesired);bad.forEach(m=>ded.push(`${m.name} carries the undesired trait (${site.undesired})`))}
-  return{score:Math.max(0,100-20*ded.length),avg,ded};
+  const precision=Math.round(avg.reduce((sum,value,i)=>{const [lo,hi]=site.ranges[i],half=Math.max(.5,(hi-lo)/2);return sum+Math.min(1,Math.abs(value-(lo+hi)/2)/half)},0)*40)/10;
+  return{score:Math.max(0,Math.round((100-20*ded.length-precision)*10)/10),avg,ded,precision};
 }
 function bestIn(site,pool){let best={score:-1,trio:null};const n=pool.length;
   for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)for(let k=j+1;k<n;k++){const t=[pool[i],pool[j],pool[k]];const s=scoreSite(site,t).score;if(s>best.score)best={score:s,trio:t};if(s===100)return best}

@@ -1,7 +1,7 @@
 function savedTheme(){try{return localStorage.getItem('solve-lab-theme')==='light'?'light':'dark'}catch{return'dark'}}
 document.documentElement.dataset.theme=savedTheme();
 const INITIAL_SETTINGS=readSettings(),INITIAL_CHALLENGE=challengeParams();
-const S={screen:'home',mode:'full',seed:INITIAL_CHALLENGE.seed??Math.floor(Math.random()*90000)+10000,challengeMode:INITIAL_CHALLENGE.mode,tab:'journal',calc:{expr:'',fresh:false},rr:null,sw:null,sfl:null,drill:null,pendingGame:null,clock:null,marks:[],lastMark:0,res:{},lastInput:null,difficulty:INITIAL_SETTINGS.difficulty,learning:INITIAL_SETTINGS.learning,notice:'',session:null};
+const S={screen:'home',mode:'full',seed:INITIAL_CHALLENGE.seed??Math.floor(Math.random()*90000)+10000,challengeMode:INITIAL_CHALLENGE.mode,tab:'journal',calc:{expr:'',fresh:false},rr:null,sw:null,sfl:null,drill:null,pendingGame:null,clock:null,marks:[],lastMark:0,res:{},lastInput:null,difficulty:INITIAL_CHALLENGE.difficulty??INITIAL_SETTINGS.difficulty,learning:INITIAL_SETTINGS.learning,notice:'',session:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mmss=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
@@ -108,7 +108,7 @@ window.addEventListener('pywebviewready',showDesktopExit);
 /* ---------- home ---------- */
 function homeHTML(){const rec=adaptiveRecommendation();return`<div class="stack home-screen" style="gap:25px">
 <section class="hero"><img class="hero-scene" src="assets/hero-scene.svg" alt=""><div class="hero-copy"><span class="hero-kicker">Field terminal // independent practice</span><h1>Choose your<br>expedition<span aria-hidden="true">_</span></h1><p>Study the island, explore the ocean, and guide a sustainable project. Every seed creates a fresh practice run.</p></div><div class="hero-hud"><span>▶ Select a route below</span><span>Redrock // Sea Wolf // Sustainable Futures</span></div></section>
-${S.challengeMode?`<div class="card row"><span class="eyebrow">Shared seed #${S.seed} · ${esc(S.challengeMode)}</span><button class="btn" data-act="start" data-v="${S.challengeMode}" data-same="1">Play shared challenge</button></div>`:''}
+${S.challengeMode?`<div class="card row"><span class="eyebrow">Shared seed #${S.seed} · ${esc(S.challengeMode)} · ${esc(S.difficulty)}</span><button class="btn" data-act="start" data-v="${S.challengeMode}" data-same="1">Play shared challenge</button></div>`:''}
 <span class="section-label">01 / Select your route</span>
 <div class="modes">
 <button class="mode mode-full" data-act="start" data-v="full"><span class="mode-icon dual" aria-hidden="true">✦</span><span class="eyebrow">65 minutes // two missions</span><span class="big">Full run</span><span class="mute">Begin at Redrock Island, then dive into Sea Wolf. Each game has its own clock.</span></button>
@@ -125,8 +125,8 @@ ${S.challengeMode?`<div class="card row"><span class="eyebrow">Shared seed #${S.
 <span class="section-label">04 / Build retention</span>${spacedPanelHTML()}
 <div class="row"><button class="btn ghost" data-act="history">Practice history</button></div><div class="card stack"><h3>Difficulty calibration</h3>${calibrationHTML()}</div>
 <div class="card flat stack field-note" style="gap:8px;max-width:900px"><h3>Field guide // practice model</h3>
-<p class="mute">Redrock: 6 analysis answers (10 points each, ${S.difficulty==='hard'?'±0.25':'±0.5'} numeric tolerance), a 5-blank written review, a chart choice with data, and six standalone cases. Some cases require tighter precision. 175 points in total. Journal, on-screen calculator and exhibits are included.</p>
-<p class="mute">Sea Wolf: each site starts at 100 and loses 20 for every average outside its range, 20 for a missing desired trait, and 20 per microbe with the undesired trait. Each profile asks for two characteristics, followed by categorising, four prospect rounds, and treatment. 300 practice points in total.</p>
+<p class="mute">Redrock: 6 analysis answers (10 points each, ${S.difficulty==='hard'?'±0.25':'±0.5'} tolerance for full credit), a 5-blank written review, a chart choice with data, and six standalone cases. Small numeric misses may earn partial credit; a wrong chart type halves chart-value credit. Some cases require tighter precision. 175 points in total. Journal, on-screen calculator and exhibits are included.</p>
+<p class="mute">Sea Wolf: each site has 75 treatment points and 25 decision points. Treatment starts at 100, loses 20 per missed range or trait requirement, and up to 12 for distance from the target midpoints. Decisions lose points for including a forbidden trait or avoiding a desired trait in the profile, miscategorising microbes, poor carry-over or prospect choices, losing access to a better full-pool treatment, or overlooking a better treatment in your final pool. Three sites total 300 practice points.</p>
 <p class="mute">These point values are practice reconstructions; McKinsey does not publish its scoring. This project is not affiliated with McKinsey, and tools like it are not allowed during the real assessment.</p></div></div>`}
 
 /* ---------- Redrock ---------- */
@@ -153,7 +153,7 @@ function rrIntroHTML(){return`<div class="stack mission-intro rr-scope" style="m
 <p>You are a researcher on Redrock Island. The 35-minute clock covers a three-phase island study, then six independent mini-cases. Study themes and case topics vary by seed.</p>
 <div class="card stack" style="gap:8px"><h3>Phases</h3>
 <p><b>Investigation.</b> Read the objective, study text and exhibits. Click numbers to save them to your Journal.</p>
-<p><b>Analysis.</b> Three questions, two answers each. Numeric answers within ${S.difficulty==='hard'?'±0.25':'±0.5'} count in this practice mode.</p>
+<p><b>Analysis.</b> Three questions, two answers each. Numeric answers within ${S.difficulty==='hard'?'±0.25':'±0.5'} earn full credit; small misses may earn partial credit.</p>
 <p><b>Report.</b> Fill a written review from your results, then pick a chart type and enter its data.</p>
 <p><b>Cases.</b> Six standalone problems with their own data. You cannot go back to a finished case.</p></div>
 <p class="pace">Suggested pacing: about 15 minutes for Investigation and Analysis, 10 for the Report, 10 for the cases. Reaching all six cases matters more than polishing the report.</p>
@@ -184,7 +184,7 @@ function rrRep2HTML(){const d=S.rr.d,A=S.rr.ans,v=d.vis;
 <div class="row"><button class="btn" data-act="to-cases">Continue to Cases</button><span class="mute" style="font-size:.9rem">The Study ends here. You will not be able to return.</span></div>`)}
 function rrCaseHTML(){const i=S.rr.ci,c=S.rr.d.cases[i],A=S.rr.ans;
   const ans=c.type==='mc'?`<div class="stack" style="gap:8px">${c.options.map(o=>`<label class="opt"><input type="radio" name="c${i}" data-bind="c${i}" value="${o.id}" ${A['c'+i]===o.id?'checked':''}><span>${esc(o.text)}</span></label>`).join('')}</div>`:`<div class="row"><label class="sr" for="c${i}" style="position:absolute;left:-9999px">${esc(c.q)}</label><input class="num" inputmode="decimal" id="c${i}" data-bind="c${i}" value="${esc(A['c'+i]||'')}"></div>`;
-  const precision=c.type==='num'?`<p class="mute">Enter a number in the requested units. This practice case accepts answers within ±${Math.min(c.tol,S.difficulty==='hard'?.25:.5)}.</p>`:'';
+  const precision=c.type==='num'?`<p class="mute">Enter a number in the requested units. Full credit is within ±${Math.min(c.tol,S.difficulty==='hard'?.25:.5)}; small misses may earn partial credit.</p>`:'';
   return split(`<div class="card q"><span class="eyebrow">Case ${i+1} of 6</span><h2>${esc(c.title)}</h2>${c.body}<p><b>${esc(c.q)}</b></p>${ans}${precision}${S.learning?'<p class="pace">Before moving on, check the units and whether the question asks for a percent, percentage points, a total, or a rate.</p>':''}</div>
 <div class="row"><button class="btn" data-act="case-next">${i<5?'Lock answer and continue':'Finish Redrock'}</button><span class="pace">About two minutes per case.</span></div>`)}
 function finishRR(timeUp){
@@ -206,7 +206,7 @@ function swIntroHTML(){return`<div class="stack mission-intro" style="max-width:
 function mbHTML(m,site,o={}){const t=m.trait===site.desired?'good':m.trait===site.undesired?'bad':'';
   const tag=o.pick?'button':'div';
   return`<${tag} class="mb ${o.pick?'pick':''} ${o.sel?'sel':''}" ${o.pick?`data-act="${o.act}" data-v="${m.id}" aria-pressed="${!!o.sel}"`:''}><span class="mb-head"><span class="microbe-sprite ${t}" aria-hidden="true"></span><span class="nm">${esc(m.name)}</span></span><span class="trait ${t}">${esc(m.trait)}${t==='good'?' · desired':t==='bad'?' · undesired':''}</span>${ATTRS.map((a,i)=>`<span class="attr"><span>${a.slice(0,5)}.</span><span class="bar2"><i style="width:${m.a[i]*10}%"></i></span><span class="mono">${m.a[i]}</span></span>`).join('')}</${tag}>`}
-function siteRequirementsHTML(s){return`<div class="req">${s.ranges.map((r,i)=>`<span class="chip" title="The average of the three selected microbes must fall within this range.">${ATTRS[i]} avg <b>${r[0]}–${r[1]}</b></span>`).join('')}${s.desired?`<span class="chip good" title="At least one selected microbe needs this trait.">Desired: <b>${esc(s.desired)}</b></span>`:''}${s.undesired?`<span class="chip bad" title="Every selected microbe with this trait loses 20 practice points.">Avoid: <b>${esc(s.undesired)}</b></span>`:''}</div>`}
+function siteRequirementsHTML(s){return`<div class="req">${s.ranges.map((r,i)=>`<span class="chip" title="The average of the three selected microbes must fall within this range.">${ATTRS[i]} avg <b>${r[0]}–${r[1]}</b></span>`).join('')}${s.desired?`<span class="chip good" title="At least one selected microbe needs this trait.">Desired: <b>${esc(s.desired)}</b></span>`:''}${s.undesired?`<span class="chip bad" title="Every selected microbe with this trait loses 20 treatment-quality points.">Avoid: <b>${esc(s.undesired)}</b></span>`:''}</div>`}
 function reqHTML(s){const sw=S.sw,next=sw.cur.step===2?sw.data.sites[sw.i+1]:null;return`<div class="card stack req-banner" style="gap:10px"><div class="row" style="justify-content:space-between"><div><span class="eyebrow">${s.name}</span><h2>${esc(s.contam)}</h2></div><div class="steps">${['Carry-overs','Profile','Categorise','Prospects','Treatment'].map((x,i)=>{const st=sw.cur.step;return`<span class="${i===st?'on':i<st?'done':''}">${x}</span>`}).join('')}</div></div>
 ${next?`<div class="site-brief-grid"><section class="site-brief current-site-brief" aria-label="${s.name} requirements"><span class="eyebrow">This site · ${s.name}</span>${siteRequirementsHTML(s)}</section><aside class="site-brief next-site-brief" aria-label="${next.name} information"><span class="eyebrow">Next site · ${next.name}</span><h3>${esc(next.contam)}</h3>${siteRequirementsHTML(next)}<p class="mute">Use these targets when choosing “Next site.” You can confirm carry-overs when you arrive there.</p></aside></div>`:siteRequirementsHTML(s)}<details class="rule-help"><summary>Explain these rules</summary><p>For each attribute, average the three selected values and compare it with the displayed interval. Include at least one desired trait if listed. Avoid the forbidden trait on every selected microbe. The profile step lets you choose two characteristics to inspect the pool; its matching rule is a practice model.</p></details></div>`}
 function profileFilterHTML(site,f,notice='',drill=false){
@@ -228,7 +228,7 @@ function swHTML(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;let body='';
     body=`<div class="card stack"><div class="row" style="justify-content:space-between"><h3>Categorise · ${c.ci+1} of ${c.shown.length}</h3><span class="mono mute">This site ${n('cur')} · Next ${n('next')} · Rejected ${n('rej')}</span></div><div class="big-mb" style="width:100%">${mbHTML(m,s)}</div>
 <div class="row" style="justify-content:center"><button class="btn" data-act="cat" data-v="cur">This site <span class="hide-sm">(1)</span></button>${sw.i<2?'<button class="btn ghost" data-act="cat" data-v="next">Next site <span class="hide-sm">(2)</span></button>':''}<button class="btn ghost" data-act="cat" data-v="rej">Reject <span class="hide-sm">(3)</span></button></div></div>`}
   else if(c.step===3){body=`<div class="card stack"><h3>Prospects · round ${c.rounds+1} of 4</h3><p class="mute">Pick one of the three. The others are discarded.</p><div class="mgrid">${c.offer.map(m=>mbHTML(m,s,{pick:true,act:'prospect'})).join('')}</div></div>`}
-  else if(c.step===5){const r=sw.results[sw.i];body=`<div class="card stack"><span class="eyebrow">Treatment submitted</span><div class="score">${r.sc.score}%</div><p class="mute">Effectiveness for ${s.name}. Candidates report seeing this figure right after submitting. The requirements you missed are listed in your results at the end.</p></div><div class="row"><button class="btn" data-act="site-next">${sw.i<2?'Continue to the next site':'Finish Sea Wolf'}</button></div>`}
+  else if(c.step===5){const r=sw.results[sw.i];body=`<div class="card stack"><span class="eyebrow">Treatment submitted</span><div class="score">${r.sc.score}%</div><p class="mute">Practice score for ${s.name}, combining treatment quality and decisions. See the itemised deductions in your results at the end.</p></div><div class="row"><button class="btn" data-act="site-next">${sw.i<2?'Continue to the next site':'Finish Sea Wolf'}</button></div>`}
   else{const pool=finalPool();const sums=[0,1,2].map(i=>c.sel.reduce((t,id)=>t+D.byId[id].a[i],0));const n=c.sel.length;
     const rows=ATTRS.map((a,i)=>{const avg=n?sums[i]/n:null;const ok=n===3&&sums[i]>=3*s.ranges[i][0]&&sums[i]<=3*s.ranges[i][1];return`<div class="avgrow"><span>${a}</span><span class="mono">${avg===null?'—':(Math.round(avg*100)/100)} <span class="mute">target ${s.ranges[i][0]}–${s.ranges[i][1]}</span></span><span class="${n===3?(ok?'ok':'no'):'mute'}">${n===3?(ok?'in range':'out of range'):'pick 3'}</span></div>`}).join('');
     const sel=c.sel.map(id=>D.byId[id]);const hasD=s.desired?sel.some(m=>m.trait===s.desired):null;const badN=s.undesired?sel.filter(m=>m.trait===s.undesired).length:0;
@@ -266,8 +266,64 @@ function updateCount(){
   const n=filterPool(site,site.pool,filter).length;
   el.textContent=`${n} of ${site.pool.length} microbes match · ${Math.min(10,n)} will be shown${n===0?' · adjust the profile':''}.`;
 }
+function candidateTreatmentScore(site,microbe){
+  if(site.undesired&&microbe.trait===site.undesired)return -1;
+  const others=site.pool.filter(m=>m.id!==microbe.id);
+  let best=-1;
+  for(let i=0;i<others.length-1;i++)for(let j=i+1;j<others.length;j++){
+    const candidate=scoreSite(site,[microbe,others[i],others[j]]);
+    if(candidate.ded.length===0&&candidate.score>best)best=candidate.score;
+    if(best===100)return best;
+  }
+  return best;
+}
+function scoreSeaWolfDecisions(sw,site,cur,treatment,bestPool,bestFull){
+  const byId=sw.data.byId,penalties=[];
+  const add=(points,label)=>{if(points>0)penalties.push({points,label})};
+  if(site.undesired&&cur.filter?.selected.includes('t:'+site.undesired)&&cur.filter.traitModes[site.undesired]==='yes')
+    add(10,`Profile included the forbidden trait (${site.undesired})`);
+  if(site.desired&&cur.filter?.selected.includes('t:'+site.desired)&&cur.filter.traitModes[site.desired]==='no')
+    add(8,`Profile excluded the desired trait (${site.desired})`);
+  const next=sw.data.sites[sw.i+1],nextBest=next?bestIn(next,next.pool).score:0;
+  const potentialCache=new Map(),potential=(target,id)=>{
+    const key=target.idx+':'+id;
+    if(!potentialCache.has(key))potentialCache.set(key,candidateTreatmentScore(target,byId[id]));
+    return potentialCache.get(key);
+  };
+  for(const id of cur.shown){
+    const microbe=byId[id],choice=cur.cat[id];
+    if(!choice)continue;
+    const here=potential(site,id),later=next?potential(next,id):-1;
+    if(choice==='cur'&&here<0||choice==='next'&&later<0||choice==='rej'&&(here>=bestFull.score-5||next&&later>=nextBest-5))
+      add(4,`${microbe.name} was miscategorised as ${choice==='cur'?'This site':choice==='next'?'Next site':'Reject'}`);
+  }
+  for(const id of cur.carry){
+    const microbe=byId[id],potentialScore=potential(site,id),kept=cur.keep.has(id);
+    if(kept&&potentialScore<0||!kept&&potentialScore>=bestFull.score-5)
+      add(5,`${microbe.name} was ${kept?'kept despite not fitting this site':'dropped despite being a strong option for this site'}`);
+  }
+  const core=cur.shown.filter(id=>cur.cat[id]==='cur').concat([...cur.keep]);
+  cur.picks.forEach((id,round)=>{
+    const others=core.concat(cur.picks.filter((_,index)=>index!==round));
+    const choices=(cur.offerHistory[round]||[]).map(candidate=>{
+      const pool=[...new Set(others.concat(candidate))].map(key=>byId[key]);
+      return{id:candidate,score:pool.length>=3?bestIn(site,pool).score:0};
+    });
+    const picked=choices.find(x=>x.id===id)?.score??0,best=Math.max(0,...choices.map(x=>x.score));
+    if(best>picked)add(Math.min(6,Math.ceil((best-picked)/3)),`Prospect round ${round+1}: a different offer could improve the available treatment by ${Math.round((best-picked)*10)/10}`);
+  });
+  if(bestFull.score>bestPool.score)add(Math.min(12,Math.ceil((bestFull.score-bestPool.score)/2)),`Earlier choices lost access to a better full-pool treatment (${bestFull.score} versus ${bestPool.score})`);
+  if(bestPool.score>treatment.score)add(Math.min(12,Math.ceil((bestPool.score-treatment.score)/2)),`A better treatment was available in your final pool (${bestPool.score} versus ${treatment.score})`);
+  const processScore=Math.max(0,100-penalties.reduce((sum,p)=>sum+p.points,0));
+  return{processScore,penalties};
+}
 function scoreCurrent(){const sw=S.sw,D=sw.data,s=D.sites[sw.i],c=sw.cur;const trio=c.sel.map(id=>D.byId[id]);const pool=finalPool();
-  sw.results[sw.i]={site:s,trio,sc:trio.length===3?scoreSite(s,trio):{score:0,avg:[0,0,0],ded:['No treatment was submitted before time ran out']},bestPool:pool.length>=3?bestIn(s,pool):{score:0,trio:null},bestFull:bestIn(s,s.pool),review:{filtered:c.filtered?c.filtered.slice():null,shown:c.shown.slice(),cat:{...c.cat},picks:c.picks.slice(),kept:[...c.keep],offerHistory:c.offerHistory.map(x=>x.slice()),filter:JSON.parse(JSON.stringify(c.filter)),timeMs:Math.max(0,Date.now()-c.started-((S.clock?.pausedMs||0)-c.pauseBase))}};
+  const treatment=trio.length===3?scoreSite(s,trio):{score:0,avg:[0,0,0],ded:['No treatment was submitted before time ran out'],precision:0};
+  const bestPool=pool.length>=3?bestIn(s,pool):{score:0,trio:null},bestFull=bestIn(s,s.pool);
+  const decisions=trio.length===3?scoreSeaWolfDecisions(sw,s,c,treatment,bestPool,bestFull):{processScore:0,penalties:[]};
+  const sc={...treatment,treatmentScore:treatment.score,processScore:decisions.processScore,penalties:decisions.penalties,
+    score:trio.length===3?Math.round((treatment.score*.75+decisions.processScore*.25)*10)/10:0};
+  sw.results[sw.i]={site:s,trio,sc,bestPool,bestFull,review:{filtered:c.filtered?c.filtered.slice():null,shown:c.shown.slice(),cat:{...c.cat},picks:c.picks.slice(),kept:[...c.keep],offerHistory:c.offerHistory.map(x=>x.slice()),filter:JSON.parse(JSON.stringify(c.filter)),timeMs:Math.max(0,Date.now()-c.started-((S.clock?.pausedMs||0)-c.pauseBase))}};
   mark('sw',s.name);c.done=true}
 function finishSW(){const sw=S.sw;if(sw.fin)return;sw.fin=true;for(let i=sw.i;i<3;i++){if(i===sw.i){if(!sw.results[i])scoreCurrent()}else{const s=sw.data.sites[i];sw.results[i]={site:s,trio:[],sc:{score:0,avg:[0,0,0],ded:['Site not reached']},bestPool:{score:0,trio:null},bestFull:bestIn(s,s.pool)}}}
   S.res.sw=sw.results;stopClock();if(S.mode==='full20'||S.mode==='full30'){S.pendingGame=S.mode==='full20'?'sfl20':'sfl30';go('break')}else go('results')}
@@ -283,16 +339,18 @@ function resultsHTML(){let h='<div class="stack" style="gap:24px"><div class="ro
   h+='<p class="mute" style="max-width:720px">Scores here are practice feedback from an independent model. McKinsey does not publish its scoring or a pass mark.</p></div>';return h}
 function phaseTimes(g){const m=S.marks.filter(x=>x.game===g);return m.length?`<div class="row">${m.map(x=>`<span class="chip">${x.name} <b>${mmss(x.ms/1000)}</b></span>`).join('')}</div>`:''}
 function rrResults(){const r=S.res.rr,secs=['Analysis','Report','Cases'];
-  return`<section class="card stack rr-scope"><div class="row" style="justify-content:space-between"><div><span class="eyebrow rr-t">Redrock Study${S.rr.timeUp?' · time ran out':''}</span><div class="score rr-t">${Math.round(r.total*10)/10} <span class="mute" style="font-size:1.2rem">/ ${r.max}</span></div></div><div class="row">${secs.map(s=>{const it=r.items.filter(x=>x.sec===s);return`<span class="chip">${s} <b>${Math.round(it.reduce((a,b)=>a+b.pts,0)*10)/10}/${it.reduce((a,b)=>a+b.max,0)}</b></span>`}).join('')}</div></div>${phaseTimes('rr')}
+  return`<section class="card stack rr-scope"><div class="row" style="justify-content:space-between"><div><span class="eyebrow rr-t">Redrock Study${S.rr.timeUp?' · time ran out':''}</span><div class="score rr-t">${r.total} <span class="mute" style="font-size:1.2rem">/ ${r.max}</span></div></div><div class="row">${secs.map(s=>{const it=r.items.filter(x=>x.sec===s);return`<span class="chip">${s} <b>${Math.round(it.reduce((a,b)=>a+b.pts,0)*100)/100}/${it.reduce((a,b)=>a+b.max,0)}</b></span>`}).join('')}</div></div>${phaseTimes('rr')}
 <div class="tblbox"><table><tr><th>Item</th><th>Your answer</th><th>Correct</th><th class="n">Points</th></tr>${r.items.map(x=>`<tr><td>${esc(x.sec)} · ${esc(x.label)}</td><td class="mono">${esc(x.your)}</td><td class="mono">${esc(x.correct)}</td><td class="n ${x.pts===x.max?'ok':x.pts>0?'':'no'}">${x.pts}/${x.max}</td></tr>`).join('')}</table></div>
 <details><summary>Case explanations</summary><div class="stack" style="margin-top:10px">${S.rr.d.cases.map((c,i)=>`<p><b>Case ${i+1} · ${c.kind}.</b> ${esc(c.explain)}</p>`).join('')}</div></details></section>`}
-function swResults(){const R=S.res.sw,tot=R.reduce((a,b)=>a+b.sc.score,0);
+function swResults(){const R=S.res.sw,tot=Math.round(R.reduce((a,b)=>a+b.sc.score,0)*10)/10;
   return`<section class="card stack"><div><span class="eyebrow sw-t">Sea Wolf</span><div class="score sw-t">${tot} <span class="mute" style="font-size:1.2rem">/ 300</span></div></div>${phaseTimes('sw')}
 <p class="mute">Your pool contains the microbes you kept for a site and the prospects you selected. The full pool is that site's original set before your profile and choices. A full-pool example may no longer be available from your choices.</p>
 ${R.map(r=>`<div class="stack card flat" style="gap:8px"><div class="row" style="justify-content:space-between"><h3>${r.site.name} · ${esc(r.site.contam)}</h3><span class="mono"><b>${r.sc.score}</b>/100</span></div>
 <p>${r.trio.length?r.trio.map(m=>`${esc(m.name)} <span class="mute">(${esc(m.trait)})</span>`).join(', '):'<span class="mute">No treatment</span>'}</p>
-${r.sc.ded.length?`<ul style="margin:0;padding-left:1.1rem">${r.sc.ded.map(d=>`<li class="no">${r.trio.length===3?'−20 · ':''}${esc(d)}</li>`).join('')}</ul>`:'<p class="ok">Every requirement met.</p>'}
-<p class="mute" style="font-size:.9rem">Best from your pool: ${r.bestPool.score}. Full pool: ${r.site.pool.length} microbes, ${countPerfectTeams(r.site)} perfect teams. Target widths: ${r.site.ranges.map(x=>x[1]-x[0]).join(' / ')}. Reference perfect team: ${r.bestFull.trio?r.bestFull.trio.map(m=>esc(m.name)+' ('+esc(m.trait)+')').join(', '):'—'}.</p></div>`).join('')}</section>`}
+<p class="mute">Treatment ${r.sc.treatmentScore??0}/100 (75% of site score) · Decisions ${r.sc.processScore??0}/100 (25%). ${r.sc.precision?`Midpoint distance cost ${r.sc.precision} treatment points.`:''}</p>
+${r.sc.ded.length?`<ul style="margin:0;padding-left:1.1rem">${r.sc.ded.map(d=>`<li class="no">${r.trio.length===3?'−20 treatment points · ':''}${esc(d)}</li>`).join('')}</ul>`:'<p class="ok">Every treatment requirement met.</p>'}
+${r.sc.penalties?.length?`<ul style="margin:0;padding-left:1.1rem">${r.sc.penalties.map(p=>`<li class="no">−${p.points} decision points · ${esc(p.label)}</li>`).join('')}</ul>`:''}
+<p class="mute" style="font-size:.9rem">Best treatment from your pool: ${r.bestPool.score}. Full pool: ${r.site.pool.length} microbes, ${countPerfectTeams(r.site)} compliant teams. Target widths: ${r.site.ranges.map(x=>x[1]-x[0]).join(' / ')}. Reference best team: ${r.bestFull.trio?r.bestFull.trio.map(m=>esc(m.name)+' ('+esc(m.trait)+')').join(', '):'—'}.</p></div>`).join('')}</section>`}
 
 /* ---------- actions ---------- */
 function setBind(k,v){S.rr.ans[k]=v}
@@ -309,7 +367,7 @@ const ACT={
   'spaced-csv'(){downloadText('solve-lab-review-plan.csv',spacedCSV(),'text/csv;charset=utf-8')},
   'results-csv'(){downloadText('solve-lab-'+S.seed+'.csv',resultsCSV(),'text/csv;charset=utf-8')},
   'print-results'(){document.querySelectorAll('details').forEach(x=>x.open=true);setTimeout(()=>window.print(),40)},
-  'copy-challenge'(){const share=challengeShareText(S.seed,S.mode),status=$('#share-status'),field=$('#challenge-url');const fallback=()=>{field?.select();let ok=false;try{ok=document.execCommand('copy')}catch{}if(status)status.textContent=ok?'Copied.':'Challenge selected; press Ctrl+C to copy.'};if(navigator.clipboard?.writeText)navigator.clipboard.writeText(share).then(()=>{if(status)status.textContent='Copied.'}).catch(fallback);else fallback()},
+  'copy-challenge'(){const share=challengeShareText(S.seed,S.mode,S.difficulty),status=$('#share-status'),field=$('#challenge-url');const fallback=()=>{field?.select();let ok=false;try{ok=document.execCommand('copy')}catch{}if(status)status.textContent=ok?'Copied.':'Challenge selected; press Ctrl+C to copy.'};if(navigator.clipboard?.writeText)navigator.clipboard.writeText(share).then(()=>{if(status)status.textContent='Copied.'}).catch(fallback);else fallback()},
   'feedback-save'(){const selects=[...document.querySelectorAll('[data-feedback]')].filter(x=>x.value);for(const x of selects)addFeedback({at:new Date().toISOString(),seed:S.seed,game:x.dataset.feedback,rating:x.value,difficulty:S.difficulty});const status=$('#feedback-status');if(status)status.textContent=selects.length?'Saved on this device.':'Choose a comparison first.'},
   'drill-start'(v){if(S.screen==='drill-results')S.seed=randomSeed();startDrill(v)},
   'drill-answer'(){drillAnswer()},

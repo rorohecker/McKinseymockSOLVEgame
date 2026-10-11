@@ -106,7 +106,11 @@ def score_site(site, trio):
         for m in trio:
             if m["trait"] == site["undesired"]:
                 ded.append(f"{m['name']} carries the undesired trait ({site['undesired']})")
-    return {"score": max(0, 100 - 20 * len(ded)), "avg": avg, "ded": ded}
+    precision = js_round(sum(min(1, abs(value - sum(site["ranges"][i]) / 2) /
+                                 max(.5, (site["ranges"][i][1] - site["ranges"][i][0]) / 2))
+                             for i, value in enumerate(avg)) * 40) / 10
+    return {"score": max(0, js_round((100 - 20 * len(ded) - precision) * 10) / 10),
+            "avg": avg, "ded": ded, "precision": precision}
 
 
 def best_in(site, pool):
@@ -122,7 +126,7 @@ def best_in(site, pool):
 
 
 def count_perfect(site, pool):
-    return sum(1 for t in combinations(pool, 3) if score_site(site, list(t))["score"] == 100)
+    return sum(1 for t in combinations(pool, 3) if not score_site(site, list(t))["ded"])
 
 
 def profile_traits(site, pool=None):

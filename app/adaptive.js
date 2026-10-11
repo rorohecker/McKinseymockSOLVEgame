@@ -28,10 +28,10 @@ function sessionSkillStats(){
     const deductions=r.sc.ded||[];
     for(let i=0;i<3;i++)add("range",r.trio.length!==3||deductions.some(x=>x.startsWith(ATTRS[i]+" average")));
     // A planted trio is one reference solution, not the only valid way to solve a site.
-    // Judge access to a strong treatment and visible trait mistakes, rather than
-    // whether the player happened to use one reference trio.
+    // Use actual sorting errors and lost access instead of an absolute 100 threshold.
     const traitMiss=deductions.some(x=>x.startsWith("No microbe carries the desired trait")||x.includes("undesired trait"));
-    add("filter",r.trio.length!==3||r.bestPool?.score<100||traitMiss);
+    const sortingMiss=(r.sc.penalties||[]).some(p=>/Profile included|Profile excluded|miscategorised|dropped despite|kept despite/.test(p.label));
+    add("filter",r.trio.length!==3||r.bestPool?.score<r.bestFull?.score||traitMiss||sortingMiss);
   }
   if(S.res.sfl)for(const item of S.res.sfl.score.items)add("sfl",item.pts<item.max);
   if(S.drill?.results){

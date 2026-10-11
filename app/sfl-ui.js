@@ -12,8 +12,8 @@ function breakHTML(){
 function sflIntroHTML(){
   const team=S.sfl.format==='team',mins=team?30:20;
   const guide=team
-    ?'<p><b>Explore:</b> Ask up to three questions each day. Each question earns one practice point, and its note remains available.</p><p><b>Assign:</b> Match four researchers to the station skills shown and explain each placement.</p><p><b>Support:</b> Respond to two requests. <b>Reflect:</b> Use skill fit and support to assess each person.</p><p class="mute">Daily points: 3 explore, 16 assignment, 4 support, 4 reflection. The three days are scaled to 100.</p>'
-    :'<p><b>Ranking:</b> Order four first actions for 20 points. Drag rows or use the arrow buttons.</p><p><b>Decisions:</b> Make twelve linked choices worth 60 points. Earlier choices change later context.</p><p><b>Consistency:</b> Starts at 20 points. Each conflicting pair costs 5: transparent versus opaque, evidence versus assumption, or targeted versus spreading effort equally. Skipped decisions reduce this score proportionally.</p>';
+    ?'<p><b>Explore:</b> Ask up to three questions each day. Full credit requires asking about both a researcher and a station.</p><p><b>Assign:</b> Match four researchers to the station skills shown and explain each placement.</p><p><b>Support:</b> Respond to two requests. <b>Reflect:</b> Use skill fit and support to assess each person.</p><p class="mute">Daily points: 3 explore, 16 assignment, 4 support, 4 reflection. The three days are scaled to 100.</p>'
+    :'<p><b>Ranking:</b> Order four first actions for 20 points. Drag rows or use the arrow buttons.</p><p><b>Decisions:</b> Make twelve linked choices worth 60 points. Earlier choices change later context.</p><p><b>Consistency:</b> Starts at 10 points. Each conflicting pair costs 3.</p><p><b>Outcome:</b> Starts at 10 points. Weak evidence, lost trust, and excess pressure reduce it. Skipped decisions reduce both scores proportionally.</p>';
   return`<section class="mission-intro stack sfl-scope" style="max-width:820px"><span class="eyebrow">Mission 03 // untimed briefing</span><h1>Sustainable Futures Lab</h1><span class="chip">${team?'Team Lab · 30 minutes':'Project Lead · 20 minutes'}</span>
   <p>${team?'Guide four researchers through three project days. Each day you explore, assign, support and reflect.':'Rank four first actions, then make twelve linked decisions in one environmental project. Earlier choices change later context.'}</p>
   <div class="card stack"><h3>Practice reconstruction</h3><p>This module uses original scenarios and a transparent practice score. The real tasks and scoring are not published.</p>${guide}</div>
@@ -57,8 +57,8 @@ function sflTeamHTML(){
   return`<div class="stack sfl-scope">${head}${phase==='explore'?'':teamFieldNotesHTML(f,r)}${body}</div>`;
 }
 function sflRankMove(index,to){
-  const rank=S.sfl.rank;if(to<0||to>=rank.length)return;
-  [rank[index],rank[to]]=[rank[to],rank[index]];render(false);
+  const rank=S.sfl.rank;if(!Number.isInteger(index)||!Number.isInteger(to)||index<0||index>=rank.length||to<0||to>=rank.length||index===to)return;
+  rank.splice(to,0,rank.splice(index,1)[0]);render(false);
 }
 function sflAnswer(id){
   const f=S.sfl,q=f.data.questions[f.step],choice=q.options.find(x=>x.id===id);if(!choice)return;
@@ -105,6 +105,6 @@ function sflResults(){
   <p class="mute">The score below is an original learning model. It is not a McKinsey score or pass prediction.</p>
   <details><summary>Review every decision</summary><div class="stack" style="margin-top:14px">${sc.items.map(item=>`<div class="card flat"><div class="row" style="justify-content:space-between"><b>${esc(item.label)}</b><span class="mono">${item.pts}/${item.max}</span></div>${item.your?`<p>Your choice: ${esc(item.your)}. Strongest: ${esc(item.correct)}.</p>`:''}<p class="mute">${esc(item.why)}</p></div>`).join('')}</div></details></section>`;
 }
-document.addEventListener('dragstart',e=>{const row=e.target.closest?.('[data-rank-row]');if(row&&e.dataTransfer)e.dataTransfer.setData('text/plain',row.dataset.rankRow)});
+document.addEventListener('dragstart',e=>{const row=e.target.closest?.('[data-rank-row]');if(row&&e.dataTransfer)e.dataTransfer.setData('application/x-solve-rank',row.dataset.rankRow)});
 document.addEventListener('dragover',e=>{if(e.target.closest?.('[data-rank-row]'))e.preventDefault()});
-document.addEventListener('drop',e=>{const row=e.target.closest?.('[data-rank-row]');if(!row||S.screen!=='sfl-project')return;e.preventDefault();const from=Number(e.dataTransfer.getData('text/plain')),to=Number(row.dataset.rankRow);if(Number.isInteger(from))sflRankMove(from,to)});
+document.addEventListener('drop',e=>{const row=e.target.closest?.('[data-rank-row]');if(!row||S.screen!=='sfl-project')return;e.preventDefault();const raw=e.dataTransfer?.getData('application/x-solve-rank')||'',to=Number(row.dataset.rankRow);if(/^[0-3]$/.test(raw))sflRankMove(Number(raw),to)});

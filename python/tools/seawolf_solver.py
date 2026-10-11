@@ -34,15 +34,17 @@ def main():
     ranked = []
     for trio in combinations(ms, 3):
         r = score_site(site, list(trio))
-        ranked.append((r["score"], r["avg"], trio, r["ded"]))
+        ranked.append((r["score"], r["avg"], trio, r["ded"], r["precision"]))
     ranked.sort(key=lambda x: -x[0])
-    perfect = sum(1 for x in ranked if x[0] == 100)
-    print(f"{len(ms)} microbes, {len(ranked)} teams, {perfect} perfect\n")
-    for score, avg, trio, ded in ranked[:a.top]:
+    compliant = sum(1 for x in ranked if not x[3])
+    print(f"{len(ms)} microbes, {len(ranked)} teams, {compliant} compliant\n")
+    for score, avg, trio, ded, precision in ranked[:a.top]:
         names = ", ".join(m["name"] for m in trio)
         print(f"{score:>3}  {names}   averages {[round(v, 2) for v in avg]}")
         for d in ded:
             print(f"       -20 {d}")
+        if precision:
+            print(f"       -{precision} midpoint distance")
 
 
 if __name__ == "__main__":

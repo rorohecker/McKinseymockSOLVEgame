@@ -70,7 +70,7 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 |---|---|
 | Python port vs JS in `app/index.html` | 300 seeds matched in headless Chrome on Windows; the parity tool also uses Node.js when available. |
 | Perfect Redrock answer sheet | scores 175 on 500 seeds; empty sheet scores 0 |
-| Sea Wolf sites | planted team scores 100, perfect team found by brute force, unique names, 28-microbe pools on 1,500 sites |
+| Sea Wolf sites | planted team meets every requirement, solver finds a treatment at least as strong, unique names and 28-microbe pools across 1,500 sites |
 | Unit tests | 11 pass |
 | Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes, every standalone game, and imperfect or partial runs using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast, control labels, broken placeholders and local image loading; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
 
@@ -81,6 +81,8 @@ The DAY/NIGHT control saves your theme preference locally. The Keys menu lists s
 Extended sittings use 85 minutes (Redrock + Sea Wolf + 20-minute SFL Project Lead) or 95 minutes (with the 30-minute SFL Team Lab). A break screen pauses between games. The SFL tasks, timing and scoring are practice reconstructions because official details are limited.
 
 Short sessions cover mental math, six Redrock cases at two minutes each, and Sea Wolf filtering. The Sea Wolf filter drill shows its sorting rule beside every candidate; final treatments still use three-microbe averages. The five-minute adaptive drill reads recent missed skills from local history and chooses focused math, Redrock data, Sea Wolf filtering, or SFL decisions; a first run starts with percent math. Scores, phase time and mistake summaries are saved in this browser. Standard/Hard changes Sea Wolf range widths and distractors plus Redrock numeric tolerance; learning hints can be switched on. Personal difficulty comparisons remain on this device.
+
+The [practice scoring model](docs/PRACTICE_SCORING.md) grades Sea Wolf sorting, prospects, final treatment choice and target precision; Redrock numeric near misses and chart choice; and SFL decision consistency and outcomes. These weights are this project's rules. Past saved scores remain visible as legacy entries; history trends and seed comparisons use the current scoring model and matching difficulty. Shared challenge links include the difficulty setting.
 
 Spaced practice uses the same five-minute skill drills on a local calendar schedule. A strong review moves a skill through 1, 3, 7, 14 and 30-day intervals; missed work returns the next day. Completed runs feed the schedule, including existing saved history when the plan is first created. The home and history screens show due skills, and the plan exports to CSV. This schedule is a study aid, not a McKinsey scoring rule.
 

@@ -1,6 +1,6 @@
 # Game content and interface audit — 2026-10-08
 
-Updated 2026-10-09 with partial-run review and scoring-guide checks.
+Updated 2026-10-10 with scoring, quality-of-life, and regression checks.
 
 The simulator now gives players the rules and data needed for its own scoring before they commit an answer. Its scores remain an independent practice model; the published sources do not define the real assessment's private scoring.
 
@@ -13,6 +13,6 @@ The simulator now gives players the rules and data needed for its own scoring be
 | Focused practice | Math, Redrock cases, Sea Wolf filter, adaptive and spaced drills | Each prompt's units and rule; Sea Wolf drill uses an explicit sorting rule separate from treatment scoring |
 | Shared controls | Seed challenge, history, exports, hints, difficulty, theme, pause, quit and keyboard shortcuts | Named controls, labeled form fields and visible feedback for invalid input |
 
-The browser audit runs the 65, 85 and 95-minute routes, all standalone games, deliberately imperfect and partial runs in every game, all six spaced skill targets, and timeout paths at 1280, 500 and 360 pixels. It checks horizontal overflow, text contrast, broken placeholders, accessible names and labels, and that every referenced local image loads. It also checks that an alternative perfect Sea Wolf treatment is not mislabeled as a filtering mistake and that actual trait mistakes reach the adaptive coach. `python python/tools/ui_smoke.py` reruns it. `python -m unittest discover -s python/tests -v` checks the Python scenario port and core scoring invariants.
+The browser audit runs the 65, 85 and 95-minute routes, all standalone games, deliberately imperfect and partial runs in every game, all six spaced skill targets, and timeout paths at 1280, 500 and 360 pixels. It checks horizontal overflow, text contrast, broken placeholders, accessible names and labels, and that every referenced local image loads. The smoke check also covers Sea Wolf forbidden traits, categorisation, weak-but-usable rejects and better available treatments; Redrock near misses and chart penalties; SFL outcome and inquiry scoring across 500 seeds; actual priority drag ordering; legacy-score separation; difficulty-preserving challenge links; and adaptive skill signals. `python python/tools/ui_smoke.py` reruns it. `python -m unittest discover -s python/tests -v` checks the Python scenario port and core scoring invariants.
 
 The distinction between confirmed assessment details and this simulator's choices is tracked in [KNOWN_DEVIATIONS.md](KNOWN_DEVIATIONS.md). A player can rely on the rules displayed in this simulator to understand its practice score, without treating those rules as official McKinsey scoring.

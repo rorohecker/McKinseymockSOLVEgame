@@ -49,7 +49,7 @@ The 65-minute full run ends after Sea Wolf. The SFL branch is used only in the 8
 
 ### Sea Wolf generation (why every site is solvable)
 
-For each site the generator first **plants** a perfect team: target averages `a` per attribute, three microbes whose sum is within 1 of `3a`, ranges `[a-1, a+1]`, one planted microbe carries the desired trait, none the forbidden one. It then adds:
+For each site the generator first **plants** a compliant team: target averages `a` per attribute, three microbes whose sum is within 1 of `3a`, ranges `[a-1, a+1]`, one planted microbe carries the desired trait, none the forbidden one. Midpoint precision may leave that team below 100 under the practice scorer. It then adds:
 - 3 traps with near-target numbers but the forbidden trait,
 - 1 microbe that suits the next site (carry-over bait),
 - random fillers up to 28.
@@ -62,7 +62,7 @@ Four groups in one of three island study themes (wolf territory, wetland restora
 
 ## Python package
 
-`solve_lab.rng` and `solve_lab.jsnum` reproduce JavaScript's random stream, `Math.round`, number printing and `toLocaleString`. `redrock.py` and `seawolf.py` are line-for-line ports. `snapshot.py` builds the canonical dictionary used by the parity check and the exporters.
+`solve_lab.rng` and `solve_lab.jsnum` reproduce JavaScript's random stream, `Math.round`, number printing and `toLocaleString`. `redrock.py` and `seawolf.py` port scenario generation and treatment scoring. Sea Wolf decision scoring lives in `app/ui.js` because it uses the recorded browser choices. `snapshot.py` builds the canonical dictionary used by the parity check and the exporters; it includes sample scorer outputs.
 
 ## Change workflow
 

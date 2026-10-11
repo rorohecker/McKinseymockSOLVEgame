@@ -13,13 +13,13 @@ function sessionMetrics(){
 function finalizeSession(){
   if(!S.session||S.session.saved)return;
   S.session.saved=true;
-  const entry={id:Date.now()+'-'+S.seed,date:new Date().toISOString(),seed:S.seed,mode:S.mode,difficulty:S.difficulty,
-    rr:S.res.rr?.total??null,sw:S.res.sw?S.res.sw.reduce((a,x)=>a+x.sc.score,0):null,
+  const entry={id:Date.now()+'-'+S.seed,date:new Date().toISOString(),seed:S.seed,mode:S.mode,difficulty:S.difficulty,scoringVersion:SCORING_VERSION,
+    rr:S.res.rr?.total??null,sw:S.res.sw?Math.round(S.res.sw.reduce((a,x)=>a+x.sc.score,0)*10)/10:null,
     sfl:S.res.sfl?.score.total??null,math:S.res.math?.total??null,drill:S.drill?.results?.total??null,drillMax:S.drill?.results?.max??null,
     durationSeconds:Math.round((Date.now()-S.session.started-(S.session.pausedMs||0))/1000),source:'local',metrics:sessionMetrics(),skillStats:sessionSkillStats(),adaptiveFocus:S.drill?.kind==='adaptive'?S.drill.focus.id:null,spacedFocus:S.drill?.kind==='spaced'?S.drill.focus.id:null,
     phaseSeconds:Object.fromEntries(S.marks.map(x=>[x.game+' '+x.name,Math.round(x.ms/1000)])),
     mistakes:{redrock:S.res.rr?.items.filter(x=>x.pts<x.max).reduce((a,x)=>(a[x.sec]=(a[x.sec]||0)+1,a),{})||{},
-      seaWolf:S.res.sw?.flatMap(x=>x.sc.ded).length||0,sfl:S.res.sfl?.score.items.filter(x=>x.pts<x.max).length||0,drill:S.drill?.results?.items.filter(x=>!x.ok).length||0},
+      seaWolf:S.res.sw?.reduce((n,x)=>n+x.sc.ded.length+(x.sc.penalties?.length||0),0)||0,sfl:S.res.sfl?.score.items.filter(x=>x.pts<x.max).length||0,drill:S.drill?.results?.items.filter(x=>!x.ok).length||0},
     log:S.session.log};
   S.session.entry=entry;S.session.spacingSaved=updateSpaced(entry.skillStats);S.session.persisted=saveHistory(entry);
 }
@@ -32,16 +32,17 @@ function processHTML(){
   <p class="mute">These are self-review signals only. The real assessment's process score is not published.</p></section>`;
 }
 function historyHTML(){
-  const rows=readHistory(),rr=rows.filter(x=>Number.isFinite(x.rr)).map(x=>x.rr/175*100),sw=rows.filter(x=>Number.isFinite(x.sw)).map(x=>x.sw/300*100),sfl=rows.filter(x=>Number.isFinite(x.sfl)).map(x=>x.sfl);
+  const rows=readHistory(),comparable=rows.filter(x=>x.scoringVersion===SCORING_VERSION&&x.difficulty===S.difficulty);
+  const rr=comparable.filter(x=>Number.isFinite(x.rr)).map(x=>x.rr/175*100),sw=comparable.filter(x=>Number.isFinite(x.sw)).map(x=>x.sw/300*100),sfl=comparable.filter(x=>Number.isFinite(x.sfl)).map(x=>x.sfl);
   const av=x=>x.length?Math.round(x.reduce((a,b)=>a+b,0)/x.length):null;
   const trends=[['Redrock',av(rr)],['Sea Wolf',av(sw)],['SFL',av(sfl)]].filter(x=>x[1]!==null);
   const weakest=trends.slice().sort((a,b)=>a[1]-b[1])[0];
-  const recent=rows.slice(0,20).reverse(),pts=recent.map((x,i)=>{const scores=[Number.isFinite(x.rr)?x.rr/175*100:null,Number.isFinite(x.sw)?x.sw/300*100:null,Number.isFinite(x.sfl)?x.sfl:null,Number.isFinite(x.drill)&&Number.isFinite(x.drillMax)&&x.drillMax>0?x.drill/x.drillMax*100:null].filter(Number.isFinite);const y=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;return(i*34+12)+','+(112-y)});
+  const recent=comparable.slice(0,20).reverse(),pts=recent.map((x,i)=>{const scores=[Number.isFinite(x.rr)?x.rr/175*100:null,Number.isFinite(x.sw)?x.sw/300*100:null,Number.isFinite(x.sfl)?x.sfl:null,Number.isFinite(x.drill)&&Number.isFinite(x.drillMax)&&x.drillMax>0?x.drill/x.drillMax*100:null].filter(Number.isFinite);const y=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;return(i*34+12)+','+(112-y)});
   return`<div class="stack"><div class="row" style="justify-content:space-between"><h1>Practice history</h1><button class="btn ghost" data-act="home">Back to modes</button></div>${spacedPanelHTML()}
-  <div class="card stack"><span class="eyebrow">Saved on this device</span><h2>${rows.length} completed run${rows.length===1?'':'s'}</h2>${weakest?`<p>Lowest average: <b>${weakest[0]}</b> at ${weakest[1]}% across saved runs.</p>`:''}
+  <div class="card stack"><span class="eyebrow">Saved on this device</span><h2>${rows.length} completed run${rows.length===1?'':'s'}</h2><p class="mute">Averages and trend use ${comparable.length} run${comparable.length===1?'':'s'} from scoring model ${SCORING_VERSION} on ${esc(S.difficulty)} difficulty. Older scores remain in the table.</p>${weakest?`<p>Lowest average: <b>${weakest[0]}</b> at ${weakest[1]}% across comparable runs.</p>`:''}
   ${recent.length>1?`<svg class="trend" viewBox="0 0 ${recent.length*34+20} 125" role="img" aria-label="Recent overall practice scores"><path d="M0 112H${recent.length*34+20}" stroke="currentColor" opacity=".3"/><polyline points="${pts.join(' ')}" fill="none" stroke="currentColor" stroke-width="3"/>${pts.map(p=>`<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="4" fill="currentColor"/>`).join('')}</svg>`:''}
   <button class="btn ghost sm" data-act="history-csv" ${rows.length?'':'disabled'}>Export history CSV</button></div>
-  <div class="card tblbox"><table><thead><tr><th>Date / details</th><th>Mode</th><th>Seed</th><th>Difficulty</th><th class="n">Redrock</th><th class="n">Sea Wolf</th><th class="n">SFL / drill</th></tr></thead><tbody>${rows.map(x=>`<tr><td><details><summary>${esc(new Date(x.date).toLocaleDateString())}</summary><small>Duration: ${mmss(x.durationSeconds||0)}<br>Phases: ${esc(Object.entries(x.phaseSeconds||{}).map(([k,v])=>k+' '+mmss(v)).join(' · ')||'—')}<br>Mistakes: ${esc(JSON.stringify(x.mistakes||{}))}<br>Actions: ${x.metrics?.actions??'—'}; answer revisions: ${x.metrics?.revisions??'—'}</small></details></td><td>${esc(x.mode)}</td><td class="mono">${x.seed}</td><td>${esc(x.difficulty)}</td><td class="n">${x.rr??'—'}</td><td class="n">${x.sw??'—'}</td><td class="n">${x.sfl??(x.drill!==null&&x.drill!==undefined?x.drill+'/'+x.drillMax:'—')}</td></tr>`).join('')}</tbody></table></div></div>`;
+  <div class="card tblbox"><table><thead><tr><th>Date / details</th><th>Mode</th><th>Seed</th><th>Difficulty</th><th class="n">Redrock</th><th class="n">Sea Wolf</th><th class="n">SFL / drill</th></tr></thead><tbody>${rows.map(x=>`<tr><td><details><summary>${esc(new Date(x.date).toLocaleDateString())}</summary><small>Scoring model: ${x.scoringVersion??'legacy'}<br>Duration: ${mmss(x.durationSeconds||0)}<br>Phases: ${esc(Object.entries(x.phaseSeconds||{}).map(([k,v])=>k+' '+mmss(v)).join(' · ')||'—')}<br>Mistakes: ${esc(JSON.stringify(x.mistakes||{}))}<br>Actions: ${x.metrics?.actions??'—'}; answer revisions: ${x.metrics?.revisions??'—'}</small></details></td><td>${esc(x.mode)}</td><td class="mono">${x.seed}</td><td>${esc(x.difficulty)}</td><td class="n">${x.rr??'—'}</td><td class="n">${x.sw??'—'}</td><td class="n">${x.sfl??(x.drill!==null&&x.drill!==undefined?x.drill+'/'+x.drillMax:'—')}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
 function calibrationHTML(){
   const a=readFeedback(),n=a.length;
@@ -56,8 +57,8 @@ function feedbackHTML(){
   return`<section class="card stack"><h2>Compare difficulty</h2><p class="mute">Only if you have taken the real assessment. Your answers stay in this browser and help you choose Standard or Hard next time.</p><div class="row">${games.map(([id,name])=>`<label>${name}<select data-feedback="${id}"><option value="">No comparison</option><option value="easier">This felt easier</option><option value="similar">About similar</option><option value="harder">This felt harder</option></select></label>`).join('')}</div><button class="btn ghost" data-act="feedback-save">Save comparison</button><p class="mute" id="feedback-status"></p></section>`;
 }
 function shareHTML(){
-  const share=challengeShareText(S.seed,S.mode),same=readHistory().filter(x=>x.seed===S.seed&&x.mode===S.mode),best=same.length?Math.max(...same.map(x=>(x.rr||0)+(x.sw||0)+(x.sfl||0))):null;
-  return`<section class="card stack"><h2>Seed challenge</h2><p class="mute">${location.protocol==='file:'?'Share this seed and mode with a friend who has their own copy of the lab.':'Share this link so a friend can play the same seed and mode.'} Your local runs on this seed: ${same.length}${best!==null?' · best combined points '+best:''}.</p><label for="challenge-url" class="eyebrow">Challenge to share</label><div class="row"><input id="challenge-url" readonly value="${esc(share)}" style="flex:1;min-width:220px"><button class="btn ghost" data-act="copy-challenge">Copy challenge</button></div><p id="share-status" class="mute"></p></section>`;
+  const share=challengeShareText(S.seed,S.mode,S.difficulty),same=readHistory().filter(x=>x.seed===S.seed&&x.mode===S.mode&&x.difficulty===S.difficulty&&x.scoringVersion===SCORING_VERSION),best=same.length?Math.round(Math.max(...same.map(x=>(x.rr||0)+(x.sw||0)+(x.sfl||0)))*100)/100:null;
+  return`<section class="card stack"><h2>Seed challenge</h2><p class="mute">${location.protocol==='file:'?'Share this seed and mode with a friend who has their own copy of the lab.':'Share this link so a friend can play the same seed and mode.'} Your comparable local runs on this seed, ${esc(S.difficulty)} difficulty and model ${SCORING_VERSION}: ${same.length}${best!==null?' · best combined points '+best:''}.</p><label for="challenge-url" class="eyebrow">Challenge to share</label><div class="row"><input id="challenge-url" readonly value="${esc(share)}" style="flex:1;min-width:220px"><button class="btn ghost" data-act="copy-challenge">Copy challenge</button></div><p id="share-status" class="mute"></p></section>`;
 }
 function rrStepForItem(item,index){
   const d=S.rr.d;
@@ -96,7 +97,7 @@ function seaWolfReplayHTML(r,i){
   const submitted=Array.isArray(v.filtered),shown=v.shown||[];
   const excluded=submitted?site.planted.filter(id=>!v.filtered.includes(id)):[];
   const beyondDisplay=submitted?site.planted.filter(id=>v.filtered.includes(id)&&!shown.includes(id)):[];
-  const profileNote=!submitted?'No profile was submitted before time ran out.':excluded.length?`${excluded.length} microbe${excluded.length===1?'':'s'} from one reference 100-point trio did not match your profile.`:beyondDisplay.length?`${beyondDisplay.length} reference-trio microbe${beyondDisplay.length===1?'':'s'} matched, but fell beyond the first ten shown.`:'One reference 100-point trio was shown.';
+  const profileNote=!submitted?'No profile was submitted before time ran out.':excluded.length?`${excluded.length} microbe${excluded.length===1?'':'s'} from one compliant reference trio did not match your profile.`:beyondDisplay.length?`${beyondDisplay.length} reference-trio microbe${beyondDisplay.length===1?'':'s'} matched, but fell beyond the first ten shown.`:'One compliant reference trio was shown.';
   const categories=[['cur','This site'],['next','Next site'],['rej','Returned'],['','Unsorted']].map(([key,label])=>{const ids=shown.filter(id=>(v.cat?.[id]||'')===key);return`<div class="review-bucket"><b>${label} · ${ids.length}</b><p>${ids.length?ids.map(id=>esc(byId[id]?.name||id)).join(', '):'None'}</p></div>`}).filter((_,j)=>j<3||shown.some(id=>!v.cat?.[id])).join('');
   const moved=shown.filter(id=>site.planted.includes(id)&&v.cat?.[id]!=='cur');
   const core=shown.filter(id=>v.cat?.[id]==='cur').concat(v.kept||[]),picks=v.picks||[],poolIds=core.concat(picks),best=bestReviewTreatment(site,poolIds);
@@ -107,7 +108,7 @@ function seaWolfReplayHTML(r,i){
     return`<div class="review-round"><b>Round ${j+1} · ${esc(byId[id]?.name||id)}</b><p>${better?`With your other choices fixed, ${esc(byId[better.id]?.name||better.id)} would raise the best available treatment from ${picked} to ${better.score}/100.`:'No offered alternative improves the best available practice score with your other choices fixed.'}</p></div>`;
   }).join('');
   let comparison='';
-  if(best.trio&&r.trio.length===3){const yourGap=midpointGap(site,r.trio);comparison=best.score>r.sc.score?`Your available pool contained a ${best.score}/100 treatment.`:best.score===r.sc.score&&best.gap+0.001<yourGap?'Both treatments earn the same practice score. The example is closer to the target midpoints; that closeness is a study aid, not an extra scoring rule.':'Your treatment matches the best available practice score and midpoint alignment.'}
+  if(best.trio&&r.trio.length===3){comparison=best.score>(r.sc.treatmentScore??r.sc.score)?`Your available pool contained a ${best.score}/100 treatment.`:'Your treatment matches the best available treatment quality in your pool.'}
   const missed=r.sc.ded||[];
   return`<details class="card sw-review-site" ${i===0?'open':''}><summary>${esc(site.name)} · ${r.sc.score}/100 · ${v.timeMs!==undefined?mmss(v.timeMs/1000):'not reached'}</summary><div class="stack">
     <div class="phase-review"><h4>01 · Profile</h4><p>${submitted?`Selected: <b>${chosen.map(esc).join(' + ')}</b>. ${v.filtered.length} of ${site.pool.length} microbes matched; ${shown.length} were shown.`:'No profile submitted.'}</p><p class="mute">${profileNote} ${submitted?'Another strong trio may still exist. ':''}This pool matching is specific to this practice model.</p></div>
@@ -120,6 +121,6 @@ function seaWolfReplayHTML(r,i){
 function workedReviewHTML(){
   let out='';
   if(S.res.rr){const misses=S.res.rr.items.map((x,i)=>[x,i]).filter(([x])=>x.pts<x.max);out+=`<section class="card stack rr-scope"><h2>Redrock worked review</h2>${misses.length?misses.map(([x,i])=>`<div class="card flat"><b>${esc(x.sec)} · ${esc(x.label)}</b><p>Your answer: ${esc(x.your)} · Correct: ${esc(x.correct)}</p><p class="mute">${esc(rrStepForItem(x,i))}</p></div>`).join(''):'<p class="ok">No missed Redrock items.</p>'}</section>`}
-  if(S.res.sw)out+=`<section class="card stack"><h2>Sea Wolf phase review</h2><p class="mute">Practice feedback for profiling, categorising, prospects and treatment. The midpoint comparison breaks ties for study only.</p>${S.res.sw.map(seaWolfReplayHTML).join('')}</section>`;
+  if(S.res.sw)out+=`<section class="card stack"><h2>Sea Wolf phase review</h2><p class="mute">Practice feedback for profiling, categorising, prospects and treatment. Closer target averages improve treatment quality.</p>${S.res.sw.map(seaWolfReplayHTML).join('')}</section>`;
   return out;
 }

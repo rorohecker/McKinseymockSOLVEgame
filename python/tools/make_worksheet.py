@@ -71,7 +71,7 @@ def main():
         b = best_in(s, s["pool"])
         nums = [s["pool"].index(m) + 1 for m in b["trio"]]
         key.append([s["name"], b["score"], ", ".join(map(str, nums))])
-    out.append("<h3>Sea Wolf (one perfect team per site)</h3>" + table(["Site", "Score", "Microbe numbers"], key))
+    out.append("<h3>Sea Wolf (one highest-scoring treatment per site)</h3>" + table(["Site", "Treatment quality", "Microbe numbers"], key))
     dest = pathlib.Path(a.out or f"worksheet_{a.seed}.html")
     dest.write_text(f"<!doctype html><meta charset=utf-8><title>Worksheet {a.seed}</title><style>{CSS}</style>" + "\n".join(out), encoding="utf-8")
     print("wrote", dest)

@@ -105,11 +105,19 @@
       for(const id of S.sw.data.sites[siteIndex].planted)ACT.sel(id);
       ACT.confirm();ACT['site-next']();
     }
-    check(S.res.sw.reduce((sum,x)=>sum+x.sc.score,0)===300,'Sea Wolf 300/300');
+    const total=S.res.sw.reduce((sum,x)=>sum+x.sc.score,0);
+    check(total>0&&total<300&&S.res.sw.some(x=>x.sc.penalties.length),'Sea Wolf penalises weak sorting or prospect decisions despite compliant planted treatments');
   }
   function project(){
-    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('Each conflicting pair costs 5'),'Project Lead scoring guide');ACT['sfl-begin']();
+    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('Each conflicting pair costs 3'),'Project Lead scoring guide');ACT['sfl-begin']();
     check(document.querySelector('.crumb')?.textContent.includes('Decision 1/13'),'Project Lead header agrees with priority ranking step');
+    const originalRank=S.sfl.rank.slice();
+    const drag=new DataTransfer();
+    document.querySelector('[data-rank-row="0"]').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:drag}));
+    document.querySelector('[data-rank-row="3"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:drag}));
+    check(S.sfl.rank.join('|')===originalRank.slice(1).concat(originalRank[0]).join('|'),'dragging a priority moves the intervening rows in order');
+    sflRankMove(3,0);check(S.sfl.rank.join('|')===originalRank.join('|'),'reverse priority move restores the original order');
+    sflRankMove(NaN,1);check(S.sfl.rank.join('|')===originalRank.join('|'),'invalid rank positions are ignored');
     const correct=SFL_RANK.slice().sort((a,b)=>a.rank-b.rank).map(x=>x.id);
     for(let i=0;i<correct.length;i++){
       let pos=S.sfl.rank.indexOf(correct[i]);
@@ -123,11 +131,29 @@
     }
     check(S.res.sfl.score.total===100,'SFL project 100/100');
   }
+  function sflSeedSweep(){
+    for(let seed=1;seed<=500;seed++){
+      const project=genSFLProject(seed),answers=project.questions.map(q=>{
+        check(q.options.length===3&&new Set(q.options.map(o=>o.id)).size===3&&q.options.map(o=>o.quality).sort().join(',')==='0,1,2','SFL Project choices complete at seed '+seed);
+        return q.options.find(o=>o.quality===2).id;
+      });
+      check(project.questions.length===12&&scoreSFLProject(project,SFL_RANK.map(x=>x.id),answers).total===100,'SFL Project perfect score at seed '+seed);
+      const team=genSFLTeam(seed),records=team.days.map(day=>{
+        const assign=Object.fromEntries(team.people.map(p=>[p.id,day.stations.find(w=>w.skill===p.skill)?.id]));
+        const reasons=Object.fromEntries(team.people.map(p=>[p.id,'Skill fit']));
+        const support=day.requests.map(q=>q.options.findIndex(o=>o.quality===2));
+        const reflect=Object.fromEntries(team.people.map(p=>[p.id,sflTeamState(p,day.stations.find(w=>w.id===assign[p.id]),4)]));
+        return{asked:[team.people[0].id,team.people[1].id,day.stations[0].id],assign,reasons,support,reflect};
+      });
+      check(team.days.length===3&&scoreSFLTeam(team,records).total===100,'SFL Team perfect score at seed '+seed);
+    }
+    log('500 SFL seeds have complete choices and reachable perfect scores');
+  }
   function team(){
     check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('3 explore, 16 assignment, 4 support, 4 reflection'),'Team Lab scoring guide');ACT['sfl-begin']();noOverflow('SFL team');
     for(let day=0;day<3;day++){
       const f=S.sfl,record=f.records[day],data=f.data,stations=data.days[day].stations;
-      data.people.slice(0,3).forEach(p=>ACT['team-ask'](p.id));ACT['team-next']();
+      data.people.slice(0,2).forEach(p=>ACT['team-ask'](p.id));ACT['team-ask'](stations[0].id);ACT['team-next']();
       check(document.querySelector('.team-notes')?.textContent.includes(data.people[0].name),'Team Lab field notes persist into assignments');
       check(document.querySelectorAll('.team-station').length===4&&stations.every(w=>document.querySelector('.team-stations').textContent.includes(w.skill)),'Team Lab shows every station requirement');
       noOverflow('Team Lab assignments');
@@ -152,15 +178,16 @@
     ACT['break-next']();seawolf();
     if(mode!=='full'){check(S.screen==='break','break after Sea Wolf');ACT['break-next']();(mode==='full20'?project:team)()}
     check(S.screen==='results','combined results');
-    const firstSite=S.res.sw[0],shown=firstSite.review.shown,bestScore=firstSite.bestPool.score;
+    const firstSite=S.res.sw[0],shown=firstSite.review.shown,bestScore=firstSite.bestPool.score,deductions=firstSite.sc.ded,penalties=firstSite.sc.penalties;
+    firstSite.bestPool.score=firstSite.bestFull.score;firstSite.sc.ded=[];firstSite.sc.penalties=[];
+    const cleanMisses=sessionSkillStats().filter.missed;
     firstSite.review.shown=[];
-    check(sessionSkillStats().filter.missed===0,'alternate perfect Sea Wolf treatment is not flagged as a filter mistake');
+    check(sessionSkillStats().filter.missed===cleanMisses,'reference-team membership alone is not a filter mistake');
     firstSite.review.shown=shown;firstSite.bestPool.score=80;
-    check(sessionSkillStats().filter.missed===1,'lost access to a perfect treatment is a selection practice signal');
-    firstSite.bestPool.score=bestScore;
-    const deductions=firstSite.sc.ded;firstSite.sc.ded=['No microbe carries the desired trait'];
-    check(sessionSkillStats().filter.missed===1,'submitted trait mistake enters Sea Wolf selection practice');
-    firstSite.sc.ded=deductions;
+    check(sessionSkillStats().filter.missed===cleanMisses+1,'lost access to a better treatment is a selection practice signal');
+    firstSite.bestPool.score=firstSite.bestFull.score;firstSite.sc.ded=['No microbe carries the desired trait'];
+    check(sessionSkillStats().filter.missed===cleanMisses+1,'submitted trait mistake enters Sea Wolf selection practice');
+    firstSite.bestPool.score=bestScore;firstSite.sc.ded=deductions;firstSite.sc.penalties=penalties;
     check(document.querySelectorAll('.sw-review-site').length===3&&document.querySelectorAll('.sw-review-site .phase-review').length===12,'Sea Wolf four-phase review for each site');
     for(const result of S.res.sw){
       check(result.review.offerHistory.length===4,'prospect offers retained for review');
@@ -178,6 +205,21 @@
       check(S.screen==='results'&&readHistory()[0].mode===mode,mode+' standalone result and history');
       log(mode+' standalone route');
     }
+  }
+  function historyVersionChecks(){
+    const saved=readHistory(),current=saved[0];
+    check(current.scoringVersion===SCORING_VERSION,'new runs record the scoring model');
+    const legacy={...current,id:'legacy-check',rr:175,sw:300,sfl:100};delete legacy.scoringVersion;
+    safeWrite(HISTORY_KEY,[legacy,...saved]);
+    const comparable=saved.filter(x=>x.scoringVersion===SCORING_VERSION&&x.difficulty===S.difficulty).length;
+    check(historyHTML().includes(`Averages and trend use ${comparable} run`)&&historyHTML().includes('Scoring model: legacy'),'legacy scores remain visible but are excluded from current trends');
+    const same=saved.filter(x=>x.seed===S.seed&&x.mode===S.mode&&x.difficulty===S.difficulty&&x.scoringVersion===SCORING_VERSION).length;
+    check(shareHTML().includes(`model ${SCORING_VERSION}: ${same}`),'seed challenge compares only matching scoring models and difficulty');
+    const challenge=challengeParams(new URL(challengeURL(12345,'sw','hard')).search);
+    check(challenge.seed===12345&&challenge.mode==='sw'&&challenge.difficulty==='hard'&&challengeParams('?seed=12345&mode=sw&difficulty=invalid').difficulty===null,'shared challenge preserves valid difficulty');
+    check(historyCSV(readHistory()).startsWith('date,seed,mode,difficulty,scoringVersion,'),'history export labels scoring version');
+    safeWrite(HISTORY_KEY,saved);
+    log('history separates legacy and current scoring models');
   }
   function imperfectRoutes(){
     home(24680);ACT.start('rr');ACT.rrbegin();ACT['to-an']();
@@ -198,7 +240,7 @@
     for(let i=0;i<2;i++){const q=S.sfl.data.questions[S.sfl.step];ACT['sfl-answer'](q.options.find(x=>x.quality===0).id);ACT['sfl-next']()}
     S.clock.end=Date.now()-1;tick();
     check(S.screen==='results'&&S.res.sfl.score.items.some(x=>x.your==='No decision'),'Project Lead review explains unanswered decisions after timeout');
-    check(S.res.sfl.score.items.at(-1).why.includes('Answered 2 of 12'),'Project Lead consistency review explains partial score');
+    check(S.res.sfl.score.items.find(x=>x.label==='Decision consistency').why.includes('Answered 2 of 12'),'Project Lead consistency review explains partial score');
 
     home(24680);ACT.start('sfl30');ACT['sfl-begin']();ACT['team-ask'](S.sfl.data.people[0].id);ACT['team-next']();
     const day=S.sfl.data.days[0];for(const person of S.sfl.data.people){fill('[data-team-assign="'+person.id+'"]',day.stations.find(w=>w.skill===person.skill).id);fill('[data-team-reason="'+person.id+'"]','Skill fit')}
@@ -348,9 +390,50 @@
     log('day/night and review UI');
     checkPalette();
   }
+  function scoringRules(){
+    const site={ranges:[[5,7],[5,7],[5,7]],desired:'A',undesired:'B'};
+    const mk=(id,value,trait)=>({id,name:id,a:[value,value,value],trait});
+    const exact=[mk('a',6,'A'),mk('b',6,'A'),mk('c',6,'C')];
+    const edge=[mk('d',5,'A'),mk('e',5,'A'),mk('f',5,'C')];
+    check(scoreSite(site,exact).score===100&&scoreSite(site,edge).score===88,'valid Sea Wolf treatments are separated by midpoint precision');
+    check(scoreSite(site,[exact[0],exact[1],mk('bad',6,'B')]).score===80,'forbidden Sea Wolf trait costs 20 treatment points');
+    const w=genSeaWolf(7),s=w.sites.find(x=>x.undesired),planted=s.planted.map(id=>w.byId[id]),trap=s.pool.find(m=>m.trait===s.undesired);
+    const makeCur=cat=>({shown:[planted[0].id,trap.id],cat,carry:[],keep:new Set(),picks:[],offerHistory:[]});
+    const best=bestIn(s,s.pool),treatment=scoreSite(s,planted),sw={data:w,i:s.idx};
+    const good=scoreSeaWolfDecisions(sw,s,makeCur({[planted[0].id]:'cur',[trap.id]:'rej'}),treatment,best,best);
+    const bad=scoreSeaWolfDecisions(sw,s,makeCur({[planted[0].id]:'rej',[trap.id]:'cur'}),treatment,best,best);
+    check(bad.processScore===good.processScore-8&&bad.penalties.some(p=>p.label.includes('miscategorised')),'wrong Sea Wolf categories lose decision points');
+    const profileCur=makeCur({[planted[0].id]:'cur',[trap.id]:'rej'});
+    profileCur.filter={selected:['t:'+s.undesired],traitModes:{[s.undesired]:'yes'}};
+    check(scoreSeaWolfDecisions(sw,s,profileCur,treatment,best,best).processScore===good.processScore-10,'including a forbidden trait in the profile loses decision points');
+    const weak=mk('weak',4,'C'),simple={...site,idx:0,pool:exact.concat(weak)},simpleData={data:{sites:[simple],byId:Object.fromEntries(simple.pool.map(m=>[m.id,m]))},i:0};
+    check(candidateTreatmentScore(simple,weak)>=0&&candidateTreatmentScore(simple,weak)<95,'weak microbe is usable but materially below the best treatment');
+    check(scoreSeaWolfDecisions(simpleData,simple,{shown:['weak'],cat:{weak:'rej'},carry:[],keep:new Set(),picks:[],offerHistory:[]},scoreSite(simple,exact),bestIn(simple,simple.pool),bestIn(simple,simple.pool)).processScore===100,'rejecting a weak but usable microbe is allowed');
+    const regret=scoreSeaWolfDecisions(sw,s,makeCur({}),{score:best.score-10},best,best);
+    check(regret.processScore===100-5,'suboptimal final trio loses decision points when better team exists');
+    const d=genRedrock(7),A={};
+    d.an.forEach(q=>q.parts.forEach(p=>A[p.key]=String(p.ans)));
+    d.blanks.forEach(b=>A[b.key]=b.type==='num'?String(b.ans):b.ans[0]);
+    A.vtype=d.vis.right;d.vis.values.forEach((v,i)=>A['v'+i]=String(v));
+    d.cases.forEach((c,i)=>A['c'+i]=String(c.ans));
+    check(scoreRedrock(d,A).total===175,'exact Redrock answers earn full credit');
+    A.an0a=String(d.an[0].parts[0].ans+1);
+    const nearMiss=scoreRedrock(d,A).items.find(x=>x.label==='Q1a');
+    check(nearMiss.pts>0&&nearMiss.pts<10,'Redrock near miss earns limited partial credit');
+    A.an0a=String(d.an[0].parts[0].ans);A.vtype='wrong';
+    check(scoreRedrock(d,A).items.filter(x=>x.label.startsWith('Chart ')&&x.label!=='Chart type').every(x=>x.pts===1.88),'wrong chart type halves chart-value credit');
+    const project=genSFLProject(7),rank=SFL_RANK.map(x=>x.id),answers=project.questions.map(q=>q.options.find(x=>x.quality===2).id);
+    check(scoreSFLProject(project,rank,answers).total===100,'strong SFL Project decisions earn full credit');
+    answers[0]=project.questions[0].options.find(x=>x.quality===0).id;
+    check(scoreSFLProject(project,rank,answers).total<95,'harmful SFL Project choice reduces decision and outcome credit');
+    const team=genSFLTeam(7),records=[{asked:team.people.slice(0,3).map(x=>x.id)},{asked:[team.people[0].id,team.people[1].id,team.days[1].stations[0].id]}];
+    const scored=scoreSFLTeam(team,records).items;
+    check(scored.find(x=>x.label==='Day 1 · Explore').pts===2&&scored.find(x=>x.label==='Day 2 · Explore').pts===3,'SFL Team rewards balanced inquiry');
+    log('focused scoring penalties and ranking discrimination');
+  }
   try{
     localStorage.removeItem(HISTORY_KEY);localStorage.removeItem(SPACED_KEY);
-    fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();imperfectRoutes();spaced();edgeCases();
+    scoringRules();sflSeedSweep();fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();historyVersionChecks();imperfectRoutes();spaced();edgeCases();
     const images=await Promise.all([...imageSources].map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve([src,image.naturalWidth>0]);image.onerror=()=>resolve([src,false]);image.src=src})));
     check(images.every(([,ok])=>ok),'all referenced game images load');
     log('every visited screen has named controls, labeled fields, and loading images');

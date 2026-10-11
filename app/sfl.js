@@ -95,18 +95,20 @@ function scoreSFLProject(data,rank,answers,rankLocked=true){
   let inversions=0;for(let i=0;i<ordered.length;i++)for(let j=i+1;j<ordered.length;j++)if(ordered[i]>ordered[j])inversions++;
   const rankPts=rankLocked&&ordered.length===4?Math.round((20-inversions*20/6)*10)/10:0;
   const items=[{label:"Priority ranking",pts:rankPts,max:20,your:rank.map(id=>data.rank.find(x=>x.id===id)?.text).join(" → "),correct:SFL_RANK.slice().sort((a,b)=>a.rank-b.rank).map(x=>x.text).join(" → "),why:SFL_RANK.slice().sort((a,b)=>a.rank-b.rank).map(x=>x.text+" — "+x.why).join(" ") }];
-  const stances=[];let decisionPts=0;
+  const stances=[],state={evidence:0,trust:0,pressure:0};let decisionPts=0;
   for(let i=0;i<12;i++){const q=data.questions[i],choice=q.options.find(x=>x.id===answers[i]);const pts=choice?choice.quality*2.5:0;decisionPts+=pts;
-    if(choice)stances.push(choice.stance);
+    if(choice){stances.push(choice.stance);for(let k=0;k<choice.effects.length;k+=2)state[choice.effects[k]]+=choice.effects[k+1]}
     const best=q.options.find(x=>x.quality===2);
     items.push({label:"Decision "+(i+1)+" · "+q.phase,pts,max:5,your:choice?.text||"No decision",correct:best?.text||"",why:(choice?choice.why:"No decision submitted.")+" Strongest option: "+(best?.text||"")+" — "+(best?.why||"")})}
   const conflicts=[["transparent","opaque"],["evidence","assume"],["targeted","spread"]];
   const conflictingPairs=conflicts.filter(([a,b])=>stances.includes(a)&&stances.includes(b));
   const inconsistent=conflictingPairs.length;
   const submitted=Array.from({length:12},(_,i)=>answers[i]).filter(x=>x!==undefined).length;
-  const consistency=Math.round(Math.max(0,20-inconsistent*5)*submitted/12*10)/10;
-  items.push({label:"Decision consistency",pts:consistency,max:20,why:(inconsistent?"Conflicting approaches: "+conflictingPairs.map(pair=>pair.join(" versus ")).join(", ")+".":"No conflicting approach was detected.")+" Answered "+submitted+" of 12 decisions; unanswered decisions reduce this score proportionally."});
-  return{items,total:Math.round((rankPts+decisionPts+consistency)*10)/10,max:100};
+  const consistency=Math.round(Math.max(0,10-inconsistent*3)*submitted/12*10)/10;
+  items.push({label:"Decision consistency",pts:consistency,max:10,why:(inconsistent?"Conflicting approaches: "+conflictingPairs.map(pair=>pair.join(" versus ")).join(", ")+".":"No conflicting approach was detected.")+" Answered "+submitted+" of 12 decisions; unanswered decisions reduce this score proportionally."});
+  const outcome=Math.round(Math.max(0,10-2*Math.max(0,-state.evidence)-1.5*Math.max(0,-state.trust)-Math.max(0,state.pressure))*submitted/12*10)/10;
+  items.push({label:"Project outcome",pts:outcome,max:10,why:`Evidence ${state.evidence}, trust ${state.trust}, pressure ${state.pressure}. Weak evidence, lost trust, and excess pressure reduce this score; skipped decisions reduce it proportionally.`});
+  return{items,total:Math.round((rankPts+decisionPts+consistency+outcome)*10)/10,max:100};
 }
 
 const SFL_SKILLS=["Field ecology","Data analysis","Community outreach","Operations"];
@@ -151,7 +153,8 @@ function scoreSFLTeam(data,records){
   const items=[];let points=0,max=0;
   data.days.forEach((day,i)=>{
     const r=records[i]||{},asked=(r.asked||[]).length;
-    const explore=Math.min(3,asked);points+=explore;max+=3;items.push({label:"Day "+(i+1)+" · Explore",pts:explore,max:3,why:"Use up to three questions to reduce uncertainty."});
+    const types=new Set((r.asked||[]).map(id=>id.startsWith("p")?"person":"station"));
+    const explore=Math.min(3,asked,types.size===2?3:2);points+=explore;max+=3;items.push({label:"Day "+(i+1)+" · Explore",pts:explore,max:3,why:"Ask about both a researcher and a station to earn full inquiry credit."});
     let fit=0;for(const p of data.people){const station=day.stations.find(x=>x.id===r.assign?.[p.id]);if(station?.skill===p.skill){fit+=3;if(r.reasons?.[p.id]==="Skill fit")fit+=1}}
     points+=fit;max+=16;items.push({label:"Day "+(i+1)+" · Assign",pts:fit,max:16,
       your:data.people.map(p=>p.name+" → "+(day.stations.find(w=>w.id===r.assign?.[p.id])?.name||"unassigned")).join("; "),

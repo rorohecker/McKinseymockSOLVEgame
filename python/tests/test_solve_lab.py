@@ -62,21 +62,24 @@ class Redrock(unittest.TestCase):
 
 
 class SeaWolf(unittest.TestCase):
-    def test_planted_team_is_perfect(self):
+    def test_planted_team_is_compliant(self):
         for seed in range(1, 60):
             w = gen_sea_wolf(seed)
             for s in w["sites"]:
                 trio = [w["byId"][i] for i in s["planted"]]
-                self.assertEqual(score_site(s, trio)["score"], 100)
-                self.assertEqual(best_in(s, s["pool"])["score"], 100)
+                planted = score_site(s, trio)
+                self.assertEqual(planted["ded"], [])
+                self.assertGreaterEqual(best_in(s, s["pool"])["score"], planted["score"])
 
     def test_scoring_deductions(self):
         site = {"ranges": [[8, 10], [6, 8], [2, 4]], "desired": "Heat Resistant", "undesired": "Phosphorous Removal"}
         mk = lambda a, t: {"name": "x", "a": a, "trait": t}  # noqa: E731
         good = [mk([10, 2, 4], "Salt"), mk([4, 8, 3], "Salt"), mk([10, 10, 5], "Heat Resistant")]
-        self.assertEqual(score_site(site, good)["score"], 100)
+        self.assertEqual(score_site(site, good)["ded"], [])
+        self.assertLess(score_site(site, good)["score"], 100)  # midpoint precision separates valid trios
         bad = [mk([8, 6, 3], "Phosphorous Removal")] * 3  # no desired + 3 forbidden
-        self.assertEqual(score_site(site, bad)["score"], 100 - 20 - 60)
+        self.assertEqual(len(score_site(site, bad)["ded"]), 4)
+        self.assertLess(score_site(site, bad)["score"], 20)
         floor = [mk([1, 1, 1], "Phosphorous Removal")] * 3
         self.assertEqual(score_site(site, floor)["score"], 0)
 

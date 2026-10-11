@@ -26,11 +26,18 @@ sys.path.insert(0, str(ROOT / "python"))
 from solve_lab.snapshot import snapshot  # noqa: E402
 
 HARNESS = r"""
-function snap(seed){const d=genRedrock(seed),w=genSeaWolf(seed);return{
+function snap(seed){const d=genRedrock(seed),w=genSeaWolf(seed),A={};
+ d.an.forEach(q=>q.parts.forEach(p=>A[p.key]=String(p.ans)));
+ d.blanks.forEach(b=>A[b.key]=b.type==='num'?String(b.ans):b.ans[0]);
+ A.vtype=d.vis.right;d.vis.values.forEach((v,i)=>A['v'+i]=String(v));
+ d.cases.forEach((c,i)=>A['c'+i]=String(c.ans));
+ const exact=scoreRedrock(d,A),nearScore=scoreRedrock(d,{...A,an0a:String(Number(A.an0a)+1)});
+ return{
  rr:{theme:d.theme,names:d.names,terr:d.terr,totals:d.totals,y4:d.y4,pctA:d.pctA,kmB:d.kmB,elk:d.elk,
   an:d.an.map(q=>({title:q.title,parts:q.parts.map(p=>({key:p.key,text:p.text,unit:p.unit,ans:p.ans}))})),
   vis:d.vis,blanks:d.blanks,cases:d.cases},
- sw:{sites:w.sites.map(s=>({name:s.name,contam:s.contam,desired:s.desired,undesired:s.undesired,avg:s.avg,ranges:s.ranges,planted:s.planted,pool:s.pool}))}}}
+ sw:{sites:w.sites.map(s=>({name:s.name,contam:s.contam,desired:s.desired,undesired:s.undesired,avg:s.avg,ranges:s.ranges,planted:s.planted,pool:s.pool}))},
+ scores:{rrExact:exact.total,rrNear:nearScore.total,swPlanted:w.sites.map(s=>{const r=scoreSite(s,s.planted.map(id=>w.byId[id]));return{score:r.score,precision:r.precision,ded:r.ded}})}}}
 const out=[];for(let s=%d;s<=%d;s++)out.push(snap(s));
 process.stdout.write(JSON.stringify(out));
 """

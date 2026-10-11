@@ -6,10 +6,10 @@
 
 Checks
   * a perfect Redrock answer sheet scores 175 and an empty one scores 0
-  * every Sea Wolf site has its planted team scoring 100
+  * every Sea Wolf site has a compliant planted team and a best team at least as strong
   * microbe names are unique, pools have 28 microbes, planted microbes sit in the
     first six slots (so a permissive filter always shows them)
-  * counts perfect teams per pool and how often a tight filter hides the solution
+  * counts compliant teams per pool and how often a tight filter hides the planted team
 """
 import pathlib
 import statistics
@@ -52,14 +52,15 @@ def main():
         for s in w["sites"]:
             sites += 1
             planted = [w["byId"][i] for i in s["planted"]]
-            if score_site(s, planted)["score"] != 100:
-                problems.append(f"seed {seed} {s['name']}: planted team is not perfect")
+            planted_score = score_site(s, planted)
+            if planted_score["ded"]:
+                problems.append(f"seed {seed} {s['name']}: planted team misses a requirement")
             if len({m["name"] for m in s["pool"]}) != POOL_SIZE:
                 problems.append(f"seed {seed} {s['name']}: duplicate names or wrong pool size")
             if any(s["pool"].index(m) > 5 for m in planted):
                 problems.append(f"seed {seed} {s['name']}: planted microbe outside first six slots")
-            if best_in(s, s["pool"])["score"] != 100:
-                problems.append(f"seed {seed} {s['name']}: no perfect team found")
+            if best_in(s, s["pool"])["score"] < planted_score["score"]:
+                problems.append(f"seed {seed} {s['name']}: solver missed the planted team")
             perfect_counts.append(count_perfect(s, s["pool"]))
             for pad, counter in ((1, "tight"), (2, "wide")):
                 f = {"selected": ["a0", "a1"], "r": [[max(1, a - pad), min(10, b + pad)] for a, b in s["ranges"]], "traitModes": {}}
@@ -72,7 +73,7 @@ def main():
     perfect_counts.sort()
     n = len(perfect_counts)
     print(f"seeds {lo}..{hi}: {hi - lo + 1} scenarios, {sites} Sea Wolf sites")
-    print(f"perfect teams per pool: min {perfect_counts[0]}, median {statistics.median(perfect_counts)}, max {perfect_counts[-1]}")
+    print(f"compliant teams per pool: min {perfect_counts[0]}, median {statistics.median(perfect_counts)}, max {perfect_counts[-1]}")
     print(f"sites where a filter at range +/-1 hides part of the planted team: {tight_hidden} ({tight_hidden / n:.0%})")
     print(f"sites where a filter at range +/-2 hides part of the planted team: {wide_hidden} ({wide_hidden / n:.0%})")
     if problems:

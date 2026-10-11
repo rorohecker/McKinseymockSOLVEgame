@@ -1,5 +1,5 @@
 /* Local learning data and deterministic practice variants. */
-const HISTORY_KEY="solve-lab-history-v1",SETTINGS_KEY="solve-lab-settings",FEEDBACK_KEY="solve-lab-feedback-v1";
+const HISTORY_KEY="solve-lab-history-v1",SETTINGS_KEY="solve-lab-settings",FEEDBACK_KEY="solve-lab-feedback-v1",SCORING_VERSION=2;
 function safeRead(key,fallback){try{const x=JSON.parse(localStorage.getItem(key));return x??fallback}catch{return fallback}}
 function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}}
 function readSettings(){const s=safeRead(SETTINGS_KEY,{});return{difficulty:s.difficulty==="hard"?"hard":"standard",learning:!!s.learning}}
@@ -7,16 +7,16 @@ function readHistory(){const h=safeRead(HISTORY_KEY,[]);return Array.isArray(h)?
 function saveHistory(entry){const h=[entry,...readHistory()];for(const n of [80,60,40,20,10,1])if(safeWrite(HISTORY_KEY,h.slice(0,n)))return true;return false}
 function readFeedback(){const x=safeRead(FEEDBACK_KEY,[]);return Array.isArray(x)?x:[]}
 function addFeedback(entry){const a=readFeedback();a.unshift(entry);safeWrite(FEEDBACK_KEY,a.slice(0,100))}
-function challengeParams(){try{const p=new URLSearchParams(location.search),s=p.get("seed"),m=p.get("mode");return{seed:s&&/^\d{1,10}$/.test(s)?Number(s)>>>0:null,mode:["full","full20","full30","rr","sw","sfl20","sfl30"].includes(m)?m:null}}catch{return{seed:null,mode:null}}}
-function challengeURL(seed,mode){const u=new URL(location.href);u.searchParams.set("seed",seed);u.searchParams.set("mode",mode);return u.href}
-function challengeShareText(seed,mode){return location.protocol==="file:"?`Solve Lab challenge — seed ${seed}, mode ${mode}`:challengeURL(seed,mode)}
+function challengeParams(search=location.search){try{const p=new URLSearchParams(search),s=p.get("seed"),m=p.get("mode"),d=p.get("difficulty");return{seed:s&&/^\d{1,10}$/.test(s)?Number(s)>>>0:null,mode:["full","full20","full30","rr","sw","sfl20","sfl30"].includes(m)?m:null,difficulty:["standard","hard"].includes(d)?d:null}}catch{return{seed:null,mode:null,difficulty:null}}}
+function challengeURL(seed,mode,difficulty){const u=new URL(location.href);u.searchParams.set("seed",seed);u.searchParams.set("mode",mode);u.searchParams.set("difficulty",difficulty);return u.href}
+function challengeShareText(seed,mode,difficulty){return location.protocol==="file:"?`Solve Lab challenge — seed ${seed}, mode ${mode}, difficulty ${difficulty}`:challengeURL(seed,mode,difficulty)}
 function downloadText(name,text,type){const blob=new Blob([text],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function csvCell(v){let s=String(v??"");if(typeof v==="string"&&/^[=+@-]/.test(s.trimStart())&&!/^[+-]?\d+(?:\.\d+)?$/.test(s.trim()))s="'"+s;return'"'+s.replaceAll('"','""')+'"'}
-function historyCSV(rows){const keys=["date","seed","mode","difficulty","rr","sw","sfl","math","drill","drillMax","durationSeconds","source","phaseSeconds","mistakes","skillStats","adaptiveFocus","spacedFocus"];return[keys.join(","),...rows.map(r=>keys.map(k=>csvCell(r[k]!==null&&typeof r[k]==="object"?JSON.stringify(r[k]):r[k])).join(","))].join("\r\n")}
+function historyCSV(rows){const keys=["date","seed","mode","difficulty","scoringVersion","rr","sw","sfl","math","drill","drillMax","durationSeconds","source","phaseSeconds","mistakes","skillStats","adaptiveFocus","spacedFocus"];return[keys.join(","),...rows.map(r=>keys.map(k=>csvCell(r[k]!==null&&typeof r[k]==="object"?JSON.stringify(r[k]):r[k])).join(","))].join("\r\n")}
 function resultsCSV(){
   const rows=[["game","phase","item","your answer","correct answer","points","maximum"]];
   if(S.res.rr)for(const x of S.res.rr.items)rows.push(["Redrock",x.sec,x.label,x.your,x.correct,x.pts,x.max]);
-  if(S.res.sw)for(const x of S.res.sw){rows.push(["Sea Wolf",x.site.name,"Treatment",x.trio.map(m=>m.name).join(" + "),x.bestFull.trio?.map(m=>m.name).join(" + ")||"",x.sc.score,100]);for(const d of x.sc.ded)rows.push(["Sea Wolf",x.site.name,"Deduction",d,"",x.trio.length===3?-20:"",0])}
+  if(S.res.sw)for(const x of S.res.sw){rows.push(["Sea Wolf",x.site.name,"Site score",x.trio.map(m=>m.name).join(" + "),x.bestFull.trio?.map(m=>m.name).join(" + ")||"",x.sc.score,100]);rows.push(["Sea Wolf",x.site.name,"Treatment quality","","",x.sc.treatmentScore??0,100]);rows.push(["Sea Wolf",x.site.name,"Decision quality","","",x.sc.processScore??0,100]);for(const d of x.sc.ded)rows.push(["Sea Wolf",x.site.name,"Treatment deduction",d,"",x.trio.length===3?-20:"",""]);for(const p of x.sc.penalties||[])rows.push(["Sea Wolf",x.site.name,"Decision deduction",p.label,"",-p.points,""])}
   if(S.res.sfl)for(const x of S.res.sfl.score.items)rows.push(["SFL",S.res.sfl.format,x.label,x.your||"",x.correct||x.why,x.pts,x.max]);
   if(S.drill?.results)for(const x of S.drill.results.items)rows.push(["Drill",S.drill.kind,x.label,x.your,x.correct,x.ok?1:0,1]);
   return [["seed","mode","difficulty",...rows[0]].join(","),...rows.slice(1).map(row=>[S.seed,S.mode,S.difficulty,...row].map(csvCell).join(","))].join("\r\n");
@@ -33,7 +33,7 @@ function hardenSeaWolf(data){
   return data;
 }
 function countPerfectTeams(site){
-  let n=0,p=site.pool;for(let a=0;a<p.length-2;a++)for(let b=a+1;b<p.length-1;b++)for(let c=b+1;c<p.length;c++)if(scoreSite(site,[p[a],p[b],p[c]]).score===100)n++;
+  let n=0,p=site.pool;for(let a=0;a<p.length-2;a++)for(let b=a+1;b<p.length-1;b++)for(let c=b+1;c<p.length;c++)if(scoreSite(site,[p[a],p[b],p[c]]).ded.length===0)n++;
   return n;
 }
 function genMath(seed){

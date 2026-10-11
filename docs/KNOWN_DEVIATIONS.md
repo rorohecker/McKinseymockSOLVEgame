@@ -8,11 +8,11 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 |---|---|---|
 | Redrock clock | 35 min | CORROBORATED (FACTS F23) |
 | Sea Wolf clock | 30 min, shared by 3 sites | CORROBORATED |
-| Redrock total points | 175 (Analysis 60, Report 25 + 30, Cases 60) | One vendor's model (SolvePrep). Not McKinsey's. |
+| Redrock total points | 175 (Analysis 60, Report 25 + 30, Cases 60) | One vendor's model (SolvePrep). Graded near-miss credit and chart-type interaction are this project's rules. |
 | Answer tolerance | +/-0.5 (cases with prices: +/-0.05) | SolvePrep model; the price tolerance is this project's own choice |
 | Hard Redrock tolerance | +/-0.25 except tighter case-specific tolerances | This project's practice setting |
 | Hard Sea Wolf ranges | Planted-team average rounded down/up; four forbidden-trait distractors added | This project's practice setting, not a published real difficulty |
-| Sea Wolf site score | 100, -20 per miss | Several vendor models; stacking per forbidden microbe is SolvePrep's (D3) |
+| Sea Wolf site score | 75% treatment, 25% decisions; treatment loses 20 per missed requirement and up to 12 for midpoint distance | The -20 starting point follows vendor models; midpoint and decision weights are this project's differentiation rules. See [PRACTICE_SCORING.md](PRACTICE_SCORING.md). |
 | Sea Wolf team size and attribute scale | 3 microbes, values 1-10 | CORROBORATED |
 | Attribute names | Permeability, Mobility, Energy | One vendor; names UNVERIFIED (D1) |
 | Prospect rounds | 4 rounds, pick 1 of 3 | REPORTED by several vendors |
@@ -27,7 +27,7 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 1. **Hidden facts are unknown.** Process scoring, weights between games and the true raw-score scale cannot be reproduced. The results page shows a practice score and self-review process metrics.
 2. **Sea Wolf profile** requires exactly two choices from three numeric attributes and four selectable traits. The simulator filters its generated pool using a disclosed practice rule. Sources disagree about whether the real profile choice affects later microbes, and its matching operator is unpublished (D4).
 3. **Carry-over step** appears only from site 2 and is a keep/reject screen. Some sources do not mention it (D2).
-4. **Pool design** (28 microbes with planted solutions, traps and carry-over bait) is invented to guarantee full-pool solvability. Candidate reports of 80% and 60% Sea Wolf ceilings do not establish whether the full pool was unsolvable or earlier choices removed a perfect team. The results screen shows both the best available from your choices and the full-pool reference.
+4. **Pool design** (28 microbes with planted compliant treatments, traps and carry-over bait) is invented to guarantee full-pool solvability. Candidate reports of 80% and 60% Sea Wolf ceilings do not establish whether the full pool was unsolvable or earlier choices removed a compliant team. The results screen shows both the best available from your choices and the full-pool reference.
 5. **Redrock report** selects 5 prompts from an 8-prompt bank plus a chart; CaseStar describes 8-10 blanks (D8).
 6. **Calculator** is available in Investigation; one source says it is not (D9). Drag-to-answer is a practice convenience.
 7. **Exhibits** combine tables and a generated bar chart. The real visual design is not published.
@@ -38,7 +38,7 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 12. **SFL** has original 20-minute Project Lead and 30-minute Team Lab reconstructions. Their content and scoring are not official. Reports disagree on whether every 95-minute invite contains a 30-minute SFL or includes survey time. Legacy Ecosystem Building is not implemented.
 13. **Time-up handling** scores what is answered. The real game's behaviour at timeout is not documented.
 14. **AI variation** is replaced by a seed. McKinsey says AI varies parameters per candidate (FACTS F06).
-15. **Sea Wolf phase review** compares prospects by the best treatment available after changing one choice while holding later choices fixed. A midpoint tie-break helps study equal-scoring treatments. Neither is a published McKinsey scoring rule.
+15. **Sea Wolf decision score** penalises sorting mistakes and lost treatment opportunities. Prospect comparisons hold the other selected rounds fixed. Midpoint distance now distinguishes compliant treatments. None of these weights is a published McKinsey scoring rule.
 16. **Sea Wolf filter drill** uses a visible sorting rule: reject a forbidden trait, then keep a desired-trait microbe or one with at least two individual values inside the site ranges. This teaches rapid categorisation; it is separate from the full game's three-microbe average scoring.
 17. **SFL Team Lab** shows all station requirements before assignment, and scores skill fit, constructive support, and a reflection derived from those two signals. Preference notes provide context but do not affect this original practice score.
 
