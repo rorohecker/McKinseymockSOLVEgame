@@ -1,7 +1,7 @@
 function savedTheme(){try{return localStorage.getItem('solve-lab-theme')==='light'?'light':'dark'}catch{return'dark'}}
 document.documentElement.dataset.theme=savedTheme();
 const INITIAL_SETTINGS=readSettings(),INITIAL_CHALLENGE=challengeParams();
-const S={screen:'home',mode:'full',seed:INITIAL_CHALLENGE.seed??Math.floor(Math.random()*90000)+10000,challengeMode:INITIAL_CHALLENGE.mode,tab:'journal',calc:{expr:'',fresh:false},rr:null,sw:null,sfl:null,drill:null,pendingGame:null,clock:null,marks:[],lastMark:0,res:{},lastInput:null,difficulty:INITIAL_CHALLENGE.difficulty??INITIAL_SETTINGS.difficulty,learning:INITIAL_SETTINGS.learning,notice:'',session:null};
+const S={screen:'home',mode:'full',seed:INITIAL_CHALLENGE.seed??Math.floor(Math.random()*90000)+10000,challengeMode:INITIAL_CHALLENGE.mode,tab:'journal',calc:{expr:'',fresh:false,history:[],result:null,error:false},rr:null,sw:null,sfl:null,drill:null,pendingGame:null,clock:null,marks:[],lastMark:0,res:{},lastInput:null,difficulty:INITIAL_CHALLENGE.difficulty??INITIAL_SETTINGS.difficulty,learning:INITIAL_SETTINGS.learning,notice:'',session:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mmss=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
@@ -70,7 +70,7 @@ function topbar(){
   const timed=S.clock&&(isRR()&&S.screen!=='rr-intro'||isSW()&&S.screen==='sw-site'||isSFL()&&S.screen!=='sfl-intro'||S.screen.startsWith('drill-')&&S.screen!=='drill-results');
   const active=!!S.session&&!S.session.saved&&!['home','history','results','drill-results'].includes(S.screen);
   const theme=document.documentElement.dataset.theme;
-  return`<div class="bar"><div class="bar-in"><div class="row" style="gap:14px"><span class="brand">SOLVE LAB<small>FIELD TERMINAL</small></span>${game?`<span class="crumb">${game}${crumb()}</span>`:''}</div><div class="top-actions"><details class="shortcut-menu"><summary>Keys</summary><div>Tab and Enter work on all controls.<br>Alt+P pauses or resumes. Escape resumes or closes the quit prompt.<br>Redrock: Alt+1 Journal, Alt+2 Exhibits, Alt+3 Calculator.<br>Sea Wolf: 1–3 to categorise or choose prospects.<br>SFL: A–C for decisions.<br>Drills: Enter to submit, 1–2 to categorise.</div></details><button class="theme-toggle" type="button" data-act="theme" aria-label="Switch to ${theme==='dark'?'day':'night'} mode">${theme==='dark'?'☀ DAY':'☾ NIGHT'}</button>${active?`${timed?'<button class="run-control" type="button" data-act="pause">Ⅱ Pause</button>':''}<button class="run-control quit-control" type="button" data-act="quit">Quit</button>`:''}${timed?`<div class="clockwrap row" style="gap:8px"><span class="eyebrow hide-sm">Time left</span><span class="clock" id="clk" role="timer">--:--</span><span id="time-announcement" class="sr-only" aria-live="polite"></span></div>`:''}</div></div>${timed?'<div class="prog"><i id="prog"></i></div>':''}</div>`}
+  return`<div class="bar"><div class="bar-in"><div class="row" style="gap:14px"><span class="brand">SOLVE LAB<small>FIELD TERMINAL</small></span>${game?`<span class="crumb">${game}${crumb()}</span>`:''}</div><div class="top-actions"><details class="shortcut-menu"><summary>Keys</summary><div>Tab and Enter work on all controls.<br>Alt+P pauses or resumes. Escape resumes or closes the quit prompt.<br>Redrock: Alt+1 Notebook, Alt+2 Exhibits, Alt+3 Calculator. Type in the calculator and press Enter for a result.<br>Sea Wolf: 1–3 to categorise or choose prospects.<br>SFL: A–C for decisions.<br>Drills: Enter to submit, 1–2 to categorise.</div></details><button class="theme-toggle" type="button" data-act="theme" aria-label="Switch to ${theme==='dark'?'day':'night'} mode">${theme==='dark'?'☀ DAY':'☾ NIGHT'}</button>${active?`${timed?'<button class="run-control" type="button" data-act="pause">Ⅱ Pause</button>':''}<button class="run-control quit-control" type="button" data-act="quit">Quit</button>`:''}${timed?`<div class="clockwrap row" style="gap:8px"><span class="eyebrow hide-sm">Time left</span><span class="clock" id="clk" role="timer">--:--</span><span id="time-announcement" class="sr-only" aria-live="polite"></span></div>`:''}</div></div>${timed?'<div class="prog"><i id="prog"></i></div>':''}</div>`}
 function crumb(){
   const m={'rr-intro':' · Briefing','rr-inv':' · Investigation','rr-an':` · Analysis ${S.rr?S.rr.an+1:''}/3`,'rr-rep1':' · Report 1/2','rr-rep2':' · Report 2/2','rr-case':` · Case ${S.rr?S.rr.ci+1:''}/6`,'sw-intro':' · Briefing','sfl-intro':' · Briefing','sfl-project':S.sfl?` · Decision ${S.sfl.phase==='rank'?1:Math.min(13,S.sfl.step+2)}/13`:'','sfl-team':S.sfl?` · Day ${S.sfl.day+1}/3`:''};
   if(m[S.screen])return m[S.screen];if(S.screen==='sw-site'&&S.sw)return` · ${S.sw.data.sites[S.sw.i].name} of 3`;return''}
@@ -125,44 +125,44 @@ ${S.challengeMode?`<div class="card row"><span class="eyebrow">Shared seed #${S.
 <span class="section-label">04 / Build retention</span>${spacedPanelHTML()}
 <div class="row"><button class="btn ghost" data-act="history">Practice history</button></div><div class="card stack"><h3>Difficulty calibration</h3>${calibrationHTML()}</div>
 <div class="card flat stack field-note" style="gap:8px;max-width:900px"><h3>Field guide // practice model</h3>
-<p class="mute">Redrock: 6 analysis answers (10 points each, ${S.difficulty==='hard'?'±0.25':'±0.5'} tolerance for full credit), a 5-blank written review, a chart choice with data, and six standalone cases. Small numeric misses may earn partial credit; a wrong chart type halves chart-value credit. Some cases require tighter precision. 175 points in total. Journal, on-screen calculator and exhibits are included.</p>
+<p class="mute">Redrock: 6 analysis answers (10 points each, ${S.difficulty==='hard'?'±0.25':'±0.5'} tolerance for full credit), a 5-blank written review, a chart choice with data, and six standalone cases. Small numeric misses may earn partial credit; a wrong chart type halves chart-value credit. Some cases require tighter precision. 175 points in total. Notebook, calculator with history, and exhibits are included.</p>
 <p class="mute">Sea Wolf: each site has 75 treatment points and 25 decision points. Treatment starts at 100, loses 20 per missed range or trait requirement, and up to 12 for distance from the target midpoints. Decisions lose points for including a forbidden trait or avoiding a desired trait in the profile, miscategorising microbes, poor carry-over or prospect choices, losing access to a better full-pool treatment, or overlooking a better treatment in your final pool. Three sites total 300 practice points.</p>
 <p class="mute">These point values are practice reconstructions; McKinsey does not publish its scoring. This project is not affiliated with McKinsey, and tools like it are not allowed during the real assessment.</p></div></div>`}
 
 /* ---------- Redrock ---------- */
 function exhibitsHTML(d,click){
-  const c=(lab,v)=>click?` class="n clk" data-j="${esc(lab)}|${esc(v)}" tabindex="0" role="button" aria-label="Save ${esc(lab)} to journal"`:' class="n"';
+  const c=(lab,v)=>click?` class="n clk" data-j="${esc(lab)}|${esc(v)}" draggable="true" tabindex="0" role="button" aria-label="Save or drag ${esc(lab)} to notebook"`:' class="n"';
   const t1=d.names.map((n,i)=>`<tr><td>${esc(n)}</td>${d.terr[i].map((v,y)=>`<td${c(n+' · Year '+(y+1)+' '+d.theme.measure,v+' '+d.theme.unit)}>${v}</td>`).join('')}</tr>`).join('');
   const t2=d.names.map((n,i)=>`<tr><td>${esc(n)}</td><td${c(n+' · Proposal A change',(d.pctA[i]>0?'+':'')+d.pctA[i]+'%')}>${d.pctA[i]>0?'+':''}${d.pctA[i]}%</td><td${c(n+' · Proposal B change',(d.kmB[i]>0?'+':'')+d.kmB[i]+' '+d.theme.unit)}>${d.kmB[i]>0?'+':''}${d.kmB[i]} ${esc(d.theme.unit)}</td></tr>`).join('');
   return`<div class="stack"><div><h3>Exhibit 1 · ${esc(d.theme.name)} (${esc(d.theme.unit)})</h3><div class="tblbox"><table><tr><th>${esc(d.theme.group)}</th><th class="n">Year 1</th><th class="n">Year 2</th><th class="n">Year 3</th><th class="n">Year 4</th></tr>${t1}</table></div>${studyChartHTML(d)}</div>
   <div><h3>Exhibit 2 · Allocation proposals</h3><div class="tblbox"><table><tr><th>${esc(d.theme.group)}</th><th class="n">Proposal A (% of Year 4)</th><th class="n">Proposal B (${esc(d.theme.unit)})</th></tr>${t2}</table></div></div></div>`}
 function studyChartHTML(d){const top=Math.max(...d.y4);return`<div class="study-chart" role="img" aria-label="Bar chart of Year 4 ${esc(d.theme.measure)}">${d.names.map((name,i)=>`<div class="study-bar"><span class="mono">${esc(name)}</span><div class="study-track"><i style="width:${Math.round(d.y4[i]/top*100)}%"></i></div><b>${d.y4[i]}</b></div>`).join('')}</div>`}
 function panelHTML(){
-  const inCase=S.screen==='rr-case';let tabs=[['journal','Journal'],['exh','Exhibits'],['calc','Calculator']];
-  if(inCase)tabs=[['calc','Calculator']];else if(S.screen==='rr-inv')tabs=tabs.filter(t=>t[0]!=='exh');
+  const inCase=S.screen==='rr-case';let tabs=[['journal','Notebook'],['exh','Exhibits'],['calc','Calculator']];
+  if(inCase)tabs=[['journal','Notebook'],['calc','Calculator']];else if(S.screen==='rr-inv')tabs=tabs.filter(t=>t[0]!=='exh');
   if(!tabs.some(t=>t[0]===S.tab))S.tab=tabs[0][0];
   let body='';
-  if(S.tab==='journal'){const j=S.rr.journal;body=`<div>${j.length?j.map((x,i)=>`<div class="jrow"><span><input class="jname" data-jname="${i}" value="${esc(x.k)}" maxlength="80" aria-label="Rename journal entry"><small class="mute"> · ${esc(x.at||'saved')}</small></span><span>${esc(x.v)} <button class="tab" style="padding:0 4px" data-act="jdel" data-v="${i}" aria-label="Remove entry">×</button></span></div>`).join(''):'<p class="mute" style="font-size:.9rem">Click any dashed number or table cell to save it here.</p>'}</div><label class="eyebrow" for="notes">Scratch notes</label><textarea id="notes" rows="4" data-notes>${esc(S.rr.notes)}</textarea>`}
-  else if(S.tab==='exh'){body=exhibitsHTML(S.rr.d,false)}
+  if(S.tab==='journal'){const j=S.rr.journal;body=`<div class="journal-drop" data-journal-drop aria-label="Notebook drop area"><p class="mute">Click or drag a marked fact here. Drag a saved value into the calculator or a numeric answer.</p>${j.length?j.map((x,i)=>`<div class="jrow ${x.important?'important':''}" data-j-row="${i}"><span><input class="jname" data-jname="${i}" value="${esc(x.k)}" maxlength="80" aria-label="Rename notebook entry"><small class="mute"> · ${esc(x.at||'saved')}</small></span><span class="journal-actions"><span class="journal-fact" draggable="true" data-j-entry="${i}" title="Drag this value to calculator or answer">${esc(x.v)}</span><button class="tab" data-act="jpin" data-v="${i}" aria-label="${x.important?'Unmark':'Mark'} important" aria-pressed="${!!x.important}">${x.important?'★':'☆'}</button><button class="tab" data-act="jdel" data-v="${i}" aria-label="Remove entry">×</button></span></div>`).join(''):'<p class="mute" style="font-size:.9rem">No saved facts yet.</p>'}</div><label class="eyebrow" for="notes">Scratch notes</label><textarea id="notes" rows="4" data-notes>${esc(S.rr.notes)}</textarea>`}
+  else if(S.tab==='exh'){body=exhibitsHTML(S.rr.d,true)}
   else{const ks=['7','8','9','÷','4','5','6','×','1','2','3','−','0','.','(',')','C','⌫','=','+'];
-    body=`<div class="calc-d" id="cd" draggable="true" title="Drag this value to an answer field">${esc(S.calc.expr||'0')}</div><div class="keys">${ks.map(k=>`<button data-act="key" data-v="${k}">${k}</button>`).join('')}</div><button class="btn ghost sm" data-act="usecalc">Use result in answer field</button><p class="mute">Drag the result to a numeric answer, or focus one and use the button.</p>`}
+    body=`<label class="eyebrow" for="cd">Calculation</label><input class="calc-d" id="cd" data-calc-input autocomplete="off" spellcheck="false" value="${esc(S.calc.expr)}" placeholder="Type or use keys"><div class="keys">${ks.map(k=>`<button data-act="key" data-v="${esc(k)}" aria-label="Calculator ${esc(k)}">${k}</button>`).join('')}</div><div class="calc-result" id="calc-result" draggable="${S.calc.result!==null}" aria-live="polite" title="Drag result to a numeric answer">${S.calc.result===null?(S.calc.error?'Check expression':'Press = for a result'):esc(S.calc.result)}</div><button class="btn ghost sm" data-act="usecalc">Use result in answer field</button><div class="calc-facts"><b>Saved facts</b>${S.rr.journal.length?S.rr.journal.map((x,i)=>`<button class="calc-fact" data-act="calc-fact" data-v="${i}" data-j-entry="${i}" draggable="true" title="Click to insert or drag this value">${x.important?'★ ':''}${esc(x.k)}: ${esc(x.v)}</button>`).join(''):'<p class="mute">Save facts from the study or exhibits.</p>'}</div><div class="calc-history"><div class="row" style="justify-content:space-between"><b>History</b><button class="tab" data-act="calc-clear-history" ${S.calc.history.length?'':'disabled'}>Clear</button></div>${S.calc.history.length?S.calc.history.map((h,i)=>`<button class="calc-history-item" data-act="calc-recall" data-v="${i}" data-calc-history="${i}" draggable="true" title="Click to reuse or drag result">${esc(h.expr)} = <b>${esc(h.result)}</b></button>`).join(''):'<p class="mute">Calculations appear here after pressing =.</p>'}</div><p class="mute">Type with the keyboard or use the buttons. Click or drag saved facts into calculations; drag results into answers.</p>`}
   return`<div class="tabs" role="tablist">${tabs.map(t=>`<button class="tab" role="tab" aria-selected="${S.tab===t[0]}" data-act="tab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>${body}`}
 function split(main){return`<div class="split"><div class="stack">${main}</div><aside class="side card" id="side">${panelHTML()}</aside></div>`}
 
 function rrIntroHTML(){return`<div class="stack mission-intro rr-scope" style="max-width:760px"><img class="intro-sprite" src="assets/redrock-icon.svg" alt=""><span class="eyebrow rr-t">Mission 01 // untimed briefing</span><h1>Redrock Study</h1>
 <p>You are a researcher on Redrock Island. The 35-minute clock covers a three-phase island study, then six independent mini-cases. Study themes and case topics vary by seed.</p>
 <div class="card stack" style="gap:8px"><h3>Phases</h3>
-<p><b>Investigation.</b> Read the objective, study text and exhibits. Click numbers to save them to your Journal.</p>
+<p><b>Investigation.</b> Read the objective, study text and exhibits. Click or drag marked facts into the Notebook.</p>
 <p><b>Analysis.</b> Three questions, two answers each. Numeric answers within ${S.difficulty==='hard'?'±0.25':'±0.5'} earn full credit; small misses may earn partial credit.</p>
 <p><b>Report.</b> Fill a written review from your results, then pick a chart type and enter its data.</p>
 <p><b>Cases.</b> Six standalone problems with their own data. You cannot go back to a finished case.</p></div>
 <p class="pace">Suggested pacing: about 15 minutes for Investigation and Analysis, 10 for the Report, 10 for the cases. Reaching all six cases matters more than polishing the report.</p>
 <div class="row"><button class="btn" data-act="rrbegin">Start the 35-minute clock</button><button class="btn ghost" data-act="home">Back</button></div></div>`}
-function rrInvHTML(){const d=S.rr.d,j=(l,v,t)=>`<span class="clk" data-j="${esc(l)}|${esc(v)}" tabindex="0" role="button" aria-label="Save ${esc(l)} to journal">${t}</span>`;
+function rrInvHTML(){const d=S.rr.d,j=(l,v,t)=>`<span class="clk" data-j="${esc(l)}|${esc(v)}" draggable="true" tabindex="0" role="button" aria-label="Save or drag ${esc(l)} to notebook">${t}</span>`;
   return split(`<div class="card stack"><span class="eyebrow">Research objective · ${esc(d.theme.name)}</span><p style="font-size:1.1rem">Decide whether either allocation proposal would increase total ${esc(d.theme.measure)} across Redrock Island's ${esc(d.theme.groups)}, and report what you find.</p></div>
 <div class="card stack"><span class="eyebrow">Study information</span><p>Redrock Island has ${j('Study groups','4','four')} ${esc(d.theme.groups)}: ${d.names.map(esc).join(', ')}. The Island Research Authority has surveyed ${esc(d.theme.measure)} in ${esc(d.theme.unit)} for ${j('Survey years','4','four')} consecutive years. ${esc(d.theme.context)} ${esc(d.theme.contextLabel)}: ${j(d.theme.contextLabel,fmt(d.elk)+' '+d.theme.contextUnit,fmt(d.elk))} ${esc(d.theme.contextUnit)}. Under Proposal A, each ${esc(d.theme.group)}'s Year 4 value changes by a set percentage. Under Proposal B, each ${esc(d.theme.group)} gains or loses a fixed number of ${esc(d.theme.unit)}. Field teams cover ${j('Survey sectors','3','three')} sectors.</p></div>
 <div class="card">${exhibitsHTML(d,true)}</div>
-<div class="row"><button class="btn" data-act="to-an">Continue to Analysis</button><span class="mute" style="font-size:.9rem">The Journal and exhibits stay available in the next phases.</span></div>`)}
+<div class="row"><button class="btn" data-act="to-an">Continue to Analysis</button><span class="mute" style="font-size:.9rem">The Notebook and exhibits stay available in the next phases.</span></div>`)}
 function numField(key,unit){return`<span class="row" style="gap:6px"><input class="num" inputmode="decimal" id="${key}" data-bind="${key}" value="${esc(S.rr.ans[key]||'')}"><span class="mute">${unit}</span></span>`}
 function rrAnHTML(){const q=S.rr.d.an[S.rr.an];
   return split(`<div class="card q"><span class="eyebrow">Question ${S.rr.an+1} of 3</span><h2>${q.title}</h2>${q.parts.map(p=>`<div class="part"><label class="lbl" for="${p.key}">${esc(p.text)}</label>${numField(p.key,p.unit)}</div>`).join('')}${S.learning?'<p class="pace">Quick check: confirm the requested unit, the percentage denominator, and whether the result is a total or a change.</p>':''}</div>
@@ -381,7 +381,7 @@ const ACT={
   reseed(){S.seed=randomSeed();S.challengeMode=null;render(false)},
   theme(){const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('solve-lab-theme',next)}catch{}render(false)},
   start(v,t){const same=t&&t.dataset.same;if(!same){const e=$('#seed');if(e&&e.value.trim()){const raw=e.value.trim(),n=Number(raw);S.seed=/^[+-]?\d+$/.test(raw)&&Number.isSafeInteger(n)?n>>>0:hash(raw)>>>0}}
-    S.mode=v;S.res={};S.marks=[];S.rr=null;S.sw=null;S.sfl=null;S.drill=null;S.pendingGame=null;S.tab='journal';S.calc={expr:'',fresh:false};startSession();
+    S.mode=v;S.res={};S.marks=[];S.rr=null;S.sw=null;S.sfl=null;S.drill=null;S.pendingGame=null;S.tab='journal';S.calc={expr:'',fresh:false,history:[],result:null,error:false};startSession();
     if(v==='sfl20'||v==='sfl30'){initSFL(v==='sfl30'?'team':'project');go('sfl-intro')}
     else if(v==='sw'){initSW();go('sw-intro')}
     else{initRR();if(v.startsWith('full'))initSW();go('rr-intro')}},
@@ -399,12 +399,16 @@ const ACT={
   'team-support'(v){teamSupport(v)},
   tab(v){S.tab=v;$('#side').innerHTML=panelHTML()},
   jdel(v){S.rr.journal.splice(+v,1);$('#side').innerHTML=panelHTML()},
+  jpin(v){const entry=S.rr.journal[+v];if(entry){entry.important=!entry.important;$('#side').innerHTML=panelHTML()}},
   key(v){calcKey(v)},
-  usecalc(){const el=S.lastInput;if(el&&document.contains(el)){const x=calcValue();if(x!==null){el.value=String(Math.round(x*100)/100);el.dispatchEvent(new Event('input',{bubbles:true}))}}},
+  'calc-recall'(v){const h=S.calc.history[+v];if(h){S.calc.expr=String(h.result);S.calc.result=h.result;S.calc.error=false;S.calc.fresh=true;refreshCalculator()}},
+  'calc-fact'(v){const x=S.rr?.journal[+v],n=x&&factNumber(x.v);if(n!==null&&n!==undefined){S.calc.expr=(S.calc.fresh?'':S.calc.expr)+n;S.calc.result=null;S.calc.error=false;S.calc.fresh=false;refreshCalculator();$('#cd')?.focus()}},
+  'calc-clear-history'(){S.calc.history=[];$('#side').innerHTML=panelHTML()},
+  usecalc(){const el=S.lastInput;if(el&&document.contains(el)){const x=S.calc.result??calcValue();if(x!==null){el.value=String(x);el.dispatchEvent(new Event('input',{bubbles:true}))}}},
   'to-an'(){mark('rr','Investigation');S.rr.an=0;go('rr-an')},
   'an-next'(){if(preventInvalidNumericAdvance())return;if(S.rr.an<2){S.rr.an++;render(true)}else{mark('rr','Analysis');go('rr-rep1')}},
   'to-rep2'(){if(preventInvalidNumericAdvance())return;go('rr-rep2')},
-  'to-cases'(){if(preventInvalidNumericAdvance())return;mark('rr','Report');S.rr.ci=0;S.calc={expr:'',fresh:false};S.rr.journal=[];go('rr-case')},
+  'to-cases'(){if(preventInvalidNumericAdvance())return;mark('rr','Report');S.rr.ci=0;S.calc.expr='';S.calc.result=null;S.calc.error=false;S.tab='calc';go('rr-case')},
   'case-next'(){if(preventInvalidNumericAdvance())return;if(S.rr.ci<5){S.rr.ci++;render(true)}else finishRR(false)},
   swbegin(){S.screen='sw-site';startClock(30,()=>{if(S.sw&&!S.sw.fin){finishSW()}});enterSite(0);render(true)},
   keep(v){const k=S.sw.cur.keep;k.has(v)?k.delete(v):k.add(v);render(false)},
@@ -423,18 +427,23 @@ const ACT={
 function hash(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))|0;return h}
 function initRR(){S.rr={d:genRedrock(S.seed),ans:{},journal:[],notes:'',an:0,ci:0}}
 function initSW(){const data=genSeaWolf(S.seed);if(S.difficulty==='hard')hardenSeaWolf(data);S.sw={data,i:0,cur:null,nextCarry:[],results:[],fin:false}}
-function calcValue(){const e=S.calc.expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');if(!e||!/^[0-9+\-*/().\s]+$/.test(e))return null;try{const r=Function('"use strict";return ('+e+')')();return isFinite(r)?r:null}catch(x){return null}}
+function calcValue(){const e=S.calc.expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');if(!e||e.length>120||!/^[0-9+\-*/().\s]+$/.test(e))return null;try{const r=Function('"use strict";return ('+e+')')();return Number.isFinite(r)?r:null}catch(x){return null}}
+function refreshCalculator(full=false){if(full){const side=$('#side');if(side)side.innerHTML=panelHTML()}else{const d=$('#cd'),r=$('#calc-result');if(d)d.value=S.calc.expr;if(r){r.textContent=S.calc.result===null?(S.calc.error?'Check expression':'Press = for a result'):String(S.calc.result);r.draggable=S.calc.result!==null}}}
 function calcKey(k){const c=S.calc;
-  if(k==='C')c.expr='';else if(k==='⌫')c.expr=c.expr.slice(0,-1);
-  else if(k==='='){const r=calcValue();if(r!==null){c.expr=String(Math.round(r*1e6)/1e6);c.fresh=true}}
-  else{if(c.fresh&&/[0-9.(]/.test(k))c.expr='';c.fresh=false;c.expr+=k}
-  const d=$('#cd');if(d)d.textContent=c.expr||'0'}
+  if(k==='C'){c.expr='';c.result=null;c.error=false;c.fresh=false}
+  else if(k==='⌫'){c.expr=c.expr.slice(0,-1);c.result=null;c.error=false;c.fresh=false}
+  else if(k==='='){const before=c.expr,r=calcValue();if(r!==null){const result=Math.round(r*1e8)/1e8;c.history.unshift({expr:before,result});c.history=c.history.slice(0,12);c.expr=String(result);c.result=result;c.error=false;c.fresh=true;refreshCalculator(true);return}c.error=true}
+  else if(c.expr.length<120){if(c.fresh&&/[0-9.(]/.test(k))c.expr='';c.fresh=false;c.result=null;c.error=false;c.expr+=k}
+  refreshCalculator()}
+function factNumber(value){const m=String(value).trim().replaceAll(',','').match(/^[+\-]?(?:\d+(?:\.\d*)?|\.\d+)/);return m?m[0]:null}
+function saveFact(k,v){if(!S.rr||!k)return false;if(S.rr.journal.some(x=>x.k===k&&x.v===v))return false;S.rr.journal.push({k,v,important:false,at:mmss((Date.now()-(S.session?.started||Date.now()))/1000)});track('journal',{label:k});S.tab='journal';const p=$('#side');if(p){p.innerHTML=panelHTML();p.classList.add('flash')}return true}
 
 document.addEventListener('click',e=>{
   const j=e.target.closest('[data-j]');
-  if(j&&S.rr){const[k,v]=j.dataset.j.split('|');track('journal',{label:k});if(!S.rr.journal.some(x=>x.k===k)){S.rr.journal.push({k,v,at:mmss((Date.now()-(S.session?.started||Date.now()))/1000)});S.tab='journal';const p=$('#side');if(p){p.innerHTML=panelHTML();p.classList.add('flash')}}return}
+  if(j&&S.rr){const[k,v]=j.dataset.j.split('|');saveFact(k,v);return}
   const t=e.target.closest('[data-act]');if(!t||t.disabled)return;track(t.dataset.act==='tab'?'tab':'action',{name:t.dataset.act,value:t.dataset.v||'',site:S.sw?.i,day:S.sfl?.day});const a=ACT[t.dataset.act];if(a)a(t.dataset.v,t,e)});
 function onInput(e){const t=e.target;
+  if(t.dataset.calcInput!==undefined){S.calc.expr=t.value.slice(0,120);if(t.value!==S.calc.expr)t.value=S.calc.expr;S.calc.result=null;S.calc.error=false;S.calc.fresh=false;const r=$('#calc-result');if(r){r.textContent='Press = for a result';r.draggable=false}return}
   if(t.dataset.jname!==undefined&&S.rr){const entry=S.rr.journal[Number(t.dataset.jname)];if(entry)entry.k=t.value;return}
   if(t.dataset.profileRange!==undefined||t.dataset.profileTrait!==undefined){const current=activeProfile();if(!current)return;
     if(t.dataset.profileRange!==undefined){const [index,end]=t.dataset.profileRange.split(':'),v=t.value.trim()===''?null:Number(t.value);current.filter.r[Number(index)][end==='min'?0:1]=Number.isFinite(v)?v:null}
@@ -448,9 +457,19 @@ function onInput(e){const t=e.target;
   else if(t.dataset.notes!==undefined&&S.rr){S.rr.notes=t.value}}
 document.addEventListener('input',onInput);document.addEventListener('change',onInput);
 document.addEventListener('focusin',e=>{if(e.target.matches&&e.target.matches('input.num')&&e.target.dataset.bind)S.lastInput=e.target;if(S.screen==='sw-site'&&S.sw&&S.sw.cur.step===1)updateCount()});
-document.addEventListener('dragstart',e=>{if(e.target.id==='cd'&&e.dataTransfer){const v=calcValue();if(v!==null)e.dataTransfer.setData('text/plain',String(Math.round(v*100)/100))}});
-document.addEventListener('dragover',e=>{if(e.target.matches?.('input.num[data-bind]'))e.preventDefault()});
-document.addEventListener('drop',e=>{if(!e.target.matches?.('input.num[data-bind]'))return;e.preventDefault();const raw=e.dataTransfer?.getData('text/plain');if(raw&&Number.isFinite(Number(raw))){e.target.value=raw;e.target.dispatchEvent(new Event('input',{bubbles:true}));track('calculator-drop',{field:e.target.dataset.bind})}});
+document.addEventListener('dragstart',e=>{if(!e.dataTransfer)return;const source=e.target.closest?.('[data-j],[data-j-entry],[data-calc-history],#calc-result');if(!source)return;
+  if(source.dataset.j){const[k,v]=source.dataset.j.split('|');e.dataTransfer.setData('application/x-solve-fact',JSON.stringify({k,v}));const n=factNumber(v);if(n!==null)e.dataTransfer.setData('text/plain',n)}
+  else if(source.dataset.jEntry!==undefined&&S.rr){const i=Number(source.dataset.jEntry),x=S.rr.journal[i];if(!x)return;e.dataTransfer.setData('application/x-solve-fact',JSON.stringify({k:x.k,v:x.v}));e.dataTransfer.setData('application/x-solve-journal-index',String(i));const n=factNumber(x.v);if(n!==null)e.dataTransfer.setData('text/plain',n)}
+  else{const x=source.id==='calc-result'?S.calc.result:S.calc.history[Number(source.dataset.calcHistory)]?.result;if(x!==null&&x!==undefined)e.dataTransfer.setData('text/plain',String(x))}
+});
+document.addEventListener('dragover',e=>{if(e.target.closest?.('[data-journal-drop]')||e.target.matches?.('input.num[data-bind],#cd'))e.preventDefault()});
+document.addEventListener('drop',e=>{const notebook=e.target.closest?.('[data-journal-drop]'),target=e.target;if(!notebook&&!target.matches?.('input.num[data-bind],#cd'))return;e.preventDefault();
+  if(notebook&&S.rr){const rawIndex=e.dataTransfer?.getData('application/x-solve-journal-index'),row=target.closest?.('[data-j-row]');if(rawIndex!==''&&row){const from=Number(rawIndex),to=Number(row.dataset.jRow);if(Number.isInteger(from)&&from>=0&&from<S.rr.journal.length&&to>=0&&to<S.rr.journal.length){const item=S.rr.journal.splice(from,1)[0];S.rr.journal.splice(to,0,item);$('#side').innerHTML=panelHTML()}return}
+    const raw=e.dataTransfer?.getData('application/x-solve-fact');if(raw){try{const x=JSON.parse(raw);saveFact(String(x.k),String(x.v))}catch{}}return}
+  const raw=e.dataTransfer?.getData('text/plain'),n=factNumber(raw);if(n===null)return;
+  if(target.id==='cd'){S.calc.expr=(S.calc.fresh?'':S.calc.expr)+n;S.calc.fresh=false;S.calc.result=null;S.calc.error=false;refreshCalculator();target.focus()}
+  else{target.value=n;target.dispatchEvent(new Event('input',{bubbles:true}));track('value-drop',{field:target.dataset.bind})}
+});
 document.addEventListener('keydown',e=>{
   if($('#run-overlay')){
     if(e.key==='Escape'){e.preventDefault();S.quitConfirm?cancelQuit():resumeRun()}
@@ -458,6 +477,8 @@ document.addEventListener('keydown',e=>{
     return;
   }
   if(e.altKey&&e.key.toLowerCase()==='p'&&S.clock){e.preventDefault();pauseRun();return}
+  if(isRR()&&S.rr&&S.tab==='calc'){if(e.target.id==='cd'&&(e.key==='Enter'||e.key==='=')){e.preventDefault();calcKey('=');$('#cd')?.focus();return}
+    if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName)){const k=e.key==='Enter'?'=':e.key==='Backspace'?'⌫':e.key;if(/^[0-9+\-*/.()]$/.test(k)||['=','⌫'].includes(k)){e.preventDefault();calcKey(k);return}}}
   const j=e.target.closest&&e.target.closest('[data-j]');
   if(j&&(e.key==='Enter'||e.key===' ')){e.preventDefault();j.click();return}
   if(e.altKey&&isRR()&&S.rr&&['1','2','3'].includes(e.key)){const tab={1:'journal',2:'exh',3:'calc'}[e.key];if(tab==='exh'&&S.screen==='rr-inv')return;e.preventDefault();track('tab',{value:tab,keyboard:true});S.tab=tab;const side=$('#side');if(side)side.innerHTML=panelHTML();return}

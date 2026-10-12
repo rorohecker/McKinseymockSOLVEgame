@@ -31,7 +31,7 @@ The real Solve is unpublished. This file lists where the simulator differs from 
 5. **Redrock report** selects 5 prompts from an 8-prompt bank plus a chart; CaseStar describes 8-10 blanks (D8).
 6. **Calculator** is available in Investigation; one source says it is not (D9). Drag-to-answer is a practice convenience.
 7. **Exhibits** combine tables and a generated bar chart. The real visual design is not published.
-8. **Case set** selects six from nine templates with randomised numbers, still much smaller than the real library.
+8. **Case set** selects six from eleven templates with randomised numbers, still much smaller than the real library.
 9. **Case order** is shuffled per seed; the real order is unknown.
 10. **Breaks** are available only between games. Briefing screens are static text.
 11. **Sea Wolf feedback**: site effectiveness is shown right after submission, as reported for 2026 (D6). Detailed deductions appear only at the end.

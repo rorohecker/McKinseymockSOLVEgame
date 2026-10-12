@@ -67,8 +67,36 @@
     const name=document.querySelector('[data-jname]');
     name.value='Field note';name.dispatchEvent(new Event('input',{bubbles:true}));
     check(S.rr.journal[0].k==='Field note','journal rename');
-    ACT.tab('calc');S.calc.expr='6+4';ACT.key('=');check(calcValue()===10,'calculator result');
-    ACT.tab('journal');ACT['to-an']();
+    const source=[...document.querySelectorAll('[data-j]')].find(x=>x!==clickTarget),factDrag=new DataTransfer();
+    source.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:factDrag}));
+    document.querySelector('[data-journal-drop]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:factDrag}));
+    check(S.rr.journal.length===2,'exhibit fact drags into notebook');
+    const firstLabel=S.rr.journal[0].k,secondLabel=S.rr.journal[1].k,reorderDrag=new DataTransfer();
+    document.querySelector('[data-j-entry="1"]').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:reorderDrag}));
+    document.querySelector('[data-j-row="0"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:reorderDrag}));
+    check(S.rr.journal[0].k===secondLabel&&S.rr.journal[1].k===firstLabel,'notebook entries reorder by drag');
+    ACT.jpin(0);check(S.rr.journal[0].important,'notebook important marker');
+    ACT.tab('calc');check(document.querySelectorAll('.calc-fact').length===2,'saved facts visible beside calculator');
+    const savedDrag=new DataTransfer();
+    document.querySelector('.calc-fact').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:savedDrag}));
+    document.querySelector('#cd').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:savedDrag}));
+    check(S.calc.expr===factNumber(S.rr.journal[0].v),'notebook value drags into calculator');
+    fill('#cd','1'.repeat(130));check(S.calc.expr.length===120&&document.querySelector('#cd').value.length===120,'calculator paste limit matches displayed expression');
+    ACT.key('C');
+    S.calc.expr='6+4';ACT.key('=');check(calcValue()===10&&S.calc.history.length===1,'calculator mouse result and history');
+    fill('#cd','7*3').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+    check(S.calc.result===21&&S.calc.history.length===2,'calculator keyboard expression and history');
+    fill('#cd','1/0').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+    check(document.querySelector('#calc-result').textContent==='Check expression'&&S.calc.history.length===2,'calculator rejects non-finite result');
+    ACT['calc-recall'](0);
+    ACT['to-an']();
+    const resultDrag=new DataTransfer();
+    document.querySelector('#calc-result').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:resultDrag}));
+    document.querySelector('[data-bind="an0a"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:resultDrag}));
+    check(S.rr.ans.an0a==='21','calculator result drags to numeric answer');
+    ACT.key('C');ACT.key('8');ACT.key('÷');ACT.key('2');ACT.key('=');
+    check(S.calc.result===4&&S.calc.history.length===3,'calculator mouse keys perform division');
+    ACT['calc-clear-history']();check(S.calc.history.length===0,'calculator history clears');
     if(S.learning)check(document.querySelector('.pace')?.textContent.includes('Quick check'),'Redrock learning hint');
     for(const q of S.rr.d.an){
       for(const p of q.parts)fill('[data-bind="'+p.key+'"]',p.ans);
@@ -132,13 +160,17 @@
     check(S.res.sfl.score.total===100,'SFL project 100/100');
   }
   function sflSeedSweep(){
+    const projectBestPositions=new Set(),teamBestPositions=new Set();
     for(let seed=1;seed<=500;seed++){
       const project=genSFLProject(seed),answers=project.questions.map(q=>{
         check(q.options.length===3&&new Set(q.options.map(o=>o.id)).size===3&&q.options.map(o=>o.quality).sort().join(',')==='0,1,2','SFL Project choices complete at seed '+seed);
+        check(new Set(q.options.map(o=>o.text)).size===3&&!/[{][a-z]+[}]/.test(q.prompt+' '+q.options.map(o=>o.text).join(' ')),'SFL Project choices distinct and filled at seed '+seed);
+        projectBestPositions.add(q.options.findIndex(o=>o.quality===2));
         return q.options.find(o=>o.quality===2).id;
       });
       check(project.questions.length===12&&scoreSFLProject(project,SFL_RANK.map(x=>x.id),answers).total===100,'SFL Project perfect score at seed '+seed);
       const team=genSFLTeam(seed),records=team.days.map(day=>{
+        day.requests.forEach(q=>{check(q.options.map(o=>o.quality).sort().join(',')==='0,1,2'&&new Set(q.options.map(o=>o.text)).size===3,'SFL Team choices distinct at seed '+seed);teamBestPositions.add(q.options.findIndex(o=>o.quality===2))});
         const assign=Object.fromEntries(team.people.map(p=>[p.id,day.stations.find(w=>w.skill===p.skill)?.id]));
         const reasons=Object.fromEntries(team.people.map(p=>[p.id,'Skill fit']));
         const support=day.requests.map(q=>q.options.findIndex(o=>o.quality===2));
@@ -147,6 +179,7 @@
       });
       check(team.days.length===3&&scoreSFLTeam(team,records).total===100,'SFL Team perfect score at seed '+seed);
     }
+    check(projectBestPositions.size===3&&teamBestPositions.size===3,'SFL strongest choice appears in every response position');
     log('500 SFL seeds have complete choices and reachable perfect scores');
   }
   function team(){

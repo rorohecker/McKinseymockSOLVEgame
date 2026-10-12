@@ -48,6 +48,15 @@ def main():
             problems.append(f"seed {seed}: perfect Redrock sheet scored {r['total']}")
         if score_redrock(d, {})["total"] != 0:
             problems.append(f"seed {seed}: empty Redrock sheet scored above 0")
+        if len({c["kind"] for c in d["cases"]}) != 6:
+            problems.append(f"seed {seed}: duplicate Redrock case kind")
+        for c in d["cases"]:
+            if c["type"] == "mc":
+                texts = [o["text"] for o in c["options"]]
+                if len(set(texts)) != len(texts):
+                    problems.append(f"seed {seed}: duplicate choices in {c['kind']}")
+                if sum(o["id"] == c["ans"] for o in c["options"]) != 1:
+                    problems.append(f"seed {seed}: missing unique answer in {c['kind']}")
         w = gen_sea_wolf(seed)
         for s in w["sites"]:
             sites += 1

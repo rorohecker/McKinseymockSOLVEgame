@@ -1,82 +1,85 @@
 /* Original practice reconstructions. No McKinsey scoring or scenario content is used. */
 const SFL_THEMES=[
-  {title:"Burn-scar watershed",site:"the upper watershed",risk:"a forecast storm",resource:"field crews",goal:"protect downstream water quality"},
-  {title:"Tidal wetland recovery",site:"the marsh edge",risk:"a high-tide surge",resource:"restoration crews",goal:"restore the nursery habitat"},
-  {title:"Urban heat corridor",site:"the south corridor",risk:"an early heat wave",resource:"survey teams",goal:"reduce exposure for vulnerable residents"}
+  {title:"Burn-scar watershed",site:"the upper watershed",risk:"a forecast storm",resource:"field crews",goal:"protect downstream water quality",signal:"turbidity readings",access:"the upstream road"},
+  {title:"Tidal wetland recovery",site:"the marsh edge",risk:"a high-tide surge",resource:"restoration crews",goal:"restore the nursery habitat",signal:"salinity readings",access:"the tidal causeway"},
+  {title:"Urban heat corridor",site:"the south corridor",risk:"an early heat wave",resource:"survey teams",goal:"reduce exposure for vulnerable residents",signal:"surface-temperature readings",access:"the school-site permit"},
+  {title:"Alpine slope restoration",site:"the eastern slope",risk:"an early thaw",resource:"erosion crews",goal:"reduce sediment entering the valley",signal:"slope-movement readings",access:"the ridge trail"},
+  {title:"River migration corridor",site:"the lower river",risk:"a low-flow period",resource:"habitat crews",goal:"keep fish passage open",signal:"flow-gauge readings",access:"the downstream gate"},
+  {title:"Coastal dune protection",site:"the exposed shore",risk:"a seasonal storm",resource:"monitoring crews",goal:"protect nesting habitat",signal:"shoreline-change readings",access:"the beach-entry permit"}
 ];
 const SFL_RANK=[
-  {id:"map",text:"Map the highest-consequence sites and evidence gaps",rank:0,why:"Locate the greatest risk before spending scarce capacity."},
-  {id:"verify",text:"Verify the latest field conditions and constraints",rank:1,why:"Check whether the initial picture is still accurate."},
-  {id:"brief",text:"Brief partners on the plan and uncertainty",rank:2,why:"Give partners a usable plan once priorities are clear."},
-  {id:"commit",text:"Commit the full budget to the most visible location",rank:3,why:"Visibility alone does not establish the strongest intervention."}
+  {id:"map",text:"Map sites by expected harm and mark the largest evidence gaps",rank:0,why:"A shared risk map defines which facts could change the first intervention."},
+  {id:"verify",text:"Check current field readings and access at the leading site",rank:1,why:"Verify the highest-impact uncertainty before committing people."},
+  {id:"brief",text:"Brief partners on the provisional priority and decision trigger",rank:2,why:"Explain the evidence and the condition that could change the plan."},
+  {id:"commit",text:"Run a limited, reversible pilot at the leading accessible site",rank:3,why:"A pilot is useful after its location and constraints have been checked."}
 ];
 const SFL_Q=[
-  ["Scope","A partner asks you to begin at {site} before the risk map is complete. What do you do?",[
-    ["Set a short evidence deadline and prioritise the highest-consequence locations",2,"evidence",["evidence",1,"trust",1],"A focused evidence check keeps the project moving without guessing."],
-    ["Accept the visible location immediately",0,"assume",["pressure",2,"evidence",-1],"Visibility is not evidence of impact."],
-    ["Delay every action until a perfect map exists",1,"delay",["pressure",1],"A short deadline is more useful than an open-ended study."]
+  ["Scope","A partner can open {access} today, but the risk map for {site} is incomplete. The first crew leaves tomorrow. What is the strongest next step?",[
+    ["Set a same-day deadline to compare expected harm and confirm access, then send the first crew",2,"evidence",["evidence",1,"trust",1],"The deadline protects the departure while resolving the facts most likely to change the location."],
+    ["Use the available access for a small pilot and refine the risk map after the crew leaves",1,"targeted",["pressure",-1],"A reversible pilot keeps momentum, but may use the first crew at a lower-impact site."],
+    ["Ask the partner to hold access until every site has a complete risk map",0,"delay",["pressure",1],"A complete map would help, but the open-ended wait risks losing access and the departure window."]
   ]],
-  ["Signals","New monitoring data conflicts with last week's field notes. How do you respond?",[
-    ["Check the measurement method and ask for a targeted resample",2,"evidence",["evidence",1],"Resolve the discrepancy before treating either source as certain."],
-    ["Discard the new data because it disagrees",0,"assume",["evidence",-1],"Dismissing inconvenient data hides a material risk."],
-    ["Average the two readings and continue",1,"smooth",["pressure",1],"Averaging can conceal a real change in conditions."]
+  ["Signals","Fresh {signal} disagree with last week's field notes. A location decision is due this afternoon. What do you use?",[
+    ["Check the method and run one targeted repeat at the disputed location before the decision",2,"evidence",["evidence",1],"A fast discriminating check addresses the conflict within the decision window."],
+    ["Use the new readings provisionally, flag their uncertainty, and schedule validation tomorrow",1,"transparent",["trust",1],"This is transparent and timely, but the disputed reading may steer today's placement."],
+    ["Blend the old and new readings into a midpoint estimate and add a wider safety margin",0,"smooth",["pressure",1],"A safety margin helps, but averaging may hide a real shift at the location."]
   ]],
-  ["Trade-offs","Only half of the requested {resource} are available. Which plan is strongest?",[
-    ["Concentrate effort where expected harm is highest and stage the rest",2,"targeted",["pressure",-1,"trust",1],"Concentrating scarce capacity protects the most exposed areas."],
-    ["Split every crew equally across sites",1,"spread",["pressure",1],"Equal allocation can ignore unequal risks."],
-    ["Promise full coverage anyway",0,"opaque",["trust",-2],"A promise that capacity cannot support damages trust."]
+  ["Trade-offs","Only half the requested {resource} are available. Two sites have different expected harm, but partners at both expect action. Which plan is strongest?",[
+    ["Fully staff the higher-harm site, reserve a rapid check at the other, and explain the trigger to redeploy",2,"targeted",["pressure",-1,"trust",1],"This protects the largest exposure while keeping a defined watch on the other site."],
+    ["Put one crew at each site so both partners see progress, then revise after a week",1,"spread",["pressure",1],"Visible coverage helps relationships, but each crew may lack capacity to change the higher-risk outcome."],
+    ["Staff the site with confirmed access first and negotiate the second site's scope later",0,"assume",["trust",-1],"Access matters, but it is not enough to outweigh a known difference in expected harm."]
   ]],
-  ["Stakeholders","A local group says the current plan overlooks their concerns. What is your next step?",[
-    ["Ask for specific evidence and explain how it will affect the priority rule",2,"transparent",["trust",2],"A clear decision rule and open evidence channel preserve trust."],
-    ["Explain that the model is final",0,"opaque",["trust",-2],"The model may be missing local information."],
-    ["Change the plan without checking the new claim",1,"assume",["pressure",1],"Being responsive still requires a consistent decision rule."]
+  ["Stakeholders","A local group reports a nearby exposure the model may have missed. The current plan is due for approval tomorrow. What do you do?",[
+    ["Ask for the location and evidence today, test whether it changes the risk order, and share the rule used",2,"transparent",["trust",2],"The claim receives a timely check against the same priority rule."],
+    ["Add a small contingent allocation for the reported exposure and keep the main plan moving",1,"targeted",["pressure",1],"A contingency acknowledges the concern, but does not establish whether priorities should change."],
+    ["Submit the current plan with the concern documented for the first scheduled review",0,"delay",["trust",-1],"Documentation is useful, but tomorrow's approval makes an immediate check possible and valuable."]
   ]],
-  ["Timing","The forecast moves the deadline forward. What changes first?",[
-    ["Protect critical milestones and defer lower-value work",2,"targeted",["pressure",-1],"Re-scope around the outcome that matters most."],
-    ["Keep every deliverable and ask everyone to work faster",0,"spread",["pressure",2],"This increases failure risk without changing capacity."],
-    ["Stop the project until the forecast stabilises",1,"delay",["pressure",1],"Some reversible preparation can continue."]
+  ["Timing","{risk} advances the field deadline by four days. Which schedule change best protects {goal}?",[
+    ["Keep the exposure check and first intervention; defer the lower-impact survey and name an owner for follow-up",2,"targeted",["pressure",-1],"The critical outcome remains covered, with deferred work assigned rather than forgotten."],
+    ["Run a shorter version of every task so all milestones remain on the calendar",1,"spread",["pressure",1],"Breadth preserves visibility, but can leave the critical check too thin."],
+    ["Move the field crew immediately and complete analysis from last week's readings",0,"assume",["evidence",-1,"pressure",1],"Speed helps, but the omitted exposure check could send the crew to the wrong place."]
   ]],
-  ["Team","Two specialists disagree about the likely cause of the risk. How do you proceed?",[
-    ["Name the competing hypotheses and run one discriminating check",2,"evidence",["evidence",1,"trust",1],"A small test can resolve a high-stakes disagreement."],
-    ["Let the senior specialist decide without a check",1,"assume",["trust",-1],"Seniority alone does not settle the evidence."],
-    ["Suppress the disagreement in the project note",0,"opaque",["trust",-2],"Hidden uncertainty creates brittle decisions."]
+  ["Team","Two specialists offer different explanations for the same {signal}. The next sampling window is short. How do you proceed?",[
+    ["Agree on the one observation that separates the explanations and use the next sample to test it",2,"evidence",["evidence",1,"trust",1],"The scarce sample answers the decision-relevant disagreement."],
+    ["Use the explanation with stronger historical evidence and record the competing view for review",1,"transparent",["trust",1],"History is a reasonable prior, but the next sample could resolve this case directly."],
+    ["Collect a broad extra sample across all sites and decide after the full results return",0,"delay",["pressure",1],"Broader data may help later, but misses the short decision window."]
   ]],
-  ["Measures","You must define success for {goal}. Which metric is most useful?",[
-    ["Pair an outcome measure with a leading measure and a clear baseline",2,"evidence",["evidence",1],"The baseline and leading signal show whether action is working."],
-    ["Count only how many meetings the team held",0,"smooth",["evidence",-1],"Activity is not an outcome."],
-    ["Use one outcome number without a baseline",1,"assume",["evidence",-1],"Without a baseline, change is hard to interpret."]
+  ["Measures","A sponsor wants one early indicator and one final test of whether the work achieved {goal}. Which pair is strongest?",[
+    ["Track a baseline-adjusted outcome and a leading field signal tied to the intervention",2,"evidence",["evidence",1],"The leading signal supports timely course correction; the outcome tests the actual goal."],
+    ["Track completed site visits and the final outcome against the original target",1,"targeted",["pressure",-1],"This is measurable, but site visits are activity and the target alone omits baseline change."],
+    ["Track partner approval and the final outcome at the most visible site",0,"smooth",["evidence",-1],"Partner approval matters, but it does not reveal whether the broader exposure improved."]
   ]],
-  ["Uncertainty","A quick intervention might help but its side effects are unclear. What do you do?",[
-    ["Pilot it at a reversible site with a stop rule",2,"targeted",["evidence",1,"pressure",-1],"A bounded pilot creates evidence while limiting downside."],
-    ["Deploy everywhere immediately",0,"assume",["pressure",2],"Wide deployment amplifies unknown side effects."],
-    ["Reject it without testing",1,"delay",["pressure",1],"A small pilot may be worth the information gained."]
+  ["Uncertainty","A quick intervention could reduce exposure at {site}, but its effect on adjacent habitat is unknown. There is time for one trial. What do you do?",[
+    ["Trial it at a reversible site with a habitat measure and a pre-agreed stop threshold",2,"targeted",["evidence",1,"pressure",-1],"The trial creates useful evidence and limits a side effect before scaling."],
+    ["Use it at the highest-risk site with intensive monitoring and authority to stop",1,"evidence",["evidence",1],"Monitoring helps, but an avoidable side effect would affect the most exposed site."],
+    ["Wait for a laboratory study while using only the established slower intervention",0,"delay",["pressure",1],"The established method is defensible, but a bounded field trial could answer the urgent question sooner."]
   ]],
-  ["Communication","A sponsor asks for a confident success claim before results arrive. What do you say?",[
-    ["Report progress, uncertainty and the next decision point",2,"transparent",["trust",2],"An honest update preserves a useful decision path."],
-    ["Say success is guaranteed",0,"opaque",["trust",-2],"A guarantee is unsupported before results arrive."],
-    ["Provide no update until the project ends",1,"delay",["trust",-1],"Silence prevents timely decisions."]
+  ["Communication","A sponsor needs a board update before final results arrive. Which statement is most useful?",[
+    ["State what has been delivered, what {signal} show so far, the uncertainty, and the next decision date",2,"transparent",["trust",2],"The board receives a usable status and a clear point for revision."],
+    ["Give the early trend and a range of possible outcomes, with a note that validation is pending",1,"evidence",["evidence",1],"The range signals uncertainty, but leaves the next action and decision time unclear."],
+    ["Report that delivery is on track and reserve outcome discussion for the final data release",0,"smooth",["trust",-1],"Delivery status is relevant, but it can imply the outcome is secure before evidence supports it."]
   ]],
-  ["New evidence","A late field sample shows risk shifted away from the original site. How do you respond?",[
-    ["Re-check the shift and redirect the next available crew if confirmed",2,"evidence",["evidence",1,"pressure",-1],"Update the plan when material evidence changes."],
-    ["Continue unchanged to avoid explaining a revision",0,"opaque",["trust",-2],"Consistency of process matters more than defending an old location."],
-    ["Move every crew before verifying the sample",1,"assume",["pressure",1],"A single late sample deserves a quick check."]
+  ["New evidence","One late field sample suggests risk has shifted away from the original site. The next crew can be redirected tomorrow. What do you do?",[
+    ["Verify the shift with a fast independent check, then redirect that crew if the risk order changes",2,"evidence",["evidence",1,"pressure",-1],"A short verification prevents overreacting while keeping the crew movable."],
+    ["Redirect the next crew now and test the shift during its first day in the field",1,"targeted",["pressure",-1],"This acts quickly, but uses crew capacity before the lone sample is confirmed."],
+    ["Keep the crew at the original site and add the new location to the next survey cycle",0,"delay",["pressure",1],"The original plan has a rationale, but the available redirection window calls for a faster check."]
   ]],
-  ["Capacity","A team member is overloaded while another has spare time. What do you do?",[
-    ["Reassign a defined task and agree on the hand-off",2,"targeted",["pressure",-1,"trust",1],"A specific hand-off protects delivery and ownership."],
-    ["Tell the overloaded person to push through",0,"spread",["pressure",2],"The bottleneck remains."],
-    ["Move every task at once",1,"assume",["pressure",1],"A broad reshuffle adds coordination cost."]
+  ["Capacity","The analyst validating {signal} is overloaded; a second analyst has capacity but less site context. What is the best hand-off?",[
+    ["Transfer the repeatable quality check with a short briefing and retain final interpretation with the site analyst",2,"targeted",["pressure",-1,"trust",1],"The spare capacity removes a defined bottleneck without losing context for interpretation."],
+    ["Move the entire analysis package to the available analyst and schedule one review at the end",1,"spread",["pressure",-1],"This frees the bottleneck, but puts interpretation at risk until the late review."],
+    ["Keep all validation with the site analyst and ask the other to prepare the board slides",0,"assume",["pressure",1],"The other analyst contributes, but the validation bottleneck remains on the critical path."]
   ]],
-  ["Synthesis","You are asked for a final recommendation. What should it include?",[
-    ["The priority, supporting evidence, uncertainty and a trigger to revise",2,"transparent",["trust",1,"evidence",1],"A decision-ready recommendation states what to do and when to adapt."],
-    ["Only the most positive metric",0,"opaque",["trust",-2],"Selective reporting prevents an informed decision."],
-    ["A long data dump without a recommendation",1,"delay",["pressure",1],"The audience still needs a clear decision."]
+  ["Synthesis","Leaders need a recommendation for {site} today, although one habitat measure remains uncertain. Which final note is strongest?",[
+    ["Recommend the priority action, quantify the expected benefit, name the uncertainty, and specify a revision trigger",2,"transparent",["trust",1,"evidence",1],"The note supports an immediate decision and defines when new evidence should change it."],
+    ["Recommend a limited first phase, show expected benefit and uncertainty, and request a second approval before scaling",1,"targeted",["pressure",1],"A staged decision limits downside, but may add an avoidable approval delay without a clear trigger."],
+    ["Present the likely benefit and uncertainty, then let leaders choose among the three feasible actions",0,"delay",["pressure",1],"The evidence is useful, but the requested recommendation is still missing."]
   ]]
 ];
-function sflFill(text,theme){return text.replaceAll("{site}",theme.site).replaceAll("{risk}",theme.risk).replaceAll("{resource}",theme.resource).replaceAll("{goal}",theme.goal)}
+function sflFill(text,theme){return text.replaceAll("{site}",theme.site).replaceAll("{risk}",theme.risk).replaceAll("{resource}",theme.resource).replaceAll("{goal}",theme.goal).replaceAll("{signal}",theme.signal).replaceAll("{access}",theme.access)}
 function genSFLProject(seed){
   const R=RNG(seed*23+11),theme=R.pick(SFL_THEMES);
   return{seed,theme,rank:R.shuffle(SFL_RANK),questions:SFL_Q.map(([phase,prompt,raw])=>({
-    phase,prompt:sflFill(prompt,theme),options:R.shuffle(raw.map(([text,quality,stance,effects,why],i)=>({id:String(i),text,quality,stance,effects,why})))
+    phase,prompt:sflFill(prompt,theme),options:R.shuffle(raw.map(([text,quality,stance,effects,why],i)=>({id:String(i),text:sflFill(text,theme),quality,stance,effects,why})))
   }))};
 }
 function sflProjectPrompt(data,index,state){
@@ -100,7 +103,7 @@ function scoreSFLProject(data,rank,answers,rankLocked=true){
     if(choice){stances.push(choice.stance);for(let k=0;k<choice.effects.length;k+=2)state[choice.effects[k]]+=choice.effects[k+1]}
     const best=q.options.find(x=>x.quality===2);
     items.push({label:"Decision "+(i+1)+" · "+q.phase,pts,max:5,your:choice?.text||"No decision",correct:best?.text||"",why:(choice?choice.why:"No decision submitted.")+" Strongest option: "+(best?.text||"")+" — "+(best?.why||"")})}
-  const conflicts=[["transparent","opaque"],["evidence","assume"],["targeted","spread"]];
+  const conflicts=[["transparent","opaque"],["evidence","assume"],["targeted","spread"],["targeted","delay"]];
   const conflictingPairs=conflicts.filter(([a,b])=>stances.includes(a)&&stances.includes(b));
   const inconsistent=conflictingPairs.length;
   const submitted=Array.from({length:12},(_,i)=>answers[i]).filter(x=>x!==undefined).length;
@@ -115,29 +118,29 @@ const SFL_SKILLS=["Field ecology","Data analysis","Community outreach","Operatio
 const SFL_NAMES=["Ari","Bela","Cleo","Dara","Emi","Finn","Gio","Hana"];
 const SFL_STATIONS=["Field station","Data desk","Community desk","Logistics bench"];
 const SFL_SUPPORT=[
-  {prompt:"A researcher finds a conflicting measurement and asks what to do.",options:[
-    {text:"Check the method and repeat one targeted sample",quality:2,why:"A targeted check resolves the discrepancy."},
-    {text:"Use whichever reading supports the current plan",quality:0,why:"Selecting convenient evidence creates bias."},
-    {text:"Average the readings without investigating",quality:1,why:"Averaging can hide a real change."}]},
-  {prompt:"A partner requests a result before the team is ready.",options:[
-    {text:"Share progress, uncertainty and the next update time",quality:2,why:"A bounded update is honest and useful."},
-    {text:"Promise the result will be positive",quality:0,why:"The result is not known yet."},
-    {text:"Ignore the request until the project ends",quality:1,why:"Silence weakens coordination."}]},
-  {prompt:"A team member says their workload is becoming unmanageable.",options:[
-    {text:"Clarify the bottleneck and reassign one defined task",quality:2,why:"A specific hand-off reduces overload."},
-    {text:"Ask them to work longer",quality:0,why:"Longer hours do not remove the bottleneck."},
-    {text:"Cancel all work at the station",quality:1,why:"A narrower change could preserve progress."}]},
-  {prompt:"A workstation loses access to a key tool for the afternoon.",options:[
-    {text:"Move reversible tasks and reset the day's priorities",quality:2,why:"Replanning protects the critical path."},
-    {text:"Keep the original schedule and hope access returns",quality:0,why:"The blocked task cannot progress."},
-    {text:"Move everyone to the same station",quality:1,why:"A full move may overcrowd the station."}]}
+  {prompt:"Two measurements conflict just before the day's placement decision. One more sample can be run before the crew leaves.",options:[
+    {text:"Check the method and use the extra sample where the readings disagree",quality:2,why:"The available sample directly tests the decision-relevant discrepancy."},
+    {text:"Use the more recent reading provisionally and flag it for tomorrow's validation",quality:1,why:"This keeps the crew moving, but the placement still rests on disputed evidence."},
+    {text:"Widen the planning range around the two readings and send the crew to the current priority",quality:0,why:"A wider range expresses uncertainty but does not resolve a check that fits today's window."}]},
+  {prompt:"A partner needs a board update today; the outcome measure will arrive tomorrow.",options:[
+    {text:"Share delivery progress, early signals, uncertainty and tomorrow's decision point",quality:2,why:"The partner gets a useful update without an unsupported outcome claim."},
+    {text:"Share early signals as a provisional outcome range with a clear caveat",quality:1,why:"The caveat is honest, but the board still lacks a decision point."},
+    {text:"Share the delivery milestones only and hold all interpretation until tomorrow",quality:0,why:"Milestones are factual, but they do not answer the board's request about likely impact."}]},
+  {prompt:"The analyst on the critical-path check is overloaded. Another analyst has capacity but less site context.",options:[
+    {text:"Hand over the repeatable validation step with a short briefing, retaining site interpretation",quality:2,why:"A bounded hand-off reduces pressure while preserving the context needed for interpretation."},
+    {text:"Transfer the full analysis package and arrange a single review before release",quality:1,why:"This may reduce overload, but a late review can miss context-dependent errors."},
+    {text:"Keep the analysis with its current owner and move presentation work to the spare analyst",quality:0,why:"Presentation support helps, but leaves the critical-path bottleneck untouched."}]},
+  {prompt:"A workstation loses its main tool for the afternoon; the backup can complete only a subset of tasks.",options:[
+    {text:"Move the critical compatible tasks to the backup and reschedule the rest with owners",quality:2,why:"The critical path continues within the backup's real capacity."},
+    {text:"Send the full workload to the backup and triage unfinished tasks at day's end",quality:1,why:"This starts work quickly, but overcommits the known backup capacity."},
+    {text:"Keep staff at the blocked station for preparatory work and resume the original plan tomorrow",quality:0,why:"Preparation has value, but available backup capacity could protect today's key task."}]}
 ];
 function genSFLTeam(seed){
   const R=RNG(seed*29+5),names=R.shuffle(SFL_NAMES).slice(0,4);
   const people=names.map((name,i)=>({id:"p"+i,name,skill:SFL_SKILLS[i],preference:R.pick(["Clear hand-offs","Early feedback","Focused work","Partner contact"])}));
   const days=[0,1,2].map(day=>({
     stations:R.shuffle(SFL_SKILLS.map((skill,i)=>({id:"w"+i,name:SFL_STATIONS[i],skill,task:["Map the latest risk","Check the evidence","Coordinate partners","Stage the next response"][i]}))),
-    requests:R.shuffle(SFL_SUPPORT).slice(0,2)
+    requests:R.shuffle(SFL_SUPPORT).slice(0,2).map(q=>({...q,options:R.shuffle(q.options)}))
   }));
   return{seed,people,days};
 }

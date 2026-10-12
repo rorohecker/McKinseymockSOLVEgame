@@ -8,6 +8,9 @@ THEMES = [
     {"name": "Wildlife territory", "groups": "wolf packs", "group": "pack", "measure": "territory", "unit": "km²", "names": PACKS, "context": "An elk herd is moving inland.", "contextLabel": "Elk herd", "contextUnit": "animals"},
     {"name": "Wetland restoration", "groups": "wetland basins", "group": "basin", "measure": "restored habitat", "unit": "hectares", "names": ["North Basin", "Saltmeadow", "Reed Bend", "Tidal Flats", "Willow Reach", "South Marsh", "Old Lagoon", "Estuary Edge"], "context": "Seasonal flooding is changing which basins need attention.", "contextLabel": "Seedling count", "contextUnit": "seedlings"},
     {"name": "Forest protection", "groups": "forest corridors", "group": "corridor", "measure": "protected habitat", "unit": "hectares", "names": ["North Ridge", "Cedar Pass", "Ash Hollow", "Pine Edge", "West Spur", "River Gate", "Granite Slope", "High Meadow"], "context": "Dry conditions have changed the highest-risk corridors.", "contextLabel": "Survey trees", "contextUnit": "trees"},
+    {"name": "Coastal resilience", "groups": "shoreline sectors", "group": "sector", "measure": "stabilised coast", "unit": "hectares", "names": ["North Dune", "Shell Point", "Outer Beach", "Harbour Edge", "Salt Reach", "East Spit", "Bay Mouth", "Tern Cove"], "context": "Storm exposure differs between sectors.", "contextLabel": "Nesting birds", "contextUnit": "birds"},
+    {"name": "River recovery", "groups": "river reaches", "group": "reach", "measure": "restored bank", "unit": "hectares", "names": ["Upper Fork", "Willow Bend", "Mill Reach", "Stone Run", "South Channel", "Pine Crossing", "Lower Gate", "Heron Pool"], "context": "Runoff is changing conditions along the river.", "contextLabel": "Survey fish", "contextUnit": "fish"},
+    {"name": "Grassland restoration", "groups": "prairie zones", "group": "zone", "measure": "restored grassland", "unit": "hectares", "names": ["North Plain", "Dry Hollow", "Bison Ridge", "Clover Flat", "West Meadow", "Long Draw", "South Rise", "Creek Edge"], "context": "Seasonal grazing pressure varies by zone.", "contextLabel": "Seed plots", "contextUnit": "plots"},
 ]
 LETTERS = ["a", "b", "c", "d"]
 
@@ -27,12 +30,12 @@ def gen_cases(R: RNG):
     g = R.pick([10, 12.5, 15, 20, 25, 30])
     a = R.pick([8, 10, 12, 14, 16, 18, 20]) * 1000
     b = a * (1 + g / 100)
-    m = _mc(R, [jstr(g) + "%", jstr(f1(g / (100 + g) * 100)) + "%", fmt(b - a), jstr(100 + g) + "%"], 0)
+    m = _mc(R, [jstr(g) + "%", jstr(f1(g / (100 + g) * 100)) + "%", jstr(f1(g + g * g / 100)) + "%", jstr(f1(g * 100 / (100 - g))) + "%"], 0)
     out.append({
         "kind": "Growth", "title": "Visitors at the ranger station",
         "body": f"<p>The ranger station logged <b>{fmt(a)}</b> visitors in Year 1 and <b>{fmt(b)}</b> in Year 2.</p>",
         "q": "By what percentage did visitors increase?", "type": "mc", **m,
-        "explain": f"({fmt(b)} − {fmt(a)}) ÷ {fmt(a)} = {jstr(g)}%. Dividing by the Year 2 figure or reporting the raw change answers a different question.",
+        "explain": f"({fmt(b)} − {fmt(a)}) ÷ {fmt(a)} = {jstr(g)}%. The other percentages use Year 2 as the base or apply a second change.",
     })
 
     # 2. weighted average
@@ -100,12 +103,12 @@ def gen_cases(R: RNG):
     # 6. data judgement
     h1 = R.pick([60, 80, 100]); h2 = h1 * 1.5; r1 = R.pick([2.5, 3, 3.5, 4])
     s1 = r1 * h1; s2 = s1 * 1.25
-    m = _mc(R, ["Only statement 2", "Statements 1 and 2", "Only statement 1", "Statements 1 and 3"], 0)
+    m = _mc(R, ["Statements 1 and 2", "Statements 1 and 3", "Statements 2 and 3", "All three statements"], 0)
     out.append({
-        "kind": "Data judgement", "title": "What does the table prove?",
-        "body": f'<div class="tblbox"><table><tr><th>Year</th><th class="n">Seal sightings</th><th class="n">Survey hours</th></tr><tr><td>Year 1</td><td class="n">{fmt(s1)}</td><td class="n">{jstr(h1)}</td></tr><tr><td>Year 2</td><td class="n">{fmt(s2)}</td><td class="n">{jstr(h2)}</td></tr></table></div><ol><li>The seal population grew by 25%.</li><li>Sightings per survey hour fell.</li><li>Extra survey hours caused more seals to appear.</li></ol>',
+        "kind": "Data judgement", "title": "What does the table show?",
+        "body": f'<div class="tblbox"><table><tr><th>Year</th><th class="n">Seal sightings</th><th class="n">Survey hours</th></tr><tr><td>Year 1</td><td class="n">{fmt(s1)}</td><td class="n">{jstr(h1)}</td></tr><tr><td>Year 2</td><td class="n">{fmt(s2)}</td><td class="n">{jstr(h2)}</td></tr></table></div><ol><li>Recorded sightings rose by 25%.</li><li>Sightings per survey hour fell.</li><li>Sightings per survey hour fell by 25%.</li></ol>',
         "q": "Which statements does the table support?", "type": "mc", **m,
-        "explain": f"Sightings per hour fell from {jstr(f1(r1))} to {jstr(f1(s2 / h2))}. Statement 1 compares counts taken with different effort; statement 3 claims a cause the table cannot show.",
+        "explain": f"Recorded sightings rose by 25%, but survey hours rose by 50%. Sightings per hour fell from {jstr(f1(r1))} to {jstr(f1(s2 / h2))}, a decline of about 16.7%, so statement 3 is too large.",
     })
     old = R.pick([18, 24, 35, 42, 55]); now = old + R.pick([3, 5, 7, 10])
     out.append({
@@ -132,6 +135,28 @@ def gen_cases(R: RNG):
         "q": "Enter the ending total (thousand euros) for the waterfall chart.", "type": "num",
         "ans": ans, "tol": 0.1,
         "explain": f"Begin at {start}; add {a}, subtract {b}, then subtract {c}. Ending total = {ans} thousand euros.",
+    })
+    p = R.pick([10, 15, 20]); q = R.pick([5, 10, 15]); base = R.pick([200, 300, 400])
+    net = f1(p - q - p * q / 100); cross = p * q / 100
+    m = _mc(R, [jstr(net) + "%", jstr(f1(p - q)) + "%",
+                jstr(f1(p - q + cross)) + "%", jstr(f1(p - q - 2 * cross)) + "%"], 0)
+    out.append({
+        "kind": "Sequential change", "title": "Habitat after two seasons",
+        "body": f"<p>A habitat index began at <b>{base}</b>. It rose <b>{p}%</b> in spring, then fell <b>{q}%</b> from the spring level in autumn.</p>",
+        "q": "What was the net percentage change from the original index?", "type": "mc", **m,
+        "explain": f"Multiply the changes: (1 + {p}/100) × (1 − {q}/100) − 1 = {jstr(net)}%. Simply subtracting the rates ignores their different bases.",
+    })
+    base = R.pick([4, 8, 12]); values = [base, base + 2, base + 4, base + 6]
+    counts = [R.pick([2, 3, 4]) for _ in values]
+    ordered = [v for i, v in enumerate(values) for _ in range(counts[i])]
+    middle = (ordered[(len(ordered) - 1) // 2] + ordered[len(ordered) // 2]) / 2
+    rows = "".join(f'<tr><td class="n">{v}</td><td class="n">{counts[i]}</td></tr>' for i, v in enumerate(values))
+    out.append({
+        "kind": "Median", "title": "Samples per survey plot",
+        "body": f'<div class="tblbox"><table><tr><th class="n">Samples in a plot</th><th class="n">Number of plots</th></tr>{rows}</table></div>',
+        "q": "What is the median number of samples per plot?", "type": "num",
+        "ans": middle, "tol": 0.1,
+        "explain": f"Expand each sample count by its number of plots. Of {len(ordered)} plots, the middle observation{'s' if len(ordered) % 2 == 0 else ''} give{'s' if len(ordered) % 2 else ''} a median of {jstr(middle)}.",
     })
     return R.shuffle(out)[:6]
 

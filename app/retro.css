@@ -328,7 +328,21 @@ tr:nth-child(even) td {background:color-mix(in srgb,var(--surface) 65%,transpare
 .review-teams .row {margin-top:10px;gap:6px}
 .review-teams .chip {font-size:.72rem}
 .trend {display:block;width:100%;max-height:125px;color:var(--sea);background:var(--bg);border:1px solid var(--line)}
-.calc-d[draggable="true"] {cursor:grab}
+.journal-drop {border:2px dashed var(--line);padding:8px;min-height:90px}
+.journal-drop > p:first-child {font-size:.82rem;margin:0 0 8px}
+.jrow.important {background:var(--tint);border-left:3px solid var(--accent);padding-left:6px}
+.journal-actions {display:flex;align-items:center;gap:5px;min-width:0}
+.journal-fact,.calc-result[draggable="true"],.calc-history-item[draggable="true"] {cursor:grab}
+.journal-fact {white-space:normal;overflow-wrap:anywhere}
+.journal-actions .tab {min-width:28px;padding:3px}
+.calc-d {width:100%;min-height:48px}
+.calc-result {border:2px dashed var(--accent);padding:8px 10px;font-family:var(--f-mono);font-size:1.1rem;text-align:right;min-height:42px;overflow-wrap:anywhere}
+.calc-history {display:grid;gap:5px;max-height:190px;overflow-y:auto;border-top:1px solid var(--line);padding-top:8px}
+.calc-history-item {display:block;width:100%;text-align:right;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:6px;font-family:var(--f-mono);overflow-wrap:anywhere}
+.calc-history-item:hover,.calc-history-item:focus-visible {border-color:var(--accent);background:var(--tint)}
+.calc-facts {display:grid;gap:5px;max-height:150px;overflow-y:auto;border-top:1px solid var(--line);padding-top:8px}
+.calc-fact {display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:6px;overflow-wrap:anywhere;cursor:grab}
+.calc-fact:hover,.calc-fact:focus-visible {border-color:var(--accent);background:var(--tint)}
 .practice-options label {display:inline-flex;align-items:center;gap:9px;font-family:var(--f-mono);font-size:.86rem}
 .practice-options select {min-width:140px}
 .choice {display:block;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);padding:14px 16px;cursor:pointer;box-shadow:3px 3px 0 var(--shadow)}

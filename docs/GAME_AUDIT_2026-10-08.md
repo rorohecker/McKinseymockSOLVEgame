@@ -1,12 +1,12 @@
 # Game content and interface audit — 2026-10-08
 
-Updated 2026-10-10 with scoring, quality-of-life, and regression checks.
+Updated 2026-10-12 with scenario difficulty, Redrock research tools, and regression checks.
 
 The simulator now gives players the rules and data needed for its own scoring before they commit an answer. Its scores remain an independent practice model; the published sources do not define the real assessment's private scoring.
 
 | Area | Checked in the browser simulation | Information shown to the player |
 |---|---|---|
-| Redrock | Investigation, clickable exhibits and journal, calculator, six analysis answers, five written fields, four chart variants, six cases selected from nine templates, timeout and results | Objective, units, data tables and chart, answer tolerance, case data, worked review |
+| Redrock | Investigation, draggable exhibits and notebook, keyboard and mouse calculator with history, six analysis answers, five written fields, four chart variants, six cases selected from eleven templates, timeout and results | Objective, units, data tables and chart, answer tolerance, case data, worked review |
 | Sea Wolf | Three sites, two-choice profile variants, categorisation, four prospect rounds, treatment, carry-overs, next-site preview, timeout and phase replay | Current and next site ranges and traits, profile matching explanation, the difference between individual search ranges and treatment averages, treatment status, and the meaning of your pool versus the full pool |
 | SFL Project Lead | Priority ranking, 12 decisions, branching context, outcomes, review and timeout | Ranking objective, decision context, consequence signals, exact consistency rule and practice score breakdown |
 | SFL Team Lab | Three days of questions, assignment, support, reflection, review and timeout | Persistent field notes, every station's required skill, daily point breakdown, assignment scoring rule and reflection guide |
@@ -14,5 +14,7 @@ The simulator now gives players the rules and data needed for its own scoring be
 | Shared controls | Seed challenge, history, exports, hints, difficulty, theme, pause, quit and keyboard shortcuts | Named controls, labeled form fields and visible feedback for invalid input |
 
 The browser audit runs the 65, 85 and 95-minute routes, all standalone games, deliberately imperfect and partial runs in every game, all six spaced skill targets, and timeout paths at 1280, 500 and 360 pixels. It checks horizontal overflow, text contrast, broken placeholders, accessible names and labels, and that every referenced local image loads. The smoke check also covers Sea Wolf forbidden traits, categorisation, weak-but-usable rejects and better available treatments; Redrock near misses and chart penalties; SFL outcome and inquiry scoring across 500 seeds; actual priority drag ordering; legacy-score separation; difficulty-preserving challenge links; and adaptive skill signals. `python python/tools/ui_smoke.py` reruns it. `python -m unittest discover -s python/tests -v` checks the Python scenario port and core scoring invariants.
+
+The October 12 release check additionally verified 500 Redrock/Sea Wolf scenario seeds and 500 JavaScript/Python parity seeds. Generated Redrock multiple-choice answers were checked for distinct options and one keyed answer; SFL choices were checked for distinct text, filled scenario placeholders, one strongest option, and shuffled answer positions. Browser checks exercised notebook drag and reorder, calculator mouse and keyboard input, pasted-expression limits, invalid results, history, and answer transfer. Export, worksheet, and Sea Wolf solver commands ran successfully. Desktop and narrow screenshots were reviewed, and the rebuilt Windows executable passed its bundled-asset self-test and desktop window smoke check.
 
 The distinction between confirmed assessment details and this simulator's choices is tracked in [KNOWN_DEVIATIONS.md](KNOWN_DEVIATIONS.md). A player can rely on the rules displayed in this simulator to understand its practice score, without treating those rules as official McKinsey scoring.

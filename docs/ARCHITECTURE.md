@@ -58,7 +58,7 @@ Planted microbes sit in the first 6 pool slots, so any permissive profile shows 
 
 ### Redrock generation
 
-Four groups in one of three island study themes (wolf territory, wetland restoration or forest protection), four years of area data, two proposals, six analysis answers, five prompts selected from eight and a chart task selected from four types. The six cases are selected from nine templates.
+Four groups in one of six island study themes, four years of area data, two proposals, six analysis answers, five prompts selected from eight and a chart task selected from four types. The six cases are selected from eleven templates, including sequential percentage change and a frequency-table median.
 
 ## Python package
 
