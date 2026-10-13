@@ -82,7 +82,7 @@ Order of random calls matters. If you add a call to the RNG anywhere, every late
 
 ## Theming
 
-The original CSS in `index.html` provides the base layout; `retro.css` applies the pixel art theme and responsive overrides. The page starts in day mode. The DAY/NIGHT control sets `data-theme` on `:root` and saves the choice in `localStorage`. `render()` also sets `data-game`, which selects Redrock, Sea Wolf, or SFL colors in either theme. Pixelify Sans is reserved for display accents; body copy uses IBM Plex Sans with a system fallback.
+The original CSS in `index.html` provides the base layout; `retro.css` applies the pixel art theme and responsive overrides. The page starts in day mode. The DAY/NIGHT control sets `data-theme` on `:root` and saves the choice in `localStorage`. `render()` also sets `data-game`, which selects each game's palette and background in either theme. Sea Wolf's side note moves above the task on narrow screens, and its trait key becomes expandable there. `microbeSpriteHTML()` draws small pixel sprites from shape and color variants tied to the generated names, without using traits or attribute values. Pixelify Sans is reserved for display accents; body copy uses IBM Plex Sans with a system fallback.
 
 ## Dependencies
 

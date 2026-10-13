@@ -79,6 +79,8 @@ def self_test() -> None:
             "/retro.css": b".spaced-panel",
             "/assets/hero-scene.svg": b"<svg",
             "/assets/ocean-expedition-background.png": b"\x89PNG\r\n\x1a\n",
+            "/assets/redrock-wetlands-background.png": b"\x89PNG\r\n\x1a\n",
+            "/assets/sustainable-campus-background.png": b"\x89PNG\r\n\x1a\n",
         }
         for path, marker in required.items():
             with urlopen(origin + path, timeout=5) as response:

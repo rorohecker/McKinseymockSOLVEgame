@@ -50,7 +50,7 @@
     probe.remove();root.dataset.theme=theme;root.dataset.game=game;
     log('all mission palettes meet 4.5:1 text contrast');
   }
-  const home=(seed=12345)=>{stopClock();S.seed=seed;S.screen='home';render(false);document.querySelector('#seed').value=seed;noOverflow('home')};
+  const home=(seed=12345)=>{stopClock();S.seed=seed;S.screen='home';render(false);document.querySelector('#seed').value=seed;check(document.querySelectorAll('.tip-card').length===7&&document.querySelector('.tips-source')?.textContent.includes('does not publish a bonus'),'main menu shows sourced practice tips without an official calculator-score claim');noOverflow('home')};
   function chooseFullProfile(){
     check(document.querySelector('[data-act="profile-toggle"]'),'profile choices visible');
     document.querySelector('[data-act="profile-toggle"][data-v="a0"]').click();
@@ -62,6 +62,7 @@
   }
   function redrock(){
     check(S.screen==='rr-intro','Redrock intro');ACT.rrbegin();noOverflow('Redrock investigation');
+    check(getComputedStyle(document.body).backgroundImage.includes('redrock-wetlands-background.png'),'Redrock has its own landscape');
     const clickTarget=document.querySelector('[data-j]');
     clickTarget.click();check(S.rr.journal.length===1,'journal click save');
     const name=document.querySelector('[data-jname]');
@@ -128,6 +129,8 @@
   }
   function seawolf(){
     check(S.screen==='sw-intro','Sea Wolf intro');ACT.swbegin();noOverflow('Sea Wolf site');
+    check(TRAIT_SYMBOLS.join('|')==='♨|⇊|P−|N+|Na|H+|☾|▤'&&new Set(TRAIT_SYMBOLS).size===TRAITS.length,'Sea Wolf symbols relate to and uniquely identify traits');
+    check(getComputedStyle(document.body).backgroundImage.includes('ocean-expedition-background.png'),'Sea Wolf keeps its ocean scene');
     const first=S.sw.data.sites[0];
     check(S.sw.cur.filter.r.every((range,i)=>range[0]===Math.max(1,first.ranges[i][0]-1)&&range[1]===Math.min(10,first.ranges[i][1]+1)),'Sea Wolf starting profile permits complementary individual values');
     check(document.querySelector('#app').textContent.includes('Search ranges filter individual microbes'),'Sea Wolf explains profile ranges versus treatment averages');
@@ -143,13 +146,18 @@
       }else check(!nextBrief,'no next-site brief on final site');
       const traitBadge=document.querySelector('.mb .trait'),traitLegend=document.querySelector('.trait-key'),currentMicrobe=S.sw.data.byId[S.sw.cur.shown[S.sw.cur.ci]];
       check(traitLegend?.textContent.includes('Heat Resistant')&&traitBadge?.textContent.trim()===traitSymbol(currentMicrobe.trait)&&getComputedStyle(traitBadge).color===getComputedStyle(traitBadge.closest('.mb')).color,'Sea Wolf symbol key and neutral microbe traits shown');
+      const stickyNote=document.querySelector('.sw-note-column .current-site-brief');
+      check(stickyNote?.textContent.includes('Site targets')&&stickyNote.textContent.includes(S.sw.data.sites[siteIndex].name),'current site targets appear in the side note');
+      check(document.querySelector('.big-mb .microbe-sprite svg path'),'microbe cards contain pixel sprites');
       noOverflow('Sea Wolf categorisation with next-site brief');
       while(S.sw.cur.step===2){
         const id=S.sw.cur.shown[S.sw.cur.ci];
         ACT.cat(S.sw.data.sites[siteIndex].planted.includes(id)?'cur':'rej');
       }
       while(S.sw.cur.step===3)ACT.prospect(S.sw.cur.offer[0].id);
+      check(new Set([...document.querySelectorAll('.mgrid .microbe-sprite')].map(x=>x.dataset.spriteShape)).size>=3,'treatment choices show multiple sprite silhouettes');
       for(const id of S.sw.data.sites[siteIndex].planted)ACT.sel(id);
+      check(!/\b(?:in|out) of range\b/i.test(document.querySelector('.treatment-selection')?.textContent||'')&&!document.querySelector('.treatment-selection .avgrow'),'treatment panel does not reveal range validity before submission');
       ACT.confirm();ACT['site-next']();
     }
     const total=S.res.sw.reduce((sum,x)=>sum+x.sc.score,0);
@@ -157,6 +165,7 @@
   }
   function project(){
     check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('full practice score'),'Project Lead review guide');ACT['sfl-begin']();
+    check(getComputedStyle(document.body).backgroundImage.includes('sustainable-campus-background.png'),'Sustainable Futures has its own campus scene');
     check(document.querySelector('.sfl-background')?.textContent.includes('Situation')&&document.querySelector('.sfl-background')?.textContent.includes('Mission'),'Project Lead begins with scenario background and mission');
     check(document.querySelector('.crumb')?.textContent.includes('Decision 1/13'),'Project Lead header agrees with priority ranking step');
     const originalRank=S.sfl.rank.slice();

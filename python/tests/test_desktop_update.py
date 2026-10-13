@@ -30,14 +30,14 @@ class FakeDownload:
 
 class DesktopUpdate(unittest.TestCase):
     def test_only_newer_verified_release_is_selected(self):
-        self.assertEqual(version_tuple("v1.4.1"), (1, 4, 1))
-        self.assertIsNone(version_tuple("v1.4.1-beta"))
+        self.assertEqual(version_tuple("v1.4.2"), (1, 4, 2))
+        self.assertIsNone(version_tuple("v1.4.2-beta"))
         asset = {"name": "SolvePracticeLab.exe", "digest": "sha256:" + "a" * 64,
-                 "browser_download_url": "https://github.com/rorohecker/McKinseymockSOLVEgame/releases/download/v1.4.1/SolvePracticeLab.exe"}
+                 "browser_download_url": "https://github.com/rorohecker/McKinseymockSOLVEgame/releases/download/v1.4.2/SolvePracticeLab.exe"}
         self.assertIsNone(release_asset({"tag_name": "v1.3.0", "assets": [asset]}))
-        self.assertEqual(release_asset({"tag_name": "v1.4.1", "assets": [asset]})[2], "a" * 64)
-        self.assertIsNone(release_asset({"tag_name": "v1.4.1", "assets": [{**asset, "digest": None}]}))
-        self.assertIsNone(release_asset({"tag_name": "v1.4.1", "assets": [{**asset, "browser_download_url": "http://example.com/app.exe"}]}))
+        self.assertEqual(release_asset({"tag_name": "v1.4.2", "assets": [asset]})[2], "a" * 64)
+        self.assertIsNone(release_asset({"tag_name": "v1.4.2", "assets": [{**asset, "digest": None}]}))
+        self.assertIsNone(release_asset({"tag_name": "v1.4.2", "assets": [{**asset, "browser_download_url": "http://example.com/app.exe"}]}))
 
     def test_hash_mismatch_removes_download(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -53,7 +53,7 @@ class DesktopUpdate(unittest.TestCase):
             target = root / "SolvePracticeLab.exe"
             updates = root / "Updates"
             updates.mkdir()
-            payload = updates / "SolvePracticeLab-v1.4.1.exe"
+            payload = updates / "SolvePracticeLab-v1.4.2.exe"
             target.write_bytes(b"old executable")
             payload.write_bytes(b"new executable")
             with patch("desktop_update.UPDATE_DIR", updates), \

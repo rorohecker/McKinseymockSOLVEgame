@@ -50,7 +50,7 @@ The installer build requires Inno Setup 6 (`ISCC.exe`). The executable build che
 | Path | What it is |
 |---|---|
 | `app/index.html`, `app/*.js` | Simulator logic and interface: Redrock, Sea Wolf, two SFL formats, adaptive and spaced drills, history, review and exports. |
-| `app/retro.css`, `app/assets/` | Pixel art interface, original SVG scenery and sprites, and the locally bundled Pixelify Sans font (OFL license in `app/assets/PIXELIFY-LICENSE.txt`). |
+| `app/retro.css`, `app/assets/` | Pixel art interface, game-specific raster backgrounds, original SVG scenery, and the locally bundled Pixelify Sans font (OFL license in `app/assets/PIXELIFY-LICENSE.txt`). |
 | `python/solve_lab/` | Seeded Redrock and Sea Wolf generators and scorers ported from the JS. Identical scenarios for the same seed. |
 | `python/tools/` | `validate.py`, `parity_check.py`, `ui_smoke.py`, `export_scenarios.py` (JSON + CSV), `make_worksheet.py` (printable HTML), `seawolf_solver.py` (post-practice study tool), `serve.py`. |
 | `research/` | Notes and JSON data on the games, timeline, scoring reports, statistics, competing simulators and an October 2026 Reddit evidence audit. Claims are labelled OFFICIAL / CORROBORATED / REPORTED / VENDOR CLAIM / CONTRADICTED / UNVERIFIED. |
@@ -93,7 +93,7 @@ The [practice scoring model](docs/PRACTICE_SCORING.md) grades Sea Wolf sorting, 
 
 Spaced practice uses the same five-minute skill drills on a local calendar schedule. A strong review moves a skill through 1, 3, 7, 14 and 30-day intervals; missed work returns the next day. Completed runs feed the schedule, including existing saved history when the plan is first created. The home and history screens show due skills, and the plan exports to CSV. This schedule is a study aid, not a McKinsey scoring rule.
 
-Each game has its own dark and light palette: earthy Redrock, kelp and warm coral Sea Wolf, and forest-green Sustainable Futures. The home screen uses a hand-drawn pixel shoreline. The body text uses a plain sans-serif face while headings and controls carry the pixel-art treatment. The wider desktop layout and mobile layout keep the game controls readable.
+Each game has its own dark and light palette and pixel backdrop: rust and sandstone for Redrock, sea glass and coral for Sea Wolf, and leafy greens and warm yellow for Sustainable Futures. The home screen uses a hand-drawn pixel shoreline. Sea Wolf target ranges and trait symbols appear on side notes on wide screens and compact notes on narrow screens. Microbes have distinct pixel silhouettes and colors unrelated to their traits or score. The treatment screen waits until submission to reveal whether the final averages satisfy the ranges. The menu includes seven practice tips, with links to the sources used and a clear distinction between practice habits and unpublished official scoring rules.
 
 ## Further features
 

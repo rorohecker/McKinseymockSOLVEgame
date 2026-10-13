@@ -1,6 +1,6 @@
 ; Per-user installer: the app can replace its executable during a verified update.
 #ifndef AppVersion
-#define AppVersion "1.4.0"
+#define AppVersion "1.4.1"
 #endif
 
 [Setup]
