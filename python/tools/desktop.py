@@ -72,7 +72,7 @@ def self_test() -> None:
     try:
         origin = f"http://{HOST}:{server.server_port}"
         required = {
-            "/index.html": b"Solve Practice Lab",
+            "/index.html": f'<meta name="app-version" content="{APP_VERSION}">'.encode(),
             "/ui.js": b"function",
             "/ai-review.js": b"aiReviewData",
             "/spaced.js": b"spacedPanelHTML",

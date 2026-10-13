@@ -127,6 +127,7 @@ h3 {font-size:1.38rem;line-height:1.17;letter-spacing:-.015em}
 .brand {text-shadow:1px 0 var(--sea),-1px 0 var(--rr)}
 .brand::before {content:"";width:16px;height:16px;background:var(--sea);box-shadow:7px 0 var(--rr),0 7px var(--rr),7px 7px var(--sea);transform:scale(.72);transform-origin:center}
 .brand small {display:block;font-family:var(--f-mono);font-size:.67rem;letter-spacing:.1em;color:var(--mute);margin-top:4px}
+.app-version {display:inline-flex;align-items:center;white-space:nowrap;border:1px solid var(--line);border-radius:6px;background:var(--tint);color:var(--ink);padding:4px 7px;font:600 .7rem var(--f-mono);letter-spacing:.02em}
 .crumb {font-family:var(--f-mono);font-size:.8rem;letter-spacing:.04em;color:var(--mute)}
 .top-actions {margin-left:auto;display:flex;align-items:center;gap:14px}
 .shortcut-menu {position:relative;font-family:var(--f-mono);font-size:.78rem}
@@ -506,6 +507,7 @@ details>summary {cursor:pointer}
   .wrap {padding:20px 13px 60px}
   .bar-in {padding:9px 13px}
   .brand {font-size:1.1rem}
+  .app-version {padding:3px 5px;font-size:.64rem}
   .brand small,.crumb {display:none}
   .top-actions {gap:8px}
   .theme-toggle {padding:6px 8px;font-size:.7rem}

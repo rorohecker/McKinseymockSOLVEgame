@@ -14,7 +14,7 @@ import time
 from urllib.request import Request, urlopen
 
 
-APP_VERSION = "1.4.1"
+APP_VERSION = "1.4.2"
 RELEASE_API = "https://api.github.com/repos/rorohecker/McKinseymockSOLVEgame/releases/latest"
 ASSET_NAME = "SolvePracticeLab.exe"
 UPDATE_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "SolvePracticeLab" / "Updates"

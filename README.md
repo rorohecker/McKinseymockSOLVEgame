@@ -14,14 +14,13 @@ open app/index.html            # macOS;  xdg-open on Linux; or double-click it
 Start-Process .\app\index.html
 
 # or serve it
-cd python && python3 tools/serve.py       # http://localhost:8765
+python3 python/tools/serve.py              # http://localhost:8765
 
 # check everything
-cd python
-python3 -m unittest discover -s tests -v  # 15 tests (parity uses Node.js or Chrome)
-python3 tools/validate.py 1 500           # scenario sanity over 500 seeds
-python3 tools/parity_check.py 1 1000      # Python port == JS in the HTML
-python3 tools/ui_smoke.py                 # full browser routes, spaced reviews and timeouts
+python3 -m unittest discover -s python/tests -v  # 16 tests (parity uses Node.js or Chrome)
+python3 python/tools/validate.py 1 500           # scenario sanity over 500 seeds
+python3 python/tools/parity_check.py 1 1000      # Python port == JS in the HTML
+python3 python/tools/ui_smoke.py                 # full browser routes, spaced reviews and timeouts
 ```
 
 For the browser version, no installs are needed: open `app/index.html` with its adjacent CSS and assets. The Python toolkit uses only the standard library.
@@ -32,7 +31,7 @@ Download `SolvePracticeLab-Setup-<version>.exe` from the [latest release](https:
 
 Releases before v1.4.0 only provide the portable executable.
 
-At launch, the desktop executable checks the latest GitHub release. If its version is newer and GitHub provides a SHA-256 digest for `SolvePracticeLab.exe`, the app downloads and verifies it, checks its bundled assets, replaces the old executable after it closes, and relaunches. If the check fails or there is no newer release, the current app opens. `--no-update` skips the check for an offline launch; update errors are recorded in `%LOCALAPPDATA%\SolvePracticeLab\Updates\last-error.txt`. Publish the executable, its checksum, the installer, and its checksum together in each release. The updater requires the executable asset to be named `SolvePracticeLab.exe`. Advance `APP_VERSION` in `python/tools/desktop_update.py` for the next release.
+At launch, the desktop executable checks the latest GitHub release. If its version is newer and GitHub provides a SHA-256 digest for `SolvePracticeLab.exe`, the app downloads and verifies it, checks its bundled assets, replaces the old executable after it closes, and relaunches. The installed version appears beside the SOLVE LAB name in the top bar. If the check fails or there is no newer release, the current app opens. `--no-update` skips the check for an offline launch; update errors are recorded in `%LOCALAPPDATA%\SolvePracticeLab\Updates\last-error.txt`. Publish the executable, its checksum, the installer, and its checksum together in each release. The updater requires the executable asset to be named `SolvePracticeLab.exe`. Advance `APP_VERSION` in `python/tools/desktop_update.py` and the matching `app-version` meta tag in `app/index.html` for the next release; the desktop self-test rejects a mismatch.
 
 To rebuild the executable on Windows:
 
@@ -76,7 +75,7 @@ The installer build requires Inno Setup 6 (`ISCC.exe`). The executable build che
 | Python port vs JS in `app/index.html` | 1,000 seeds matched; the parity tool uses Node.js or headless Chrome. |
 | Perfect Redrock answer sheet | scores 175 on 500 seeds; empty sheet scores 0 |
 | Sea Wolf sites | planted team meets every requirement, solver finds a treatment at least as strong, unique names and 28-microbe pools across 1,500 sites |
-| Unit tests | 15 pass |
+| Unit tests | 16 pass |
 | Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes, every standalone game, and imperfect or partial runs using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast, control labels, broken placeholders and local image loading; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
 
 ## Interface notes

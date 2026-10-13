@@ -1,6 +1,6 @@
 ; Per-user installer: the app can replace its executable during a verified update.
 #ifndef AppVersion
-#define AppVersion "1.4.1"
+#define AppVersion "1.4.2"
 #endif
 
 [Setup]
@@ -35,3 +35,6 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 
 [Run]
 Filename: "{app}\SolvePracticeLab.exe"; Description: "Launch Solve Practice Lab"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: files; Name: "{app}\SolvePracticeLab.previous.exe"

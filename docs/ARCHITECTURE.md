@@ -22,7 +22,7 @@ python/tools/desktop.py  Windows WebView shell and user-facing bridge
 python/tools/desktop_update.py verified GitHub release updater and replacement helper
 python/tools/build_windows.py / build_installer.py Windows package builders
 installer/              per-user Inno Setup installer script
-python/tests/           unittest suite (15 tests)
+python/tests/           unittest suite (16 tests)
 research/               sourced notes and JSON data
 docs/                   this file, IDEAS.md, KNOWN_DEVIATIONS.md
 ```

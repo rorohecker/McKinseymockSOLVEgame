@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from desktop_update import release_asset, version_tuple, download_verified, apply_update  # noqa: E402
+from desktop_update import APP_VERSION, release_asset, version_tuple, download_verified, apply_update  # noqa: E402
 
 
 class FakeDownload:
@@ -30,14 +30,19 @@ class FakeDownload:
 
 class DesktopUpdate(unittest.TestCase):
     def test_only_newer_verified_release_is_selected(self):
-        self.assertEqual(version_tuple("v1.4.2"), (1, 4, 2))
-        self.assertIsNone(version_tuple("v1.4.2-beta"))
+        self.assertEqual(version_tuple("v1.4.3"), (1, 4, 3))
+        self.assertIsNone(version_tuple("v1.4.3-beta"))
         asset = {"name": "SolvePracticeLab.exe", "digest": "sha256:" + "a" * 64,
-                 "browser_download_url": "https://github.com/rorohecker/McKinseymockSOLVEgame/releases/download/v1.4.2/SolvePracticeLab.exe"}
+                 "browser_download_url": "https://github.com/rorohecker/McKinseymockSOLVEgame/releases/download/v1.4.3/SolvePracticeLab.exe"}
         self.assertIsNone(release_asset({"tag_name": "v1.3.0", "assets": [asset]}))
-        self.assertEqual(release_asset({"tag_name": "v1.4.2", "assets": [asset]})[2], "a" * 64)
-        self.assertIsNone(release_asset({"tag_name": "v1.4.2", "assets": [{**asset, "digest": None}]}))
-        self.assertIsNone(release_asset({"tag_name": "v1.4.2", "assets": [{**asset, "browser_download_url": "http://example.com/app.exe"}]}))
+        self.assertIsNone(release_asset({"tag_name": "v" + APP_VERSION, "assets": [asset]}))
+        self.assertEqual(release_asset({"tag_name": "v1.4.3", "assets": [asset]})[2], "a" * 64)
+        self.assertIsNone(release_asset({"tag_name": "v1.4.3", "assets": [{**asset, "digest": None}]}))
+        self.assertIsNone(release_asset({"tag_name": "v1.4.3", "assets": [{**asset, "browser_download_url": "http://example.com/app.exe"}]}))
+
+    def test_browser_and_desktop_versions_match(self):
+        html = (Path(__file__).resolve().parents[2] / "app" / "index.html").read_text(encoding="utf-8")
+        self.assertIn(f'<meta name="app-version" content="{APP_VERSION}">', html)
 
     def test_hash_mismatch_removes_download(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -53,7 +58,7 @@ class DesktopUpdate(unittest.TestCase):
             target = root / "SolvePracticeLab.exe"
             updates = root / "Updates"
             updates.mkdir()
-            payload = updates / "SolvePracticeLab-v1.4.2.exe"
+            payload = updates / "SolvePracticeLab-v1.4.3.exe"
             target.write_bytes(b"old executable")
             payload.write_bytes(b"new executable")
             with patch("desktop_update.UPDATE_DIR", updates), \

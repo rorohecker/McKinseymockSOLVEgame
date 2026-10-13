@@ -16,6 +16,7 @@
   const imageSources=new Set();
   function auditScreen(){
     const app=document.querySelector('#app');
+    check(document.querySelector('.app-version')?.textContent==='v'+document.querySelector('meta[name="app-version"]')?.content,'top bar shows current version: '+S.screen);
     check(app&&!/\b(?:undefined|NaN)\b|\[object Object\]/.test(app.textContent),'screen has no broken data placeholders: '+S.screen);
     for(const image of app.querySelectorAll('img')){check(image.hasAttribute('alt'),'image has alt attribute: '+S.screen);imageSources.add(image.getAttribute('src'))}
     for(const control of app.querySelectorAll('button,summary,[role="button"]')){
