@@ -76,12 +76,30 @@ const SFL_Q=[
     ["Recommend the priority action with a benefit range and a short follow-up review, leaving the scaling decision open",0,"delay",["pressure",1],"This is a defensible staged recommendation, but it leaves the unresolved measure without a specific threshold for changing course."]
   ]]
 ];
+const SFL_Q_VARIANTS={
+  1:["Signals","Two teams record different {signal} at {site}. There is time for one extra observation before choosing tomorrow's route. What should you do?",[
+    ["Repeat the measure at the location where the route would change, checking both teams' methods",2,"evidence",["evidence",1],"The extra observation tests the disagreement that can change the route."],
+    ["Use the reading from the more experienced team and record the discrepancy for later review",1,"transparent",["trust",1],"Experience is useful, but a targeted repeat can settle this decision now."],
+    ["Average the two readings and choose a middle route, then inspect both methods next week",0,"smooth",["evidence",-1],"Averaging hides the disputed location and delays a check that fits the decision window."]]],
+  4:["Timing","The earliest {resource} are delayed one day while {risk} is approaching. Which adjustment best protects {goal}?",[
+    ["Move a ready crew to the highest-risk feasible site and set a trigger for shifting delayed work",2,"targeted",["pressure",-1],"The most exposed feasible site receives help now, with a concrete plan for the delayed crew."],
+    ["Reassign every remaining task evenly across available crews to preserve the published schedule",1,"spread",["pressure",1],"The calendar stays visible, but scarce capacity may miss the largest harm."],
+    ["Wait for the delayed specialists so the original work plan can begin intact",0,"delay",["pressure",2],"Keeping the plan intact loses the available response window before the risk arrives."]]],
+  6:["Measures","The sponsor proposes counting completed visits as proof that the work achieved {goal}. What measure should you recommend?",[
+    ["Track visits for delivery and compare a baseline-adjusted outcome with a leading field signal",2,"evidence",["evidence",1],"Visits show activity; the adjusted outcome tests impact, and the leading signal gives time to respond."],
+    ["Track visits and a final outcome against the original target, then explain the limits of each",1,"transparent",["trust",1],"This is candid, but a target without baseline adjustment can misstate impact."],
+    ["Use completed visits as the primary result because they can be verified immediately",0,"assume",["evidence",-1],"Completed activity does not show whether exposure or habitat outcomes improved."]]],
+  10:["Capacity","A field lead knows {site} well but is overloaded. A spare analyst can take one defined task today. Which transfer is best?",[
+    ["Give the analyst the repeatable data check with a brief hand-off; keep site interpretation with the lead",2,"targeted",["pressure",-1,"trust",1],"A bounded transfer relieves the bottleneck while keeping context where it matters."],
+    ["Transfer the full analysis to the spare analyst and review the final note before release",1,"spread",["pressure",-1],"This frees time, but a final review may be too late to catch a context error."],
+    ["Ask the analyst to recheck all completed work independently while the lead continues the same tasks",0,"assume",["pressure",1],"This duplicates effort and leaves the overloaded lead on the critical path."]]]
+};
 function sflFill(text,theme){return text.replaceAll("{site}",theme.site).replaceAll("{risk}",theme.risk).replaceAll("{resource}",theme.resource).replaceAll("{goal}",theme.goal).replaceAll("{signal}",theme.signal).replaceAll("{access}",theme.access)}
 function genSFLProject(seed){
   const R=RNG(seed*23+11),theme=R.pick(SFL_THEMES);
-  return{seed,theme,rank:R.shuffle(SFL_RANK),questions:SFL_Q.map(([phase,prompt,raw])=>({
+  return{seed,theme,rank:R.shuffle(SFL_RANK),questions:SFL_Q.map((base,i)=>{const [phase,prompt,raw]=SFL_Q_VARIANTS[i]&&R.chance(.5)?SFL_Q_VARIANTS[i]:base;return({
     phase,prompt:sflFill(prompt,theme),options:R.shuffle(raw.map(([text,quality,stance,effects,why],i)=>({id:String(i),text:sflFill(text,theme),quality,stance,effects,why})))
-  }))};
+  })})};
 }
 function sflProjectPrompt(data,index,state){
   const q=data.questions[index];

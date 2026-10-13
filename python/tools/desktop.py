@@ -13,7 +13,10 @@ import os
 from pathlib import Path
 import sys
 import threading
+import traceback
+import webbrowser
 from urllib.request import urlopen
+from desktop_update import APP_VERSION, apply_update, check_and_stage, UPDATE_DIR
 
 
 ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
@@ -43,6 +46,12 @@ class DesktopActions:
             self._window.destroy()
         return True
 
+    def open_review_service(self, service: str) -> bool:
+        urls = {"chatgpt": "https://chatgpt.com/", "claude": "https://claude.ai/", "gemini": "https://gemini.google.com/"}
+        if service not in urls:
+            return False
+        return webbrowser.open(urls[service])
+
 
 def make_server(port: int = PORT) -> LocalServer:
     if not (APP / "index.html").is_file():
@@ -65,9 +74,11 @@ def self_test() -> None:
         required = {
             "/index.html": b"Solve Practice Lab",
             "/ui.js": b"function",
+            "/ai-review.js": b"aiReviewData",
             "/spaced.js": b"spacedPanelHTML",
             "/retro.css": b".spaced-panel",
             "/assets/hero-scene.svg": b"<svg",
+            "/assets/ocean-expedition-background.png": b"\x89PNG\r\n\x1a\n",
         }
         for path, marker in required.items():
             with urlopen(origin + path, timeout=5) as response:
@@ -80,11 +91,32 @@ def self_test() -> None:
 
 
 def main() -> int:
-    if "--self-test" in sys.argv:
-        self_test()
+    if "--version" in sys.argv:
+        print(APP_VERSION)
         return 0
+    if "--apply-update" in sys.argv:
+        try:
+            return 0 if apply_update(Path(sys.argv[2]), Path(sys.argv[3]), int(sys.argv[4])) else 1
+        except (IndexError, ValueError, OSError):
+            return 1
+    if "--self-test" in sys.argv:
+        try:
+            self_test()
+            return 0
+        except Exception:
+            report = Path(sys.argv[sys.argv.index("--self-test-log") + 1]) if "--self-test-log" in sys.argv else UPDATE_DIR / "self-test-error.txt"
+            report.parent.mkdir(parents=True, exist_ok=True)
+            report.write_text(traceback.format_exc(), encoding="utf-8")
+            return 1
     smoke = "--ui-smoke" in sys.argv
     smoke_log = Path(sys.argv[sys.argv.index("--ui-smoke") + 1]) if smoke else None
+    if not smoke and "--no-update" not in sys.argv:
+        try:
+            if check_and_stage():
+                return 0
+        except Exception as exc:
+            UPDATE_DIR.mkdir(parents=True, exist_ok=True)
+            (UPDATE_DIR / "last-error.txt").write_text(str(exc), encoding="utf-8")
     def fail(message: str) -> int:
         if smoke_log:
             smoke_log.write_text(message, encoding="utf-8")

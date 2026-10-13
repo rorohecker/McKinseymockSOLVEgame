@@ -58,14 +58,19 @@ def main() -> int:
     make_icon(icon)
     command = [
         sys.executable, "-m", "PyInstaller", "--noconfirm",
-        "--onefile", "--windowed", "--name", "SolvePracticeLab",
+        "--onefile", "--console" if os.environ.get("SOLVE_DEBUG_CONSOLE") else "--windowed", "--name", "SolvePracticeLab",
+        "--paths", str(ROOT / "python" / "tools"),
         "--icon", str(icon), "--add-data", f"{APP}{os.pathsep}app",
         "--distpath", str(DIST), "--workpath", str(BUILD / "work"),
         "--specpath", str(BUILD), str(ROOT / "python" / "tools" / "desktop.py"),
     ]
     subprocess.run(command, cwd=ROOT, check=True)
     executable = DIST / "SolvePracticeLab.exe"
-    subprocess.run([str(executable), "--self-test"], cwd=ROOT, check=True, timeout=60)
+    self_test_log = BUILD / "self-test-error.txt"
+    self_test_log.unlink(missing_ok=True)
+    result = subprocess.run([str(executable), "--self-test", "--self-test-log", str(self_test_log)], cwd=ROOT, timeout=60)
+    if result.returncode:
+        raise RuntimeError(self_test_log.read_text(encoding="utf-8") if self_test_log.is_file() else "Desktop bundled-asset self-test failed")
     with executable.open("rb") as handle:
         digest = hashlib.file_digest(handle, "sha256").hexdigest()
     (DIST / "SolvePracticeLab.sha256").write_text(f"{digest}  SolvePracticeLab.exe\n", encoding="ascii")

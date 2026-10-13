@@ -45,16 +45,17 @@ function historyHTML(){
   <div class="card tblbox"><table><thead><tr><th>Date / details</th><th>Mode</th><th>Seed</th><th>Difficulty</th><th class="n">Redrock</th><th class="n">Sea Wolf</th><th class="n">SFL / drill</th></tr></thead><tbody>${rows.map(x=>`<tr><td><details><summary>${esc(new Date(x.date).toLocaleDateString())}</summary><small>Scoring model: ${x.scoringVersion??'legacy'}<br>Duration: ${mmss(x.durationSeconds||0)}<br>Phases: ${esc(Object.entries(x.phaseSeconds||{}).map(([k,v])=>k+' '+mmss(v)).join(' · ')||'—')}<br>Mistakes: ${esc(JSON.stringify(x.mistakes||{}))}<br>Actions: ${x.metrics?.actions??'—'}; answer revisions: ${x.metrics?.revisions??'—'}</small></details></td><td>${esc(x.mode)}</td><td class="mono">${x.seed}</td><td>${esc(x.difficulty)}</td><td class="n">${x.rr??'—'}</td><td class="n">${x.sw??'—'}</td><td class="n">${x.sfl??(x.drill!==null&&x.drill!==undefined?x.drill+'/'+x.drillMax:'—')}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
 function calibrationHTML(){
-  const a=readFeedback(),n=a.length;
-  if(!n)return`<p class="mute">Difficulty is a practice setting. If you have taken the real assessment, you can compare a run on the results screen; your feedback stays on this device.</p>`;
-  const counts={easier:a.filter(x=>x.rating==='easier').length,similar:a.filter(x=>x.rating==='similar').length,harder:a.filter(x=>x.rating==='harder').length};
-  const byPart=[...new Set(a.map(x=>x.game))].map(k=>{const rows=a.filter(x=>x.game===k),easy=rows.filter(x=>x.rating==='easier').length,hard=rows.filter(x=>x.rating==='harder').length;return esc(k)+': '+rows.length+' notes'+(easy>hard?' · try Hard':hard>easy?' · try Standard':'')});
-  return`<p class="mute">Your ${n} comparison${n===1?'':'s'}: ${counts.easier} easier, ${counts.similar} similar, ${counts.harder} harder than the real game. ${byPart.join(' · ')}. These are personal observations, not population calibration.</p>`;
+  const all=readFeedback(),rows=all.filter(x=>x.difficulty===S.difficulty),n=rows.length;
+  if(!n)return`<p class="mute">No comparisons saved for ${esc(S.difficulty)} difficulty yet.${all.length?' Your comparisons at other levels remain saved.':''} This is a personal practice setting, not a population calibration.</p>`;
+  const counts={easier:rows.filter(x=>x.rating==='easier').length,similar:rows.filter(x=>x.rating==='similar').length,harder:rows.filter(x=>x.rating==='harder').length};
+  const index=DIFFICULTIES.indexOf(S.difficulty),up=DIFFICULTIES[Math.min(DIFFICULTIES.length-1,index+1)],down=DIFFICULTIES[Math.max(0,index-1)];
+  const byPart=[...new Set(rows.map(x=>x.game))].map(k=>{const partRows=rows.filter(x=>x.game===k),easy=partRows.filter(x=>x.rating==='easier').length,hard=partRows.filter(x=>x.rating==='harder').length,suggestion=easy>hard&&up!==S.difficulty?` - try ${up} next`:hard>easy&&down!==S.difficulty?` - try ${down} next`:'';return esc(k)+': '+partRows.length+' notes'+suggestion});
+  return`<p class="mute">Your ${n} comparison${n===1?'':'s'} at ${esc(S.difficulty)} difficulty: ${counts.easier} easier, ${counts.similar} similar, ${counts.harder} harder than the real game. ${byPart.join('; ')}. These are personal observations, not population calibration.</p>`;
 }
 function feedbackHTML(){
   const games=[S.res.rr&&['rr-analysis','Redrock analysis'],S.res.rr&&['rr-report','Redrock report'],S.res.rr&&['rr-cases','Redrock cases'],S.res.sw&&['sw-site-1','Sea Wolf site 1'],S.res.sw&&['sw-site-2','Sea Wolf site 2'],S.res.sw&&['sw-site-3','Sea Wolf site 3'],S.res.sfl&&['sfl','SFL']].filter(Boolean);
   if(!games.length)return'';
-  return`<section class="card stack"><h2>Compare difficulty</h2><p class="mute">Only if you have taken the real assessment. Your answers stay in this browser and help you choose Standard or Hard next time.</p><div class="row">${games.map(([id,name])=>`<label>${name}<select data-feedback="${id}"><option value="">No comparison</option><option value="easier">This felt easier</option><option value="similar">About similar</option><option value="harder">This felt harder</option></select></label>`).join('')}</div><button class="btn ghost" data-act="feedback-save">Save comparison</button><p class="mute" id="feedback-status"></p></section>`;
+  return`<section class="card stack"><h2>Compare difficulty</h2><p class="mute">Only if you have taken the real assessment. Your answers stay in this browser and help you choose a practice level next time.</p><div class="row">${games.map(([id,name])=>`<label>${name}<select data-feedback="${id}"><option value="">No comparison</option><option value="easier">This felt easier</option><option value="similar">About similar</option><option value="harder">This felt harder</option></select></label>`).join('')}</div><button class="btn ghost" data-act="feedback-save">Save comparison</button><p class="mute" id="feedback-status"></p></section>`;
 }
 function shareHTML(){
   const share=challengeShareText(S.seed,S.mode,S.difficulty),same=readHistory().filter(x=>x.seed===S.seed&&x.mode===S.mode&&x.difficulty===S.difficulty&&x.scoringVersion===SCORING_VERSION),best=same.length?Math.round(Math.max(...same.map(x=>(x.rr||0)+(x.sw||0)+(x.sfl||0)))*100)/100:null;
@@ -70,7 +71,7 @@ function rrStepForItem(item,index){
   if(item.sec==='Report'&&item.label.startsWith('Written'))return d.blanks[index-8]?.why||"Use the relevant exhibit value or the calculation from Analysis.";
   if(item.sec==='Report'&&item.label==='Chart type')return"Use a bar chart for category comparison, a line for change over time, a pie for shares, and a waterfall for a bridge between totals.";
   if(item.sec==='Report'&&item.label.startsWith('Chart ')){const name=item.label.slice(6),i=d.vis.labels.indexOf(name);if(d.vis.kind==='compare'){const group=Math.floor(i/2);return i%2?"Apply "+d.names[group]+"'s Proposal A rule ("+d.aRules[group]+") to "+d.y4[group]+" = "+d.aValues[group]+" "+d.theme.unit+".":"Read "+d.names[group]+"'s baseline from Exhibit 1: "+d.y4[group]+" "+d.theme.unit+"."}if(d.vis.kind==='share')return"Divide "+name+"'s Year 4 "+d.theme.measure+" ("+d.y4[i]+") by the total ("+d.totals[3]+"), then multiply by 100.";if(d.vis.kind==='waterfall')return"Apply "+name+"'s Proposal B rule ("+d.bRules[i]+") to its Year 4 baseline: adjustment "+d.kmB[i]+" "+d.theme.unit+".";return"Add the four "+name+" group values: "+d.terr.map(x=>x[i]).join(" + ")+" = "+d.totals[i]+" "+d.theme.unit+"."}
-  if(item.sec==='Cases'){const i=Number(item.label.match(/Case (\d+)/)?.[1])-1;return d.cases[i]?.explain||"Recheck the inputs and units."}
+  if(item.sec==='Cases'){const i=Number(item.label.match(/Case (\d+)/)?.[1])-1,c=d.cases[i];return c?.type==='mc'?caseChoiceReason(c,item.your):c?.explain||"Recheck the inputs and units."}
   return"Revisit the source figures and calculation.";
 }
 function reviewPool(ids){return[...new Set(ids)].map(id=>S.sw?.data.byId[id]).filter(Boolean)}
@@ -92,7 +93,7 @@ function treatmentReviewHTML(site,trio){
 }
 function seaWolfReplayHTML(r,i){
   const v=r.review||{},site=r.site,byId=S.sw?.data.byId||{},selected=v.filter?.selected||[];
-  const chosen=selected.map(key=>key[0]==='a'?`${ATTRS[Number(key[1])]} ${v.filter.r[Number(key[1])].join('–')}`:`${key.slice(2)}: ${v.filter.traitModes[key.slice(2)]==='no'?'Avoid':'Include'}`);
+  const chosen=selected.map(key=>key[0]==='a'?`${ATTRS[Number(key[1])]} ${v.filter.r[Number(key[1])].join('–')}`:`${traitSymbol(key.slice(2))}: ${v.filter.traitModes[key.slice(2)]==='no'?'Avoid':'Include'}`);
   const submitted=Array.isArray(v.filtered),shown=v.shown||[];
   const excluded=submitted?site.planted.filter(id=>!v.filtered.includes(id)):[];
   const beyondDisplay=submitted?site.planted.filter(id=>v.filtered.includes(id)&&!shown.includes(id)):[];

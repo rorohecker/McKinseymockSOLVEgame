@@ -12,12 +12,17 @@ app/adaptive.js         skill signals from saved runs and adaptive drill selecti
 app/spaced.js           local review schedule, due-skill selection and CSV export
 app/features.js         settings, local persistence helpers, CSV, difficulty tuning
 app/analytics-ui.js     review, process metrics, history, calibration
+app/ai-review.js         self-contained AI review export and provider handoff
 app/retro.css           pixel art theme and responsive overrides
 app/assets/             original SVG art and locally bundled Pixelify Sans font
 python/solve_lab/       port of the generators and scorers (no dependencies)
 python/tools/           validate, parity_check, export, worksheet, solver, serve
 python/tools/ui_smoke.py headless Chrome routes, review-plan and timeout checks
-python/tests/           unittest suite (12 tests)
+python/tools/desktop.py  Windows WebView shell and user-facing bridge
+python/tools/desktop_update.py verified GitHub release updater and replacement helper
+python/tools/build_windows.py / build_installer.py Windows package builders
+installer/              per-user Inno Setup installer script
+python/tests/           unittest suite (15 tests)
 research/               sourced notes and JSON data
 docs/                   this file, IDEAS.md, KNOWN_DEVIATIONS.md
 ```
@@ -77,7 +82,7 @@ Order of random calls matters. If you add a call to the RNG anywhere, every late
 
 ## Theming
 
-The original CSS in `index.html` provides the base layout; `retro.css` applies the pixel art theme and responsive overrides. The page starts in dark mode. The DAY/NIGHT control sets `data-theme` on `:root` and saves the choice in `localStorage`. `render()` also sets `data-game`, which selects earthy Redrock, kelp and coral Sea Wolf, or forest-green SFL colors in either theme. Pixelify Sans is reserved for display and game controls; body copy uses IBM Plex Sans with a system fallback.
+The original CSS in `index.html` provides the base layout; `retro.css` applies the pixel art theme and responsive overrides. The page starts in day mode. The DAY/NIGHT control sets `data-theme` on `:root` and saves the choice in `localStorage`. `render()` also sets `data-game`, which selects Redrock, Sea Wolf, or SFL colors in either theme. Pixelify Sans is reserved for display accents; body copy uses IBM Plex Sans with a system fallback.
 
 ## Dependencies
 

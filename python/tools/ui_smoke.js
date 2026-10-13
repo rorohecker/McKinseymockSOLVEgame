@@ -97,6 +97,8 @@
     document.querySelector('.analysis-source').open=true;
     const journalBefore=S.rr.journal.length;analysisFact.click();
     check(S.rr.journal.length===journalBefore+1&&document.querySelectorAll('#notebook-side [data-j-entry]').length===S.rr.journal.length&&document.querySelector('#side #cd'),'analysis facts update the visible notebook beside the calculator');
+    const notebook=document.querySelector('#notebook-side'),noteField=notebook.querySelector('#notes');
+    check(noteField.getBoundingClientRect().right<=notebook.getBoundingClientRect().right+1&&notebook.scrollWidth<=notebook.clientWidth+1,'notebook notes and saved facts fit their panel');
     const resultDrag=new DataTransfer();
     document.querySelector('#calc-result').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:resultDrag}));
     document.querySelector('[data-bind="an0a"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:resultDrag}));
@@ -137,8 +139,10 @@
       if(nextSite){
         check(nextBrief?.textContent.includes(nextSite.name)&&nextBrief.textContent.includes(nextSite.contam),'upcoming Sea Wolf site description shown while categorising');
         check(nextSite.ranges.every(range=>nextBrief.textContent.includes(range.join('–'))),'upcoming Sea Wolf numeric targets shown');
-        check((!nextSite.desired||nextBrief.textContent.includes(nextSite.desired))&&(!nextSite.undesired||nextBrief.textContent.includes(nextSite.undesired)),'upcoming Sea Wolf trait rules shown');
+        check((!nextSite.desired||nextBrief.textContent.includes(traitSymbol(nextSite.desired)))&&(!nextSite.undesired||nextBrief.textContent.includes(traitSymbol(nextSite.undesired))),'upcoming Sea Wolf trait symbols shown');
       }else check(!nextBrief,'no next-site brief on final site');
+      const traitBadge=document.querySelector('.mb .trait'),traitLegend=document.querySelector('.trait-key'),currentMicrobe=S.sw.data.byId[S.sw.cur.shown[S.sw.cur.ci]];
+      check(traitLegend?.textContent.includes('Heat Resistant')&&traitBadge?.textContent.trim()===traitSymbol(currentMicrobe.trait)&&getComputedStyle(traitBadge).color===getComputedStyle(traitBadge.closest('.mb')).color,'Sea Wolf symbol key and neutral microbe traits shown');
       noOverflow('Sea Wolf categorisation with next-site brief');
       while(S.sw.cur.step===2){
         const id=S.sw.cur.shown[S.sw.cur.ci];
@@ -250,7 +254,25 @@
     }
     check(readHistory()[0].mode===mode,'history mode');
     check(readSpaced().percent.reviews>=1,'combined run updates review plan');
-    check(resultsCSV().includes('Redrock'),'results CSV');
+    const review=aiReviewData(),csv=resultsCSV(),reviewText=aiReviewText();
+    check(review.sections.some(x=>x.game==='Redrock'&&x.items.some(item=>item.question&&item.explanation)),'AI review retains Redrock questions and calculations');
+    check(review.sections.some(x=>x.game==='Sea Wolf'&&x.sites.length===3&&x.traitKey),'AI review retains Sea Wolf site rules and trait key');
+    check(csv.includes('Redrock')&&csv.includes('explanation')&&csv.includes('question'),'results CSV contains review context');
+    check(reviewText.includes('STRUCTURED RUN DATA (JSON)')&&reviewText.includes('Do not invent missing run data'),'AI review includes a guided request');
+    check(document.querySelectorAll('[data-act="ai-review-open"]').length===3,'three AI service handoffs available');
+    const originalDownload=downloadText,originalOpen=window.open;let downloaded=null,opened=null;
+    try{
+      downloadText=(name,body,type)=>{downloaded={name,body,type}};
+      window.open=url=>{opened=url;return null};
+      ACT['ai-review-download']();
+      check(downloaded?.name.endsWith('.txt')&&downloaded.type.startsWith('text/plain'),'AI review button downloads a text file');
+      const data=JSON.parse(downloaded.body.split('STRUCTURED RUN DATA (JSON)\n')[1]);
+      check(data.session.seed===S.seed&&data.sections.some(x=>x.items?.some(item=>item.options?.some(option=>option.reason))),'downloaded review contains this run and option reasons');
+      for(const [provider,url] of Object.entries(AI_SERVICES)){
+        opened=null;ACT['ai-review-open'](provider);
+        check(opened===url&&downloaded?.body.includes('STRUCTURED RUN DATA (JSON)'),'AI handoff opens '+provider+' with a review file');
+      }
+    }finally{downloadText=originalDownload;window.open=originalOpen}
     log(mode+' full route');
   }
   function standaloneRuns(){
@@ -272,6 +294,13 @@
     const challenge=challengeParams(new URL(challengeURL(12345,'sw','hard')).search);
     check(challenge.seed===12345&&challenge.mode==='sw'&&challenge.difficulty==='hard'&&challengeParams('?seed=12345&mode=sw&difficulty=invalid').difficulty===null,'shared challenge preserves valid difficulty');
     check(historyCSV(readHistory()).startsWith('date,seed,mode,difficulty,scoringVersion,'),'history export labels scoring version');
+    const previousFeedback=readFeedback(),previousDifficulty=S.difficulty;
+    safeWrite(FEEDBACK_KEY,[{difficulty:'standard',rating:'easier',game:'rr-analysis'},{difficulty:'guided',rating:'harder',game:'rr-analysis'}]);
+    S.difficulty='standard';
+    check(calibrationHTML().includes('1 comparison')&&calibrationHTML().includes('try hard next'),'difficulty advice uses only comparisons at the selected level');
+    S.difficulty='guided';
+    check(calibrationHTML().includes('1 comparison')&&!calibrationHTML().includes('try hard next'),'difficulty advice respects the lower boundary');
+    S.difficulty=previousDifficulty;safeWrite(FEEDBACK_KEY,previousFeedback);
     safeWrite(HISTORY_KEY,saved);
     log('history separates legacy and current scoring models');
   }
@@ -437,8 +466,8 @@
     home();ACT.start('sfl30');ACT['sfl-begin']();S.clock.end=Date.now()-1;tick();
     check(S.screen==='results'&&S.res.sfl.score.total>=0,'SFL timeout');
     log('all game timeouts');
-    home();ACT.theme();check(document.documentElement.dataset.theme==='light','day theme');
-    ACT.theme();check(document.documentElement.dataset.theme==='dark','night theme');
+    home();const initialTheme=document.documentElement.dataset.theme;ACT.theme();check(document.documentElement.dataset.theme===(initialTheme==='light'?'dark':'light'),'theme changes');
+    ACT.theme();check(document.documentElement.dataset.theme===initialTheme,'theme returns to original setting');
     check(homeHTML().includes('Scheduled practice'),'review plan visible');
     log('day/night and review UI');
     checkPalette();
@@ -496,9 +525,23 @@
     }
     log('500 hard Sea Wolf seeds remain solvable with distinct distractors');
   }
+  function difficultyChecks(){
+    check(['guided','standard','hard','expert'].map(numericTolerance).join(',')==='1,0.5,0.25,0.1','four numeric difficulty levels');
+    for(const level of DIFFICULTIES){
+      const items=genMath(1947,level);
+      check(items.length===12&&new Set(items.map(x=>x.kind)).size>=(level==='guided'?4:6),level+' math variety');
+      check(items.every(x=>Number.isFinite(x.ans)&&x.why.length>60),level+' math answers and worked reasons');
+    }
+    for(const seed of [1,17,83,119]){
+      const easy=tuneSeaWolf(genSeaWolf(seed),'guided'),expert=tuneSeaWolf(genSeaWolf(seed),'expert');
+      check(easy.sites.every((s,i)=>s.ranges.every(([lo,hi],j)=>lo<=genSeaWolf(seed).sites[i].ranges[j][0]&&hi>=genSeaWolf(seed).sites[i].ranges[j][1])),'guided widens Sea Wolf ranges');
+      check(expert.sites.every(s=>new Set(s.pool.map(m=>m.id)).size===s.pool.length&&scoreSite(s,s.planted.map(id=>expert.byId[id])).ded.length===0),'expert remains solvable with distinct distractors');
+    }
+    log('guided through expert difficulty and varied math cases');
+  }
   try{
     localStorage.removeItem(HISTORY_KEY);localStorage.removeItem(SPACED_KEY);
-    scoringRules();hardSeedSweep();sflSeedSweep();fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();historyVersionChecks();imperfectRoutes();spaced();edgeCases();
+    scoringRules();hardSeedSweep();difficultyChecks();sflSeedSweep();fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();historyVersionChecks();imperfectRoutes();spaced();edgeCases();
     const images=await Promise.all([...imageSources].map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve([src,image.naturalWidth>0]);image.onerror=()=>resolve([src,false]);image.src=src})));
     check(images.every(([,ok])=>ok),'all referenced game images load');
     log('every visited screen has named controls, labeled fields, and loading images');

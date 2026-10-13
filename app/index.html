@@ -115,8 +115,6 @@ td.clk{border-bottom:1px solid var(--line);font-weight:500}
 .bar2{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
 .bar2 i{display:block;height:100%;background:var(--accent)}
 .trait{align-self:flex-start;font-size:.78rem;padding:2px 9px;border-radius:99px;border:1px solid var(--line)}
-.trait.good{border-color:var(--good);color:var(--good)}
-.trait.bad{border-color:var(--bad);color:var(--bad)}
 .big-mb{max-width:340px;margin-inline:auto}
 .avgrow{display:grid;grid-template-columns:6.5em 1fr auto;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);align-items:center}
 .ok{color:var(--good);font-weight:600}.no{color:var(--bad);font-weight:600}
@@ -142,6 +140,7 @@ const REDROCK_THEMES=[
   {name:"Grassland restoration",groups:"prairie zones",group:"zone",measure:"restored grassland",unit:"hectares",names:["North Plain","Dry Hollow","Bison Ridge","Clover Flat","West Meadow","Long Draw","South Rise","Creek Edge"],context:"Seasonal grazing pressure varies by zone.",contextLabel:"Seed plots",contextUnit:"plots"}
 ];
 const TRAITS=["Heat Resistant","Pressure Resistant","Phosphorous Removal","Nitrogen Fixing","Salt Tolerant","Acid Tolerant","Light Sensitive","Biofilm Forming"];
+const TRAIT_SYMBOLS=["▲","◆","●","■","✦","✚","⬡","◈"];
 const ATTRS=["Permeability","Mobility","Energy"];
 const G1=["Lior","Ryn","Xylo","Orun","Kael","Vesk","Tavi","Ilo","Brun","Nyx","Zeph","Quor","Marl","Sev","Dren","Palo","Yarr","Oska","Tull","Evra"];
 const G2=["Volvox","Bacil","Phage","Nema","Spira","Coccus","Vibrio","Algae","Fungi","Archa","Diatom","Cyan"];
@@ -319,7 +318,7 @@ function profileTraits(site){
   return chosen.slice(0,4);
 }
 function profileBlank(site){
-  const traitModes={};for(const trait of profileTraits(site))traitModes[trait]=trait===site.undesired?'no':'yes';
+  const traitModes={};for(const trait of profileTraits(site))traitModes[trait]='yes';
   return{selected:[],r:site.ranges.map(([lo,hi])=>[Math.max(1,lo-1),Math.min(10,hi+1)]),traitModes};
 }
 function profileError(site,f){
@@ -352,6 +351,7 @@ function filterPool(site,pool,f){
 <script src="sfl.js"></script>
 <script src="sfl-ui.js"></script>
 <script src="analytics-ui.js"></script>
+<script src="ai-review.js"></script>
 <script src="drills-ui.js"></script>
 <script src="ui.js"></script>
 </body>

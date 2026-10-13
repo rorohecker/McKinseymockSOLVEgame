@@ -89,7 +89,7 @@ function adaptiveRecommendation(rows=readHistory()){
 function adaptiveMathItems(seed,focus){
   const wanted=focus.mathKind,items=[],seen=new Set();
   for(let offset=0;items.length<8&&offset<30;offset++){
-    for(const q of genMath(seed+offset*101)){
+    for(const q of genMath(seed+offset*101,typeof S==='undefined'?'standard':S.difficulty)){
       if(q.kind!==wanted||seen.has(q.prompt))continue;
       seen.add(q.prompt);items.push(q);if(items.length===8)break;
     }
