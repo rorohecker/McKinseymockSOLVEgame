@@ -158,7 +158,63 @@ def gen_cases(R: RNG):
         "ans": middle, "tol": 0.1,
         "explain": f"Expand each sample count by its number of plots. Of {len(ordered)} plots, the middle observation{'s' if len(ordered) % 2 == 0 else ''} give{'s' if len(ordered) % 2 else ''} a median of {jstr(middle)}.",
     })
-    return R.shuffle(out)[:6]
+    prevalence = R.pick([15, 25, 35]); sensitivity = R.pick([80, 90]); false_positive = R.pick([8, 12])
+    detected = prevalence * sensitivity / 100
+    incorrect = (100 - prevalence) * false_positive / 100
+    answer = f1(detected / (detected + incorrect) * 100)
+    m = _mc(R, [jstr(answer) + "%", jstr(prevalence) + "%", jstr(sensitivity) + "%", jstr(f1(detected)) + "%"], 0)
+    out.append({
+        "kind": "Conditional probability", "title": "Testing water samples",
+        "body": f"<p><b>{prevalence}%</b> of sites have contamination. A rapid test detects contamination at <b>{sensitivity}%</b> of contaminated sites and incorrectly tests positive at <b>{false_positive}%</b> of clean sites.</p>",
+        "q": "Among positive tests, what percentage are from contaminated sites?", "type": "mc", **m,
+        "explain": f"Out of 100 sites, {jstr(f1(detected))} true positives and {jstr(f1(incorrect))} false positives are expected. Divide {jstr(f1(detected))} by their sum: {jstr(answer)}%.",
+    })
+    baseline = R.pick([240, 320, 400]); increase = R.pick([10, 15, 20]); saving = R.pick([5, 8, 12])
+    answer = f1(baseline * (1 + increase / 100) * (1 - saving / 100))
+    out.append({
+        "kind": "Sequential budget", "title": "Monitoring budget revision",
+        "body": f"<p>The monitoring budget was <b>{baseline}</b> thousand euros. New equipment raises the forecast by <b>{increase}%</b>. A later efficiency plan saves <b>{saving}%</b> of that raised forecast.</p>",
+        "q": "What is the revised budget, in thousand euros?", "type": "num", "ans": answer, "tol": 0.1,
+        "explain": f"Apply both changes in order: {baseline} × (1 + {increase}/100) × (1 − {saving}/100) = {jstr(answer)} thousand euros.",
+    })
+    animals = R.pick([120, 160, 200]); habitat = R.pick([300, 400, 500]); move = R.pick([10, 15, 20]); gain = R.pick([5, 10, 15])
+    left = animals * (1 - move / 100); new_habitat = habitat * (1 + gain / 100); answer = f1(new_habitat / left)
+    out.append({
+        "kind": "Changing denominator", "title": "Habitat per animal",
+        "body": f"<p>A reserve has <b>{habitat}</b> hectares of habitat and <b>{animals}</b> animals. Habitat expands by <b>{gain}%</b>, while <b>{move}%</b> of animals move to another reserve.</p>",
+        "q": "How many hectares of habitat are there per remaining animal?", "type": "num", "ans": answer, "tol": 0.1,
+        "explain": f"New habitat is {jstr(f1(new_habitat))} hectares; {jstr(f1(left))} animals remain. Divide to get {jstr(answer)} hectares per animal.",
+    })
+    sectors = R.shuffle(["Cedar Reach", "North Meadow", "Slate Basin", "Willow Pass", "East Hollow"])[:3]
+    growth = [R.pick([720, 840, 960])]
+    for step in [R.pick([40, 60, 80]), R.pick([30, 50, 70]), R.pick([40, 60, 90])]:
+        growth.append(growth[-1] + step)
+    middle = [R.pick([680, 800, 920])]
+    for step in R.shuffle([R.pick([30, 50, 70]), -R.pick([40, 60, 80]), R.pick([20, 40, 60])]):
+        middle.append(middle[-1] + step)
+    lower = [R.pick([620, 740, 860])]
+    for step in R.shuffle([-R.pick([20, 40, 60]), R.pick([30, 50, 70]), -R.pick([30, 50, 70])]):
+        lower.append(lower[-1] + step)
+    rows = [growth, middle, lower]
+    declines = [(row[i] - value) / row[i] * 100 for row in (middle, lower) for i, value in enumerate(row[1:]) if value < row[i]]
+    table_rows = "".join(f'<tr><td>{sectors[i]}</td>' + "".join(f'<td class="n">{fmt(v)}</td>' for v in row) + '</tr>' for i, row in enumerate(rows))
+    table = '<div class="tblbox"><table><tr><th>Survey sector</th><th class="n">Year 1</th><th class="n">Year 2</th><th class="n">Year 3</th><th class="n">Year 4</th></tr>' + table_rows + '</table></div>'
+    growth_answer = f1((growth[3] - growth[0]) / growth[0] * 100)
+    decline_answer = f1(sum(declines) / len(declines))
+    linked = [
+        {"kind": "Four-year growth", "title": "Survey coverage by sector", "body": table,
+         "q": f"What was the percentage growth for {sectors[0]} from Year 1 to Year 4?", "type": "num", "unit": "%", "ans": growth_answer, "tol": .1,
+         "explain": f"Use the original Year 1 value as the denominator: ({growth[3]} − {growth[0]}) ÷ {growth[0]} × 100 = {jstr(growth_answer)}%."},
+        {"kind": "Average decline", "title": "Survey coverage by sector", "body": table,
+         "q": f"Across {sectors[1]} and {sectors[2]}, find every year-to-year decline. What is the average percentage decrease across those declines?", "type": "num", "unit": "%", "ans": decline_answer, "tol": .1,
+         "explain": f"Calculate each decline as (earlier − later) ÷ earlier × 100, then average the {len(declines)} decline percentages: {', '.join(jstr(f1(v)) + '%' for v in declines)} → {jstr(decline_answer)}%."},
+    ]
+    # Keep every run multi-step without fixing the order or the exact case mix.
+    advanced = {"Weighted average", "Data judgement", "Sequential change", "Median",
+                "Conditional probability", "Sequential budget", "Changing denominator"}
+    shuffled = R.shuffle(out)
+    chosen = [c for c in shuffled if c["kind"] in advanced][:3] + [c for c in shuffled if c["kind"] not in advanced][:1]
+    return linked + R.shuffle(chosen)
 
 
 def gen_redrock(seed: int):
@@ -175,64 +231,60 @@ def gen_redrock(seed: int):
         terr.append(row)
     totals = [sum(r[y] for r in terr) for y in range(4)]
     y4 = [r[3] for r in terr]
-    pctA = [R.int(-10, 20) for _ in names]
-    kmB = [R.int(-12, 16) for _ in names]
+    a_order = R.shuffle([0, 1, 2, 3]); a_focus = a_order[:2]; a_reserve = R.pick([24, 36, 48, 60])
+    pctA = [R.int(18, 42) if i in a_focus else 0 for i, _ in enumerate(names)]
+    a_rules = [f"+{pctA[i]}%" if i in a_focus else f"+{a_reserve // 2} {theme['unit']} shared reserve" for i, _ in enumerate(names)]
+    a_values = [f1(v * (1 + pctA[i] / 100)) if i in a_focus else v + a_reserve / 2 for i, v in enumerate(y4)]
+    b_order = R.shuffle([0, 1, 2, 3]); b_fixed = R.pick([50, 60, 70, 80, 90]); b_increase = R.pick([30, 35, 40, 45, 50]); b_reduction = R.pick([4, 6, 8, 10])
+    b_rules = [f"+{b_fixed} {theme['unit']}" if i == b_order[0] else f"+{b_increase}%" if i == b_order[1] else f"−{b_reduction}%" if i == b_order[2] else "No change" for i, _ in enumerate(names)]
+    b_values = [v + b_fixed if i == b_order[0] else f1(v * (1 + b_increase / 100)) if i == b_order[1] else f1(v * (1 - b_reduction / 100)) if i == b_order[2] else v for i, v in enumerate(y4)]
+    kmB = [f1(v - y4[i]) for i, v in enumerate(b_values)]
 
     def cA():
-        s = 0
-        for i, v in enumerate(y4):
-            s = s + v * (1 + pctA[i] / 100)
-        return s
+        return f1(sum(a_values))
 
     def cB():
-        s = 0
-        for i, v in enumerate(y4):
-            s = s + v + kmB[i]
-        return s
-
-    g = 0
-    while abs(cA() - cB()) < 2 and g < 30:
-        g += 1
-        kmB[0] += 3
-    j = R.int(0, 3); k = R.int(0, 3); elk = R.pick([3800, 4200, 4600, 5100])
-    max4 = max(y4)
-    largest = [n for i, n in enumerate(names) if y4[i] == max4]
-    richer = "A" if cA() > cB() else "B"
+        return f1(sum(b_values))
+    resource = js_round(totals[3] * R.pick([1.5, 1.6, 1.7, 1.8])) + 50
+    target_pct = R.pick([65, 70, 75, 80])
+    target_area = f1(resource * target_pct / 100)
+    elk = R.pick([3800, 4200, 4600, 5100])
+    report_focus = b_order[2]
     an = [
-        {"title": "Study totals", "parts": [
+        {"title": "Baseline and target", "prompt": f"Calculate the current total and the additional {theme['unit']} required to reach the management target.", "parts": [
             {"key": "an0a", "text": f"Using Exhibit 1, what was the total {theme['measure']} of all four {theme['groups']} in Year 4?", "unit": theme["unit"], "ans": totals[3]},
-            {"key": "an0b", "text": f"What percentage of the Year 4 total did {names[j]} hold?", "unit": "%", "ans": f1(y4[j] / totals[3] * 100)}]},
-        {"title": "Growth", "parts": [
-            {"key": "an1a", "text": f"By what percentage did total {theme['measure']} change between Year 1 and Year 4?", "unit": "%", "ans": f1((totals[3] - totals[0]) / totals[0] * 100)},
-            {"key": "an1b", "text": f"On average, by how many {theme['unit']} per year did {names[k]}'s {theme['measure']} grow between Year 1 and Year 4?", "unit": theme["unit"] + " / yr", "ans": f1((terr[k][3] - terr[k][0]) / 3)}]},
-        {"title": "Proposal comparison", "parts": [
-            {"key": "an2a", "text": f"Applying Proposal A (percentage change to each {theme['group']}'s Year 4 {theme['measure']}), what would the total be?", "unit": theme["unit"], "ans": f1(cA())},
-            {"key": "an2b", "text": f"By how many {theme['unit']} does the larger proposal exceed the other?", "unit": theme["unit"], "ans": f1(abs(cA() - cB()))}]},
+            {"key": "an0b", "text": f"How many additional {theme['unit']} are needed to reach {target_pct}% of the {resource} {theme['unit']} management zone?", "unit": theme["unit"], "ans": f1(target_area - totals[3])}]},
+        {"title": "Proposal A by group", "prompt": f"Calculate the updated {theme['measure']} for every {theme['group']} under Proposal A. Apply each group's own rule to its Year 4 baseline.", "parts": [
+            {"key": "an1" + "abcd"[i], "text": name, "unit": theme["unit"], "ans": a_values[i]} for i, name in enumerate(names)]},
+        {"title": "Compare proposal totals", "prompt": f"Calculate the total {theme['measure']} under both proposals. Keep the Year 4 baseline separate from each proposal's changes.", "parts": [
+            {"key": "an2a", "text": "Proposal A total", "unit": theme["unit"], "ans": cA()},
+            {"key": "an2b", "text": "Proposal B total", "unit": theme["unit"], "ans": cB()}]},
     ]
     kind = R.pick(["compare", "share", "trend", "waterfall"])
     vis = {
         "kind": kind,
-        "instr": {"compare": f"Show how the four {theme['groups']} compare in Year 4 {theme['measure']} ({theme['unit']}).",
+        "instr": {"compare": f"Compare baseline {theme['measure']} with Proposal A for each {theme['group']} ({theme['unit']}).",
                   "share": f"Show each {theme['group']}'s share of total Year 4 {theme['measure']} (%).",
                   "trend": f"Show how total {theme['measure']} changed from Year 1 to Year 4 ({theme['unit']}).",
                   "waterfall": f"Show how the four Proposal B adjustments change the Year 4 total ({theme['unit']})."}[kind],
-        "labels": ["Year 1", "Year 2", "Year 3", "Year 4"] if kind == "trend" else list(names),
-        "values": y4 if kind == "compare" else [f1(v / totals[3] * 100) for v in y4] if kind == "share" else kmB if kind == "waterfall" else totals,
+        "labels": ["Year 1", "Year 2", "Year 3", "Year 4"] if kind == "trend" else [label for n in names for label in (n + " · baseline", n + " · Proposal A")] if kind == "compare" else list(names),
+        "values": [value for i, v in enumerate(y4) for value in (v, a_values[i])] if kind == "compare" else [f1(v / totals[3] * 100) for v in y4] if kind == "share" else kmB if kind == "waterfall" else totals,
         "right": {"compare": "bar", "share": "pie", "trend": "line", "waterfall": "waterfall"}[kind],
     }
+    meets = lambda x: "meet" if x >= target_area else "fall short of"  # noqa: E731
     blanks = [
-        {"key": "rp0", "type": "num", "ans": totals[3], "prompt": f"Total {theme['measure']} in Year 4 ({theme['unit']})", "why": "Add the four Year 4 figures."},
-        {"key": "rp1", "type": "sel", "ans": largest, "options": list(names), "prompt": f"Largest {theme['group']} in Year 4", "why": "Compare the four Year 4 values."},
-        {"key": "rp2", "type": "num", "ans": an[1]["parts"][0]["ans"], "prompt": f"Change in total {theme['measure']}, Year 1 to Year 4 (%)", "why": "Subtract Year 1 from Year 4, divide by Year 1, then multiply by 100."},
-        {"key": "rp3", "type": "sel", "ans": [richer], "options": ["A", "B"], "prompt": "Proposal with the larger total", "why": "Compute the total after each proposal and select the larger."},
-        {"key": "rp4", "type": "num", "ans": an[2]["parts"][1]["ans"], "prompt": f"Difference between proposal totals ({theme['unit']})", "why": "Subtract the smaller proposal total from the larger."},
-        {"key": "rp5", "type": "num", "ans": totals[0], "prompt": f"Total {theme['measure']} in Year 1 ({theme['unit']})", "why": "Add the four Year 1 figures."},
-        {"key": "rp6", "type": "num", "ans": f1(cB()), "prompt": f"Total after Proposal B ({theme['unit']})", "why": "Add each fixed Proposal B adjustment to its Year 4 value, then total the four."},
-        {"key": "rp7", "type": "num", "ans": f1(cA() - totals[3]), "prompt": f"Change from Year 4 total under Proposal A ({theme['unit']})", "why": "Compute Proposal A total, then subtract the Year 4 baseline."},
+        {"key": "rp0", "type": "num", "ans": target_area, "prompt": f"Management target ({theme['unit']})", "why": "Multiply the management zone by the target percentage."},
+        {"key": "rp1", "type": "sel", "ans": [meets(cA())], "options": ["meet", "fall short of"], "prompt": "Proposal A versus target", "why": "Compare Proposal A total with the management target."},
+        {"key": "rp2", "type": "num", "ans": cA(), "prompt": f"Proposal A total ({theme['unit']})", "why": "Add the four updated Proposal A group values."},
+        {"key": "rp3", "type": "num", "ans": a_values[report_focus], "prompt": f"Proposal A area for {names[report_focus]} ({theme['unit']})", "why": "Apply this group’s Proposal A rule to its Year 4 baseline."},
+        {"key": "rp4", "type": "sel", "ans": ["more" if cB() > cA() else "less" if cB() < cA() else "the same"], "options": ["more", "less", "the same"], "prompt": "Proposal B compared with Proposal A", "why": "Compare the two proposal totals."},
+        {"key": "rp5", "type": "num", "ans": cB(), "prompt": f"Proposal B total ({theme['unit']})", "why": "Apply all four Proposal B rules and add the results."},
+        {"key": "rp6", "type": "sel", "ans": [meets(cB())], "options": ["meet", "fall short of"], "prompt": "Proposal B versus target", "why": "Compare Proposal B total with the management target."},
+        {"key": "rp7", "type": "sel", "ans": ["reduce"], "options": ["increase", "reduce", "maintain"], "prompt": f"Proposal B effect on {names[report_focus]}", "why": "This group has the percentage-reduction rule in Exhibit 2."},
     ]
     return {"seed": seed, "theme": theme, "names": names, "terr": terr, "totals": totals, "y4": y4,
-            "pctA": pctA, "kmB": kmB, "elk": elk, "an": an, "vis": vis,
-            "blanks": [{**b, "key": "rp" + str(i)} for i, b in enumerate(R.shuffle(blanks)[:5])], "cases": gen_cases(R)}
+            "pctA": pctA, "kmB": kmB, "aRules": a_rules, "bRules": b_rules, "aReserve": a_reserve, "aValues": a_values, "bValues": b_values, "reportFocus": report_focus, "resource": resource, "targetPct": target_pct, "targetArea": target_area, "elk": elk, "an": an, "vis": vis,
+            "blanks": blanks, "cases": gen_cases(R)}
 
 
 def score_redrock(d, A, tolerance=0.5):
@@ -253,19 +305,22 @@ def score_redrock(d, A, tolerance=0.5):
         limit = max(4 * tol, abs(answer) * .02)
         return 0 if error >= limit else js_round(maximum * .6 * (limit - error) / (limit - tol) * 10) / 10
 
+    analysis_max = 60 / sum(len(q["parts"]) for q in d["an"])
     for qi, q in enumerate(d["an"]):
         for pi, p in enumerate(q["parts"]):
-            pts = numeric_points(A.get(p["key"]), p["ans"], tolerance, 10)
-            add("Analysis", f"Q{qi + 1}{'ab'[pi]}", A.get(p["key"]), f"{fmt(p['ans'])} {p['unit']}", pts, 10)
+            pts = numeric_points(A.get(p["key"]), p["ans"], tolerance, analysis_max)
+            add("Analysis", f"Q{qi + 1}{'abcd'[pi]}", A.get(p["key"]), f"{fmt(p['ans'])} {p['unit']}", pts, analysis_max)
     for i, b in enumerate(d["blanks"]):
         v = A.get(b["key"])
-        pts = numeric_points(v, b["ans"], tolerance, 5) if b["type"] == "num" else 5 if v in b["ans"] else 0
-        add("Report", f"Written blank {i + 1}", v, fmt(b["ans"]) if b["type"] == "num" else " / ".join(b["ans"]), pts, 5)
+        mx = 25 / len(d["blanks"])
+        pts = numeric_points(v, b["ans"], tolerance, mx) if b["type"] == "num" else mx if v in b["ans"] else 0
+        add("Report", f"Written blank {i + 1}", v, fmt(b["ans"]) if b["type"] == "num" else " / ".join(b["ans"]), pts, mx)
     vis = d["vis"]
     add("Report", "Chart type", A.get("vtype"), vis["right"], 15 if A.get("vtype") == vis["right"] else 0, 15)
     for i, v in enumerate(vis["values"]):
-        pts = numeric_points(A.get(f"v{i}"), v, tolerance, 3.75)
-        add("Report", "Chart " + vis["labels"][i], A.get(f"v{i}"), fmt(v), js_round(pts * (1 if A.get("vtype") == vis["right"] else .5) * 100) / 100, 3.75)
+        mx = 15 / len(vis["values"])
+        pts = numeric_points(A.get(f"v{i}"), v, tolerance, mx)
+        add("Report", "Chart " + vis["labels"][i], A.get(f"v{i}"), fmt(v), pts if A.get("vtype") == vis["right"] else js_round(pts * .5 * 100) / 100, mx)
     for i, c in enumerate(d["cases"]):
         v = A.get(f"c{i}")
         if c["type"] == "mc":

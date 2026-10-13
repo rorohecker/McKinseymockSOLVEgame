@@ -50,6 +50,30 @@ def main():
             problems.append(f"seed {seed}: empty Redrock sheet scored above 0")
         if len({c["kind"] for c in d["cases"]}) != 6:
             problems.append(f"seed {seed}: duplicate Redrock case kind")
+        advanced = {"Weighted average", "Data judgement", "Sequential change", "Median",
+                    "Conditional probability", "Sequential budget", "Changing denominator"}
+        if sum(c["kind"] in advanced for c in d["cases"][2:]) != 3:
+            problems.append(f"seed {seed}: Redrock case mix is not balanced")
+        if [c["kind"] for c in d["cases"][:2]] != ["Four-year growth", "Average decline"] or d["cases"][0]["body"] != d["cases"][1]["body"]:
+            problems.append(f"seed {seed}: first two cases do not share their four-year exhibit")
+        if len(d["blanks"]) != 8 or len(d["vis"]["values"]) != (8 if d["vis"]["kind"] == "compare" else 4):
+            problems.append(f"seed {seed}: Report field count is invalid")
+        a_total, b_total = (q["ans"] for q in d["an"][2]["parts"])
+        expected_report = [d["targetArea"], ["meet" if a_total >= d["targetArea"] else "fall short of"], a_total,
+                           d["aValues"][d["reportFocus"]], ["more" if b_total > a_total else "less" if b_total < a_total else "the same"],
+                           b_total, ["meet" if b_total >= d["targetArea"] else "fall short of"], ["reduce"]]
+        if [b["ans"] for b in d["blanks"]] != expected_report:
+            problems.append(f"seed {seed}: written summary does not match the study")
+        if d["vis"]["kind"] == "compare" and d["vis"]["values"] != [value for i, baseline in enumerate(d["y4"]) for value in (baseline, d["aValues"][i])]:
+            problems.append(f"seed {seed}: baseline-versus-Proposal-A visual values are invalid")
+        if [len(q["parts"]) for q in d["an"]] != [2, 4, 2]:
+            problems.append(f"seed {seed}: Redrock analysis does not have the expected linked fields")
+        if d["targetArea"] <= d["totals"][3] or abs(d["an"][0]["parts"][1]["ans"] - (d["targetArea"] - d["totals"][3])) > .11:
+            problems.append(f"seed {seed}: management target gap is invalid")
+        if abs(d["an"][2]["parts"][0]["ans"] - sum(d["aValues"])) > .11:
+            problems.append(f"seed {seed}: Proposal A total differs from group answers")
+        if abs(d["an"][2]["parts"][1]["ans"] - sum(d["bValues"])) > .11:
+            problems.append(f"seed {seed}: Proposal B total differs from exhibit adjustments")
         for c in d["cases"]:
             if c["type"] == "mc":
                 texts = [o["text"] for o in c["options"]]

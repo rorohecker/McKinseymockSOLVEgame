@@ -17,7 +17,7 @@ app/assets/             original SVG art and locally bundled Pixelify Sans font
 python/solve_lab/       port of the generators and scorers (no dependencies)
 python/tools/           validate, parity_check, export, worksheet, solver, serve
 python/tools/ui_smoke.py headless Chrome routes, review-plan and timeout checks
-python/tests/           unittest suite (11 tests)
+python/tests/           unittest suite (12 tests)
 research/               sourced notes and JSON data
 docs/                   this file, IDEAS.md, KNOWN_DEVIATIONS.md
 ```
@@ -32,7 +32,7 @@ The seed logic and UI are kept apart:
 ### Flow
 
 ```
-home --start--> rr-intro -> rr-inv -> rr-an(3) -> rr-rep1 -> rr-rep2 -> rr-case(6)
+home --start--> rr-intro -> rr-inv -> rr-exh -> rr-an(all 3) -> rr-rep1(Written) -> rr-rep2(Graph) -> rr-rep3(Visual) -> rr-case(6)
                   -> break -> sw-intro -> sw-site(3) -> break -> sfl-intro -> sfl-project/team -> results
 home -> any standalone game or a focused drill
 home -> adaptive drill (recent missed skill or baseline percent math) -> drill results
@@ -58,7 +58,7 @@ Planted microbes sit in the first 6 pool slots, so any permissive profile shows 
 
 ### Redrock generation
 
-Four groups in one of six island study themes, four years of area data, two proposals, six analysis answers, five prompts selected from eight and a chart task selected from four types. The six cases are selected from eleven templates, including sequential percentage change and a frequency-table median.
+Four groups in one of six island study themes, four years of area data, a management target and two mixed-rule proposals. Proposal A combines two percentage changes with a shared reserve; Proposal B mixes a fixed addition, a percentage increase, a percentage reduction and an unchanged group. Analysis presents three linked questions with eight answer fields on one page: current total and target gap, four Proposal A group values, then both proposal totals. The report has an eight-field written summary, a Graph choice, and a Visual data table. The first two cases share a four-year exhibit and test growth and average declines; the remaining four are drawn from fourteen templates, with three multi-step cases and one shorter case in a shuffled order.
 
 ## Python package
 

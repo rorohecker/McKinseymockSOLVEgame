@@ -43,13 +43,13 @@ def main():
     d, w = gen_redrock(a.seed), gen_sea_wolf(a.seed)
     out = [f"<h1>Solve practice worksheet, seed {a.seed}</h1><p>Redrock: 35 minutes. Sea Wolf: 30 minutes. Use a basic calculator and scratch paper only.</p>"]
     theme = d["theme"]
-    out.append(f"<h2>Redrock Study: {e(theme['name'])}</h2><h3>Objective</h3><p>Decide whether either proposal increases total {e(theme['measure'])} for the {e(theme['groups'])}.</p>")
+    out.append(f"<h2>Redrock Study: {e(theme['name'])}</h2><h3>Objective</h3><p>Compare two proposals for the {e(theme['groups'])}. The management zone is {d['resource']} {e(theme['unit'])}; the target is {d['targetPct']}%.</p>")
     out.append(f"<h3>Exhibit 1: {e(theme['measure'])} ({e(theme['unit'])})</h3>" + table([theme["group"], "Year 1", "Year 2", "Year 3", "Year 4"], [[n, *d["terr"][i]] for i, n in enumerate(d["names"])]))
-    out.append("<h3>Exhibit 2: proposals</h3>" + table([theme["group"], "A: % change to Year 4", f"B: {theme['unit']} change"], [[n, f"{d['pctA'][i]:+d}%", f"{d['kmB'][i]:+d}"] for i, n in enumerate(d["names"])]))
+    out.append("<h3>Exhibit 2: proposals</h3>" + table([theme["group"], "A: allocation rule", "B: allocation rule"], [[n, d["aRules"][i], d["bRules"][i]] for i, n in enumerate(d["names"])]))
     out.append("<h3>Analysis</h3>")
     for qi, q in enumerate(d["an"]):
         for pi, p in enumerate(q["parts"]):
-            out.append(f'<div class="q">Q{qi + 1}{"ab"[pi]}. {e(p["text"])} <span class="line"></span> {e(p["unit"])}</div>')
+            out.append(f'<div class="q">Q{qi + 1}{"abcd"[pi]}. {e(p["text"])} <span class="line"></span> {e(p["unit"])}</div>')
     out.append("<h3>Written report</h3>" + "".join(f'<div class="q">{e(b["prompt"])} <span class="line"></span></div>' for b in d["blanks"]))
     out.append(f"<h3>Chart</h3><p>{e(d['vis']['instr'])} Chart type: bar / pie / line / waterfall. Values for: {e(', '.join(d['vis']['labels']))}</p>")
     out.append('<h2 class="pb">Redrock cases (2 minutes each)</h2>')
@@ -62,7 +62,7 @@ def main():
         out.append(table(["#", "Microbe", *ATTRS, "Trait"], [[i + 1, m["name"], *m["a"], m["trait"]] for i, m in enumerate(s["pool"])]))
         out.append("<p>Your team (three numbers): ____ ____ ____</p>")
     out.append('<h2 class="pb">Answer key</h2><h3>Redrock analysis</h3>')
-    out.append(table(["Item", "Answer"], [[f"Q{qi + 1}{'ab'[pi]}", f"{fmt(p['ans'])} {p['unit']}"] for qi, q in enumerate(d["an"]) for pi, p in enumerate(q["parts"])]))
+    out.append(table(["Item", "Answer"], [[f"Q{qi + 1}{'abcd'[pi]}", f"{fmt(p['ans'])} {p['unit']}"] for qi, q in enumerate(d["an"]) for pi, p in enumerate(q["parts"])]))
     out.append("<h3>Written report</h3>" + table(["Prompt", "Answer"], [[b["prompt"], fmt(b["ans"]) if b["type"] == "num" else " / ".join(b["ans"])] for b in d["blanks"]]))
     out.append(f"<p>Best chart: {e(d['vis']['right'])}. Values: {e(', '.join(fmt(v) for v in d['vis']['values']))}</p>")
     out.append("<h3>Cases</h3>" + table(["Case", "Answer", "Why"], [[i + 1, next((o["text"] for o in c["options"] if o["id"] == c["ans"]), None) if c["type"] == "mc" else fmt(c["ans"]), c["explain"]] for i, c in enumerate(d["cases"])]))

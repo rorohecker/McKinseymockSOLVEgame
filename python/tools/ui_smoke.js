@@ -89,7 +89,14 @@
     fill('#cd','1/0').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
     check(document.querySelector('#calc-result').textContent==='Check expression'&&S.calc.history.length===2,'calculator rejects non-finite result');
     ACT['calc-recall'](0);
-    ACT['to-an']();
+    ACT['to-exh']();check(S.screen==='rr-exh'&&document.querySelector('#app').textContent.includes('Exhibit 1'),'Redrock exhibits have their own investigation step');
+    ACT['to-an']();check(document.querySelectorAll('.rr-analysis .card.q').length===3&&document.querySelectorAll('.rr-analysis input.num[data-bind]').length===8,'all linked Redrock analysis fields appear together');
+    check(document.querySelector('#notebook-side .analysis-notebook')&&document.querySelector('#side #cd'),'calculator and notebook remain available during analysis');
+    check(factNumber('−12%')==='-12','negative proposal rates drag into calculations');
+    const analysisFact=[...document.querySelectorAll('.analysis-source [data-j]')][0];
+    document.querySelector('.analysis-source').open=true;
+    const journalBefore=S.rr.journal.length;analysisFact.click();
+    check(S.rr.journal.length===journalBefore+1&&document.querySelectorAll('#notebook-side [data-j-entry]').length===S.rr.journal.length&&document.querySelector('#side #cd'),'analysis facts update the visible notebook beside the calculator');
     const resultDrag=new DataTransfer();
     document.querySelector('#calc-result').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:resultDrag}));
     document.querySelector('[data-bind="an0a"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:resultDrag}));
@@ -98,15 +105,23 @@
     check(S.calc.result===4&&S.calc.history.length===3,'calculator mouse keys perform division');
     ACT['calc-clear-history']();check(S.calc.history.length===0,'calculator history clears');
     if(S.learning)check(document.querySelector('.pace')?.textContent.includes('Quick check'),'Redrock learning hint');
-    for(const q of S.rr.d.an){
-      for(const p of q.parts)fill('[data-bind="'+p.key+'"]',p.ans);
-      ACT['an-next']();
-    }
+    for(const q of S.rr.d.an)for(const p of q.parts)fill('[data-bind="'+p.key+'"]',p.ans);
+    ACT['an-next']();
     for(const b of S.rr.d.blanks)fill('[data-bind="'+b.key+'"]',Array.isArray(b.ans)?b.ans[0]:b.ans);
-    ACT['to-rep2']();fill('[data-bind="vtype"][value="'+S.rr.d.vis.right+'"]',S.rr.d.vis.right);
+    ACT['to-rep2']();check(S.screen==='rr-rep2'&&document.querySelectorAll('.chart-option').length===4,'Graph chart choice is a separate report step');fill('[data-bind="vtype"][value="'+S.rr.d.vis.right+'"]',S.rr.d.vis.right);
+    ACT['to-rep3']();check(S.screen==='rr-rep3'&&document.querySelector('.rr-visual-table'),'Visual data table is a separate report step');
+    fill('[data-bind="v0"]',0);render(false);
+    check(document.querySelector('[data-bind="v0"]').value==='0','zero answer remains visible after a screen refresh');
     S.rr.d.vis.values.forEach((v,i)=>fill('[data-bind="v'+i+'"]',v));
     ACT['to-cases']();noOverflow('Redrock case');
-    for(const c of S.rr.d.cases){const key='c'+S.rr.ci;fill('[data-bind="'+key+'"]'+(c.type==='mc'?'[value="'+c.ans+'"]':''),c.ans);ACT['case-next']()}
+    check(factNumber('€12,400')==='12400','currency facts can enter calculations');
+    let caseFactChecked=false;
+    for(const c of S.rr.d.cases){
+      const fact=document.querySelector('[data-j]');
+      if(fact&&!caseFactChecked){ACT.tab('journal');const count=S.rr.journal.length,drag=new DataTransfer();fact.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:drag}));document.querySelector('[data-journal-drop]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:drag}));check(S.rr.journal.length===count+1,'case datum drags into notebook');caseFactChecked=true}
+      const key='c'+S.rr.ci;fill('[data-bind="'+key+'"]'+(c.type==='mc'?'[value="'+c.ans+'"]':''),c.ans);ACT['case-next']()
+    }
+    check(caseFactChecked,'at least one case contains draggable data');
     check(S.res.rr.total===175,'Redrock 175/175');
   }
   function seawolf(){
@@ -137,7 +152,8 @@
     check(total>0&&total<300&&S.res.sw.some(x=>x.sc.penalties.length),'Sea Wolf penalises weak sorting or prospect decisions despite compliant planted treatments');
   }
   function project(){
-    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('Each conflicting pair costs 3'),'Project Lead scoring guide');ACT['sfl-begin']();
+    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('full practice score'),'Project Lead review guide');ACT['sfl-begin']();
+    check(document.querySelector('.sfl-background')?.textContent.includes('Situation')&&document.querySelector('.sfl-background')?.textContent.includes('Mission'),'Project Lead begins with scenario background and mission');
     check(document.querySelector('.crumb')?.textContent.includes('Decision 1/13'),'Project Lead header agrees with priority ranking step');
     const originalRank=S.sfl.rank.slice();
     const drag=new DataTransfer();
@@ -161,6 +177,7 @@
   }
   function sflSeedSweep(){
     const projectBestPositions=new Set(),teamBestPositions=new Set();
+    check(SFL_THEMES.every(theme=>SFL_BACKGROUNDS[theme.title]?.situation&&SFL_BACKGROUNDS[theme.title]?.mission),'every Project Lead theme has a background and mission');
     for(let seed=1;seed<=500;seed++){
       const project=genSFLProject(seed),answers=project.questions.map(q=>{
         check(q.options.length===3&&new Set(q.options.map(o=>o.id)).size===3&&q.options.map(o=>o.quality).sort().join(',')==='0,1,2','SFL Project choices complete at seed '+seed);
@@ -183,17 +200,21 @@
     log('500 SFL seeds have complete choices and reachable perfect scores');
   }
   function team(){
-    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('3 explore, 16 assignment, 4 support, 4 reflection'),'Team Lab scoring guide');ACT['sfl-begin']();noOverflow('SFL team');
+    check(S.screen==='sfl-intro'&&document.querySelector('#app').textContent.includes('Drag researchers to workstations'),'Team Lab interaction guide');ACT['sfl-begin']();noOverflow('SFL team');
     for(let day=0;day<3;day++){
       const f=S.sfl,record=f.records[day],data=f.data,stations=data.days[day].stations;
       data.people.slice(0,2).forEach(p=>ACT['team-ask'](p.id));ACT['team-ask'](stations[0].id);ACT['team-next']();
       check(document.querySelector('.team-notes')?.textContent.includes(data.people[0].name),'Team Lab field notes persist into assignments');
       check(document.querySelectorAll('.team-station').length===4&&stations.every(w=>document.querySelector('.team-stations').textContent.includes(w.skill)),'Team Lab shows every station requirement');
       noOverflow('Team Lab assignments');
-      for(const p of data.people){fill('[data-team-assign="'+p.id+'"]',stations.find(x=>x.skill===p.skill).id);fill('[data-team-reason="'+p.id+'"]','Skill fit')}
+      const first=data.people[0],firstStation=stations.find(x=>x.skill===first.skill),personDrag=new DataTransfer();
+      document.querySelector('[data-team-person="'+first.id+'"]').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:personDrag}));
+      document.querySelector('[data-team-station="'+firstStation.id+'"]').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:personDrag}));
+      check(record.assign[first.id]===firstStation.id&&document.querySelector('[data-team-assign="'+first.id+'"]').value===firstStation.id,'Team Lab drag assigns a researcher and updates selector');
+      for(const p of data.people){if(p!==first)fill('[data-team-assign="'+p.id+'"]',stations.find(x=>x.skill===p.skill).id);fill('[data-team-reason="'+p.id+'"]','Skill fit')}
       ACT['team-next']();
       for(let i=0;i<2;i++)ACT['team-support'](data.days[day].requests[i].options.findIndex(x=>x.quality===2));
-      check(document.querySelector('.team-notes')?.textContent.includes(data.people[0].name)&&document.querySelector('.pace')?.textContent.includes('skill mismatch'),'Team Lab reflection retains notes and explains states');
+      check(document.querySelector('.team-notes')?.textContent.includes(data.people[0].name)&&document.querySelector('#app')?.textContent.includes('Consider each person'),'Team Lab reflection retains notes');
       for(const p of data.people)fill('[data-team-reflect="'+p.id+'"]',sflTeamState(p,stations.find(x=>x.id===record.assign[p.id]),4));
       ACT['team-next']();
     }
@@ -255,9 +276,8 @@
     log('history separates legacy and current scoring models');
   }
   function imperfectRoutes(){
-    home(24680);ACT.start('rr');ACT.rrbegin();ACT['to-an']();
-    for(let i=0;i<3;i++)ACT['an-next']();
-    ACT['to-rep2']();ACT['to-cases']();for(let i=0;i<6;i++)ACT['case-next']();
+    home(24680);ACT.start('rr');ACT.rrbegin();ACT['to-exh']();ACT['to-an']();ACT['an-next']();
+    ACT['to-rep2']();ACT['to-rep3']();ACT['to-cases']();for(let i=0;i<6;i++)ACT['case-next']();
     check(S.screen==='results'&&S.res.rr.total===0&&S.res.rr.items.every(x=>x.pts===0),'Redrock blank answers finish with a full worked review');
     check(document.querySelector('#app').textContent.includes('Redrock worked review'),'Redrock missed-work section renders');
 
@@ -400,12 +420,12 @@
       check(S.drill.results.items[0].ok===expected,'case drill applies '+difficulty+' tolerance');
     }
     log('case drill tolerance matches selected difficulty');
-    home();ACT.start('rr');ACT.rrbegin();ACT['to-an']();
+    home();ACT.start('rr');ACT.rrbegin();ACT['to-exh']();ACT['to-an']();
     const numeric=document.querySelector('input.num[data-bind]');
     fill('input.num[data-bind]','5xyz');check(numeric.getAttribute('aria-invalid')==='true'&&numeric.getAttribute('aria-describedby')&&numeric.parentElement.querySelector('.field-error')?.textContent.includes('complete number'),'invalid Redrock answer flagged while typing');
-    ACT['an-next']();check(S.rr.an===0&&document.activeElement===numeric,'invalid Redrock answer blocks locking the question');
+    ACT['an-next']();check(S.screen==='rr-an'&&document.activeElement===numeric,'invalid Redrock answer blocks locking the analysis');
     fill('input.num[data-bind]','5');check(numeric.getAttribute('aria-invalid')==='false'&&!numeric.parentElement.querySelector('.field-error'),'corrected Redrock answer clears warning');
-    ACT['an-next']();check(S.rr.an===1,'corrected Redrock answer can advance');
+    ACT['an-next']();check(S.screen==='rr-rep1','corrected Redrock answer can advance');
     ACT.quit();ACT['quit-confirm']();log('input validation and shortcuts');
     home();ACT.start('rr');ACT.rrbegin();S.clock.end=Date.now()-1;tick();
     check(S.screen==='results'&&S.res.rr.total===0,'Redrock timeout');
@@ -454,7 +474,7 @@
     const nearMiss=scoreRedrock(d,A).items.find(x=>x.label==='Q1a');
     check(nearMiss.pts>0&&nearMiss.pts<10,'Redrock near miss earns limited partial credit');
     A.an0a=String(d.an[0].parts[0].ans);A.vtype='wrong';
-    check(scoreRedrock(d,A).items.filter(x=>x.label.startsWith('Chart ')&&x.label!=='Chart type').every(x=>x.pts===1.88),'wrong chart type halves chart-value credit');
+    check(scoreRedrock(d,A).items.filter(x=>x.label.startsWith('Chart ')&&x.label!=='Chart type').every(x=>x.pts===Math.round(x.max*.5*100)/100),'wrong chart type halves chart-value credit');
     const project=genSFLProject(7),rank=SFL_RANK.map(x=>x.id),answers=project.questions.map(q=>q.options.find(x=>x.quality===2).id);
     check(scoreSFLProject(project,rank,answers).total===100,'strong SFL Project decisions earn full credit');
     answers[0]=project.questions[0].options.find(x=>x.quality===0).id;
@@ -464,9 +484,21 @@
     check(scored.find(x=>x.label==='Day 1 · Explore').pts===2&&scored.find(x=>x.label==='Day 2 · Explore').pts===3,'SFL Team rewards balanced inquiry');
     log('focused scoring penalties and ranking discrimination');
   }
+  function hardSeedSweep(){
+    for(let seed=1;seed<=500;seed++){
+      const data=hardenSeaWolf(genSeaWolf(seed));
+      for(const site of data.sites){
+        const team=site.planted.map(id=>data.byId[id]);
+        check(team.every(Boolean)&&scoreSite(site,team).ded.length===0,'hard Sea Wolf site remains solvable at seed '+seed);
+        check(site.ranges.every(([low,high])=>high-low<=1),'hard Sea Wolf ranges stay narrow at seed '+seed);
+        check(new Set(site.pool.map(m=>m.id)).size===site.pool.length,'hard Sea Wolf distractors are distinct at seed '+seed);
+      }
+    }
+    log('500 hard Sea Wolf seeds remain solvable with distinct distractors');
+  }
   try{
     localStorage.removeItem(HISTORY_KEY);localStorage.removeItem(SPACED_KEY);
-    scoringRules();sflSeedSweep();fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();historyVersionChecks();imperfectRoutes();spaced();edgeCases();
+    scoringRules();hardSeedSweep();sflSeedSweep();fullRun('full');fullRun('full20');fullRun('full30');standaloneRuns();historyVersionChecks();imperfectRoutes();spaced();edgeCases();
     const images=await Promise.all([...imageSources].map(src=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve([src,image.naturalWidth>0]);image.onerror=()=>resolve([src,false]);image.src=src})));
     check(images.every(([,ok])=>ok),'all referenced game images load');
     log('every visited screen has named controls, labeled fields, and loading images');

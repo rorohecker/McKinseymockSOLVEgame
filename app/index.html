@@ -190,7 +190,31 @@ function genCases(R){
   {const base=R.pick([4,8,12]),values=[base,base+2,base+4,base+6],counts=values.map(()=>R.pick([2,3,4])),ordered=values.flatMap((v,i)=>Array(counts[i]).fill(v)),middle=(ordered[(ordered.length-1)>>1]+ordered[ordered.length>>1])/2;
    const rows=values.map((v,i)=>`<tr><td class="n">${v}</td><td class="n">${counts[i]}</td></tr>`).join('');
    out.push({kind:'Median',title:'Samples per survey plot',body:`<div class="tblbox"><table><tr><th class="n">Samples in a plot</th><th class="n">Number of plots</th></tr>${rows}</table></div>`,q:'What is the median number of samples per plot?',type:'num',ans:middle,tol:0.1,explain:`Expand each sample count by its number of plots. Of ${ordered.length} plots, the middle observation${ordered.length%2?'':'s'} give${ordered.length%2?'s':''} a median of ${middle}.`})}
-  return R.shuffle(out).slice(0,6);
+  {const prevalence=R.pick([15,25,35]),sensitivity=R.pick([80,90]),falsePositive=R.pick([8,12]);
+   const detected=prevalence*sensitivity/100,incorrect=(100-prevalence)*falsePositive/100,answer=f1(detected/(detected+incorrect)*100);
+   const m=mc([answer+'%',prevalence+'%',sensitivity+'%',f1(detected)+'%'],0);
+   out.push({kind:'Conditional probability',title:'Testing water samples',body:`<p><b>${prevalence}%</b> of sites have contamination. A rapid test detects contamination at <b>${sensitivity}%</b> of contaminated sites and incorrectly tests positive at <b>${falsePositive}%</b> of clean sites.</p>`,q:'Among positive tests, what percentage are from contaminated sites?',type:'mc',...m,explain:`Out of 100 sites, ${f1(detected)} true positives and ${f1(incorrect)} false positives are expected. Divide ${f1(detected)} by their sum: ${answer}%.`})}
+  {const baseline=R.pick([240,320,400]),increase=R.pick([10,15,20]),saving=R.pick([5,8,12]);
+   const answer=f1(baseline*(1+increase/100)*(1-saving/100));
+   out.push({kind:'Sequential budget',title:'Monitoring budget revision',body:`<p>The monitoring budget was <b>${baseline}</b> thousand euros. New equipment raises the forecast by <b>${increase}%</b>. A later efficiency plan saves <b>${saving}%</b> of that raised forecast.</p>`,q:'What is the revised budget, in thousand euros?',type:'num',ans:answer,tol:0.1,explain:`Apply both changes in order: ${baseline} × (1 + ${increase}/100) × (1 − ${saving}/100) = ${answer} thousand euros.`})}
+  {const animals=R.pick([120,160,200]),habitat=R.pick([300,400,500]),move=R.pick([10,15,20]),gain=R.pick([5,10,15]);
+   const left=animals*(1-move/100),newHabitat=habitat*(1+gain/100),answer=f1(newHabitat/left);
+   out.push({kind:'Changing denominator',title:'Habitat per animal',body:`<p>A reserve has <b>${habitat}</b> hectares of habitat and <b>${animals}</b> animals. Habitat expands by <b>${gain}%</b>, while <b>${move}%</b> of animals move to another reserve.</p>`,q:'How many hectares of habitat are there per remaining animal?',type:'num',ans:answer,tol:0.1,explain:`New habitat is ${f1(newHabitat)} hectares; ${f1(left)} animals remain. Divide to get ${answer} hectares per animal.`})}
+  const sectors=R.shuffle(['Cedar Reach','North Meadow','Slate Basin','Willow Pass','East Hollow']).slice(0,3);
+  const growth=[R.pick([720,840,960])];for(const step of [R.pick([40,60,80]),R.pick([30,50,70]),R.pick([40,60,90])])growth.push(growth.at(-1)+step);
+  const middle=[R.pick([680,800,920])];for(const step of R.shuffle([R.pick([30,50,70]),-R.pick([40,60,80]),R.pick([20,40,60])]))middle.push(middle.at(-1)+step);
+  const lower=[R.pick([620,740,860])];for(const step of R.shuffle([-R.pick([20,40,60]),R.pick([30,50,70]),-R.pick([30,50,70])]))lower.push(lower.at(-1)+step);
+  const rows=[growth,middle,lower],declines=[middle,lower].flatMap(row=>row.slice(1).map((value,i)=>value<row[i]?(row[i]-value)/row[i]*100:null).filter(value=>value!==null));
+  const table=`<div class="tblbox"><table><tr><th>Survey sector</th><th class="n">Year 1</th><th class="n">Year 2</th><th class="n">Year 3</th><th class="n">Year 4</th></tr>${rows.map((row,i)=>`<tr><td>${sectors[i]}</td>${row.map(v=>`<td class="n">${fmt(v)}</td>`).join('')}</tr>`).join('')}</table></div>`;
+  const linked=[
+    {kind:'Four-year growth',title:'Survey coverage by sector',body:table,q:`What was the percentage growth for ${sectors[0]} from Year 1 to Year 4?`,type:'num',unit:'%',ans:f1((growth[3]-growth[0])/growth[0]*100),tol:.1,explain:`Use the original Year 1 value as the denominator: (${growth[3]} − ${growth[0]}) ÷ ${growth[0]} × 100 = ${f1((growth[3]-growth[0])/growth[0]*100)}%.`},
+    {kind:'Average decline',title:'Survey coverage by sector',body:table,q:`Across ${sectors[1]} and ${sectors[2]}, find every year-to-year decline. What is the average percentage decrease across those declines?`,type:'num',unit:'%',ans:f1(declines.reduce((s,v)=>s+v,0)/declines.length),tol:.1,explain:`Calculate each decline as (earlier − later) ÷ earlier × 100, then average the ${declines.length} decline percentages: ${declines.map(v=>f1(v)+'%').join(', ')} → ${f1(declines.reduce((s,v)=>s+v,0)/declines.length)}%.`}
+  ];
+  // Keep every run multi-step without fixing the order or the exact case mix.
+  const advanced=new Set(['Weighted average','Data judgement','Sequential change','Median','Conditional probability','Sequential budget','Changing denominator']);
+  const shuffled=R.shuffle(out);
+  const chosen=[...shuffled.filter(c=>advanced.has(c.kind)).slice(0,3),...shuffled.filter(c=>!advanced.has(c.kind)).slice(0,1)];
+  return [...linked,...R.shuffle(chosen)];
 }
 function genRedrock(seed){
   const R=RNG(seed*13+7);
@@ -199,47 +223,53 @@ function genRedrock(seed){
   const terr=names.map(()=>{let v=R.int(38,110);const r=[v];for(let y=1;y<4;y++){v=Math.round(v*(1+R.int(2,14)/100));r.push(v)}return r});
   const totals=[0,1,2,3].map(y=>terr.reduce((s,r)=>s+r[y],0));
   const y4=terr.map(r=>r[3]);
-  const pctA=names.map(()=>R.int(-10,20));let kmB=names.map(()=>R.int(-12,16));
-  const cA=()=>y4.reduce((s,v,i)=>s+v*(1+pctA[i]/100),0),cB=()=>y4.reduce((s,v,i)=>s+v+kmB[i],0);
-  let g=0;while(Math.abs(cA()-cB())<2&&g++<30)kmB[0]+=3;
-  const j=R.int(0,3),k=R.int(0,3),elk=R.pick([3800,4200,4600,5100]);
-  const maxY4=Math.max(...y4),largest=names.filter((n,i)=>y4[i]===maxY4);
-  const richer=cA()>cB()?'A':'B';
+  const aOrder=R.shuffle([0,1,2,3]),aFocus=aOrder.slice(0,2),aReserve=R.pick([24,36,48,60]);
+  const pctA=names.map((_,i)=>aFocus.includes(i)?R.int(18,42):0);
+  const aRules=names.map((_,i)=>aFocus.includes(i)?`+${pctA[i]}%`:`+${aReserve/2} ${theme.unit} shared reserve`);
+  const aValues=y4.map((v,i)=>aFocus.includes(i)?f1(v*(1+pctA[i]/100)):v+aReserve/2);
+  const bOrder=R.shuffle([0,1,2,3]),bFixed=R.pick([50,60,70,80,90]),bIncrease=R.pick([30,35,40,45,50]),bReduction=R.pick([4,6,8,10]);
+  const bRules=names.map((_,i)=>i===bOrder[0]?`+${bFixed} ${theme.unit}`:i===bOrder[1]?`+${bIncrease}%`:i===bOrder[2]?`−${bReduction}%`:'No change');
+  const bValues=y4.map((v,i)=>i===bOrder[0]?v+bFixed:i===bOrder[1]?f1(v*(1+bIncrease/100)):i===bOrder[2]?f1(v*(1-bReduction/100)):v);
+  const kmB=bValues.map((v,i)=>f1(v-y4[i]));
+  const cA=()=>f1(aValues.reduce((s,v)=>s+v,0)),cB=()=>f1(bValues.reduce((s,v)=>s+v,0));
+  const resource=Math.round(totals[3]*R.pick([1.5,1.6,1.7,1.8]))+50,targetPct=R.pick([65,70,75,80]),targetArea=f1(resource*targetPct/100);
+  const elk=R.pick([3800,4200,4600,5100]);
+  const reportFocus=bOrder[2];
   const an=[
-   {title:'Study totals',parts:[
+   {title:'Baseline and target',prompt:`Calculate the current total and the additional ${theme.unit} required to reach the management target.`,parts:[
      {key:'an0a',text:`Using Exhibit 1, what was the total ${theme.measure} of all four ${theme.groups} in Year 4?`,unit:theme.unit,ans:totals[3]},
-     {key:'an0b',text:`What percentage of the Year 4 total did ${names[j]} hold?`,unit:'%',ans:f1(y4[j]/totals[3]*100)}]},
-   {title:'Growth',parts:[
-     {key:'an1a',text:`By what percentage did total ${theme.measure} change between Year 1 and Year 4?`,unit:'%',ans:f1((totals[3]-totals[0])/totals[0]*100)},
-     {key:'an1b',text:`On average, by how many ${theme.unit} per year did ${names[k]}'s ${theme.measure} grow between Year 1 and Year 4?`,unit:theme.unit+' / yr',ans:f1((terr[k][3]-terr[k][0])/3)}]},
-   {title:'Proposal comparison',parts:[
-     {key:'an2a',text:`Applying Proposal A (percentage change to each ${theme.group}'s Year 4 ${theme.measure}), what would the total be?`,unit:theme.unit,ans:f1(cA())},
-     {key:'an2b',text:`By how many ${theme.unit} does the larger proposal exceed the other?`,unit:theme.unit,ans:f1(Math.abs(cA()-cB()))}]}];
+     {key:'an0b',text:`How many additional ${theme.unit} are needed to reach ${targetPct}% of the ${resource} ${theme.unit} management zone?`,unit:theme.unit,ans:f1(targetArea-totals[3])}]},
+   {title:'Proposal A by group',prompt:`Calculate the updated ${theme.measure} for every ${theme.group} under Proposal A. Apply each group's own rule to its Year 4 baseline.`,parts:names.map((name,i)=>({key:'an1'+'abcd'[i],text:name,unit:theme.unit,ans:aValues[i]}))},
+   {title:'Compare proposal totals',prompt:`Calculate the total ${theme.measure} under both proposals. Keep the Year 4 baseline separate from each proposal's changes.`,parts:[
+     {key:'an2a',text:'Proposal A total',unit:theme.unit,ans:cA()},
+     {key:'an2b',text:'Proposal B total',unit:theme.unit,ans:cB()}]}];
   const kind=R.pick(['compare','share','trend','waterfall']);
   const vis={kind,
-    instr:{compare:`Show how the four ${theme.groups} compare in Year 4 ${theme.measure} (${theme.unit}).`,share:`Show each ${theme.group}'s share of total Year 4 ${theme.measure} (%).`,trend:`Show how total ${theme.measure} changed from Year 1 to Year 4 (${theme.unit}).`,waterfall:`Show how the four Proposal B adjustments change the Year 4 total (${theme.unit}).`}[kind],
-    labels:kind==='trend'?['Year 1','Year 2','Year 3','Year 4']:names,
-    values:kind==='compare'?y4:kind==='share'?y4.map(v=>f1(v/totals[3]*100)):kind==='waterfall'?kmB:totals,
+    instr:{compare:`Compare baseline ${theme.measure} with Proposal A for each ${theme.group} (${theme.unit}).`,share:`Show each ${theme.group}'s share of total Year 4 ${theme.measure} (%).`,trend:`Show how total ${theme.measure} changed from Year 1 to Year 4 (${theme.unit}).`,waterfall:`Show how the four Proposal B adjustments change the Year 4 total (${theme.unit}).`}[kind],
+    labels:kind==='trend'?['Year 1','Year 2','Year 3','Year 4']:kind==='compare'?names.flatMap(n=>[n+' · baseline',n+' · Proposal A']):names,
+    values:kind==='compare'?y4.flatMap((v,i)=>[v,aValues[i]]):kind==='share'?y4.map(v=>f1(v/totals[3]*100)):kind==='waterfall'?kmB:totals,
     right:{compare:'bar',share:'pie',trend:'line',waterfall:'waterfall'}[kind]};
+  const meets=x=>x>=targetArea?'meet':'fall short of';
   const blanks=[
-    {key:'rp0',type:'num',ans:totals[3],prompt:`Total ${theme.measure} in Year 4 (${theme.unit})`,why:'Add the four Year 4 figures.'},
-    {key:'rp1',type:'sel',ans:largest,options:names,prompt:`Largest ${theme.group} in Year 4`,why:'Compare the four Year 4 values.'},
-    {key:'rp2',type:'num',ans:an[1].parts[0].ans,prompt:`Change in total ${theme.measure}, Year 1 to Year 4 (%)`,why:'Subtract Year 1 from Year 4, divide by Year 1, then multiply by 100.'},
-    {key:'rp3',type:'sel',ans:[richer],options:['A','B'],prompt:'Proposal with the larger total',why:'Compute the total after each proposal and select the larger.'},
-    {key:'rp4',type:'num',ans:an[2].parts[1].ans,prompt:`Difference between proposal totals (${theme.unit})`,why:'Subtract the smaller proposal total from the larger.'},
-    {key:'rp5',type:'num',ans:totals[0],prompt:`Total ${theme.measure} in Year 1 (${theme.unit})`,why:'Add the four Year 1 figures.'},
-    {key:'rp6',type:'num',ans:f1(cB()),prompt:`Total after Proposal B (${theme.unit})`,why:'Add each fixed Proposal B adjustment to its Year 4 value, then total the four.'},
-    {key:'rp7',type:'num',ans:f1(cA()-totals[3]),prompt:`Change from Year 4 total under Proposal A (${theme.unit})`,why:'Compute Proposal A total, then subtract the Year 4 baseline.'}];
-  return{seed,theme,names,terr,totals,y4,pctA,kmB,elk,an,vis,blanks:R.shuffle(blanks).slice(0,5).map((b,i)=>({...b,key:'rp'+i})),cases:genCases(R)};
+    {key:'rp0',type:'num',ans:targetArea,prompt:`Management target (${theme.unit})`,why:'Multiply the management zone by the target percentage.'},
+    {key:'rp1',type:'sel',ans:[meets(cA())],options:['meet','fall short of'],prompt:'Proposal A versus target',why:'Compare Proposal A total with the management target.'},
+    {key:'rp2',type:'num',ans:cA(),prompt:`Proposal A total (${theme.unit})`,why:'Add the four updated Proposal A group values.'},
+    {key:'rp3',type:'num',ans:aValues[reportFocus],prompt:`Proposal A area for ${names[reportFocus]} (${theme.unit})`,why:'Apply this group’s Proposal A rule to its Year 4 baseline.'},
+    {key:'rp4',type:'sel',ans:[cB()>cA()?'more':cB()<cA()?'less':'the same'],options:['more','less','the same'],prompt:'Proposal B compared with Proposal A',why:'Compare the two proposal totals.'},
+    {key:'rp5',type:'num',ans:cB(),prompt:`Proposal B total (${theme.unit})`,why:'Apply all four Proposal B rules and add the results.'},
+    {key:'rp6',type:'sel',ans:[meets(cB())],options:['meet','fall short of'],prompt:'Proposal B versus target',why:'Compare Proposal B total with the management target.'},
+    {key:'rp7',type:'sel',ans:['reduce'],options:['increase','reduce','maintain'],prompt:`Proposal B effect on ${names[reportFocus]}`,why:'This group has the percentage-reduction rule in Exhibit 2.'}];
+  return{seed,theme,names,terr,totals,y4,pctA,kmB,aRules,bRules,aReserve,aValues,bValues,reportFocus,resource,targetPct,targetArea,elk,an,vis,blanks,cases:genCases(R)};
 }
 function scoreRedrock(d,A,tolerance=.5){
   const items=[];const add=(sec,label,your,correct,pts,max)=>items.push({sec,label,your:your===''||your==null?'—':your,correct,pts,max});
   const numericPoints=(value,answer,tol,max)=>{const parsed=num(value);if(parsed===null)return 0;const error=Math.abs(parsed-answer);if(error<=tol+1e-9)return max;
     const limit=Math.max(4*tol,Math.abs(answer)*.02);return error>=limit?0:Math.round(max*.6*(limit-error)/(limit-tol)*10)/10};
-  d.an.forEach((q,qi)=>q.parts.forEach((p,pi)=>add('Analysis',`Q${qi+1}${'ab'[pi]}`,A[p.key],`${fmt(p.ans)} ${p.unit}`,numericPoints(A[p.key],p.ans,tolerance,10),10)));
-  d.blanks.forEach((b,i)=>{const v=A[b.key],pts=b.type==='num'?numericPoints(v,b.ans,tolerance,5):b.ans.includes(v)?5:0;add('Report',`Written blank ${i+1}`,v,b.type==='num'?fmt(b.ans):b.ans.join(' / '),pts,5)});
+  const analysisMax=60/d.an.reduce((n,q)=>n+q.parts.length,0);
+  d.an.forEach((q,qi)=>q.parts.forEach((p,pi)=>add('Analysis',`Q${qi+1}${'abcd'[pi]}`,A[p.key],`${fmt(p.ans)} ${p.unit}`,numericPoints(A[p.key],p.ans,tolerance,analysisMax),analysisMax)));
+  d.blanks.forEach((b,i)=>{const v=A[b.key],max=25/d.blanks.length,pts=b.type==='num'?numericPoints(v,b.ans,tolerance,max):b.ans.includes(v)?max:0;add('Report',`Written blank ${i+1}`,v,b.type==='num'?fmt(b.ans):b.ans.join(' / '),pts,max)});
   const tOK=A.vtype===d.vis.right;add('Report','Chart type',A.vtype,d.vis.right,tOK?15:0,15);
-  d.vis.values.forEach((v,i)=>{add('Report','Chart '+d.vis.labels[i],A['v'+i],fmt(v),Math.round(numericPoints(A['v'+i],v,tolerance,3.75)*(tOK?1:.5)*100)/100,3.75)});
+  d.vis.values.forEach((v,i)=>{const max=15/d.vis.values.length,raw=numericPoints(A['v'+i],v,tolerance,max);add('Report','Chart '+d.vis.labels[i],A['v'+i],fmt(v),tOK?raw:Math.round(raw*.5*100)/100,max)});
   d.cases.forEach((c,i)=>{const v=A['c'+i];const ok=c.type==='mc'&&v===c.ans;
     const yourTxt=c.type==='mc'?(c.options.find(o=>o.id===v)||{text:'—'}).text:v;const cor=c.type==='mc'?c.options.find(o=>o.id===c.ans).text:String(c.ans);
     add('Cases',`Case ${i+1} · ${c.kind}`,yourTxt,cor,c.type==='mc'?(ok?10:0):numericPoints(v,c.ans,Math.min(c.tol,tolerance),10),10)});

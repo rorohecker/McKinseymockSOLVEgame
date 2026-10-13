@@ -33,8 +33,8 @@ function snap(seed){const d=genRedrock(seed),w=genSeaWolf(seed),A={};
  d.cases.forEach((c,i)=>A['c'+i]=String(c.ans));
  const exact=scoreRedrock(d,A),nearScore=scoreRedrock(d,{...A,an0a:String(Number(A.an0a)+1)});
  return{
- rr:{theme:d.theme,names:d.names,terr:d.terr,totals:d.totals,y4:d.y4,pctA:d.pctA,kmB:d.kmB,elk:d.elk,
-  an:d.an.map(q=>({title:q.title,parts:q.parts.map(p=>({key:p.key,text:p.text,unit:p.unit,ans:p.ans}))})),
+ rr:{theme:d.theme,names:d.names,terr:d.terr,totals:d.totals,y4:d.y4,pctA:d.pctA,kmB:d.kmB,aRules:d.aRules,bRules:d.bRules,aReserve:d.aReserve,aValues:d.aValues,bValues:d.bValues,reportFocus:d.reportFocus,resource:d.resource,targetPct:d.targetPct,targetArea:d.targetArea,elk:d.elk,
+  an:d.an.map(q=>({title:q.title,prompt:q.prompt,parts:q.parts.map(p=>({key:p.key,text:p.text,unit:p.unit,ans:p.ans}))})),
   vis:d.vis,blanks:d.blanks,cases:d.cases},
  sw:{sites:w.sites.map(s=>({name:s.name,contam:s.contam,desired:s.desired,undesired:s.undesired,avg:s.avg,ranges:s.ranges,planted:s.planted,pool:s.pool}))},
  scores:{rrExact:exact.total,rrNear:nearScore.total,swPlanted:w.sites.map(s=>{const r=scoreSite(s,s.planted.map(id=>w.byId[id]));return{score:r.score,precision:r.precision,ded:r.ded}})}}}

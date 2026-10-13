@@ -8,7 +8,7 @@ const ADAPTIVE_FOCI={
   sfl:{label:"Sustainable Futures decisions",family:"sfl"}
 };
 function caseSkill(kind){
-  if(["Growth","Percentage points"].includes(kind))return"percent";
+  if(["Growth","Four-year growth","Average decline","Percentage points"].includes(kind))return"percent";
   if(["Weighted average","Expected value"].includes(kind))return"weighted";
   return"data";
 }
@@ -20,7 +20,10 @@ function sessionSkillStats(){
   const add=(id,missed)=>{const x=stats[id]||(stats[id]={attempted:0,missed:0});x.attempted++;if(missed)x.missed++};
   if(S.res.rr)for(const item of S.res.rr.items){
     let id="data";
-    if(item.sec==="Analysis")id=["Q1b","Q2a"].includes(item.label)?"percent":item.label==="Q3a"?"weighted":"data";
+    if(item.sec==="Analysis"){
+      const group=/^Q2([abcd])$/.exec(item.label),index=group?'abcd'.indexOf(group[1]):-1;
+      id=item.label==="Q1b"||(index>=0&&S.rr?.d?.aRules[index]?.endsWith('%'))?"percent":"data";
+    }
     if(item.sec==="Cases"){const kind=item.label.split(" · ")[1];id=caseSkill(kind)}
     add(id,item.pts<item.max);
   }

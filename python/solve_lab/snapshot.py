@@ -23,8 +23,8 @@ def snapshot(seed: int):
     return {
         "rr": {
             "theme": d["theme"], "names": d["names"], "terr": d["terr"], "totals": d["totals"], "y4": d["y4"],
-            "pctA": d["pctA"], "kmB": d["kmB"], "elk": d["elk"],
-            "an": [{"title": q["title"], "parts": [
+            "pctA": d["pctA"], "kmB": d["kmB"], "aRules": d["aRules"], "bRules": d["bRules"], "aReserve": d["aReserve"], "aValues": d["aValues"], "bValues": d["bValues"], "reportFocus": d["reportFocus"], "resource": d["resource"], "targetPct": d["targetPct"], "targetArea": d["targetArea"], "elk": d["elk"],
+            "an": [{"title": q["title"], "prompt": q["prompt"], "parts": [
                 {k: p[k] for k in ("key", "text", "unit", "ans")} for p in q["parts"]]} for q in d["an"]],
             "vis": d["vis"], "blanks": d["blanks"], "cases": d["cases"],
         },

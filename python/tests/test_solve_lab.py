@@ -57,8 +57,26 @@ class Redrock(unittest.TestCase):
         d = gen_redrock(5)
         self.assertEqual(len(d["names"]), 4)
         self.assertEqual(len(d["cases"]), 6)
-        self.assertEqual(sum(len(q["parts"]) for q in d["an"]), 6)
-        self.assertEqual(len(d["vis"]["labels"]), 4)
+        self.assertEqual([c["kind"] for c in d["cases"][:2]], ["Four-year growth", "Average decline"])
+        self.assertEqual(d["cases"][0]["body"], d["cases"][1]["body"])
+        self.assertEqual([len(q["parts"]) for q in d["an"]], [2, 4, 2])
+        self.assertEqual(len(d["blanks"]), 8)
+        self.assertEqual(len(d["vis"]["labels"]), len(d["vis"]["values"]))
+        self.assertIn(len(d["vis"]["values"]), (4, 8))
+
+    def test_proposal_rules_match_exhibited_values(self):
+        for seed in range(1, 60):
+            d = gen_redrock(seed)
+            self.assertEqual(sum("shared reserve" in rule for rule in d["aRules"]), 2)
+            self.assertEqual(sum(rule.endswith("%") for rule in d["aRules"]), 2)
+            self.assertEqual(sum(rule == "No change" for rule in d["bRules"]), 1)
+            for i, baseline in enumerate(d["y4"]):
+                a = d["aRules"][i]
+                expected_a = f1(baseline * (1 + int(a[:-1]) / 100)) if a.endswith("%") else baseline + d["aReserve"] / 2
+                self.assertEqual(d["aValues"][i], expected_a)
+                b = d["bRules"][i]
+                expected_b = baseline if b == "No change" else f1(baseline * (1 + int(b[:-1].replace("−", "-")) / 100)) if b.endswith("%") else baseline + int(b.split()[0])
+                self.assertEqual(d["bValues"][i], expected_b)
 
 
 class SeaWolf(unittest.TestCase):

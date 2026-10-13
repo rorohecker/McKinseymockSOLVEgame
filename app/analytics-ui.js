@@ -63,14 +63,13 @@ function shareHTML(){
 function rrStepForItem(item,index){
   const d=S.rr.d;
   if(index===0)return"Add the four Year 4 figures: "+d.y4.join(" + ")+" = "+d.totals[3]+" "+d.theme.unit+".";
-  if(index===1){const name=d.an[0].parts[1].text.match(/did (.+?) hold/)?.[1];const i=d.names.indexOf(name);return"Divide "+d.y4[i]+" by the Year 4 total "+d.totals[3]+", then multiply by 100."}
-  if(index===2)return"Use the starting year as denominator: ("+d.totals[3]+" − "+d.totals[0]+") ÷ "+d.totals[0]+" × 100.";
-  if(index===3)return"Take the named "+d.theme.group+"'s Year 4 value minus Year 1, then divide by the three year-to-year intervals.";
-  if(index===4)return"For each "+d.theme.group+", multiply its Year 4 value by (1 + Proposal A percent ÷ 100), then add the four results.";
-  if(index===5)return"Calculate both proposal totals, subtract the smaller from the larger, and report "+d.theme.unit+".";
-  if(item.sec==='Report'&&item.label.startsWith('Written'))return d.blanks[index-6]?.why||"Use the relevant exhibit value or the calculation from Analysis.";
+  if(index===1)return"Target: "+d.resource+" × "+d.targetPct+"% = "+d.targetArea+" "+d.theme.unit+". Subtract the Year 4 baseline of "+d.totals[3]+".";
+  if(index>=2&&index<6){const i=index-2;return d.names[i]+": apply "+d.aRules[i]+" to the Year 4 baseline of "+d.y4[i]+" = "+d.aValues[i]+" "+d.theme.unit+"."}
+  if(index===6)return"Add the four updated Proposal A values: "+d.aValues.join(" + ")+" = "+d.an[2].parts[0].ans+" "+d.theme.unit+".";
+  if(index===7)return"Apply each Proposal B rule to its Year 4 baseline: "+d.bValues.join(" + ")+" = "+d.an[2].parts[1].ans+" "+d.theme.unit+".";
+  if(item.sec==='Report'&&item.label.startsWith('Written'))return d.blanks[index-8]?.why||"Use the relevant exhibit value or the calculation from Analysis.";
   if(item.sec==='Report'&&item.label==='Chart type')return"Use a bar chart for category comparison, a line for change over time, a pie for shares, and a waterfall for a bridge between totals.";
-  if(item.sec==='Report'&&item.label.startsWith('Chart ')){const name=item.label.slice(6),i=d.vis.labels.indexOf(name);if(d.vis.kind==='compare')return"Read "+name+"'s Year 4 "+d.theme.measure+" directly from Exhibit 1: "+d.y4[i]+" "+d.theme.unit+".";if(d.vis.kind==='share')return"Divide "+name+"'s Year 4 "+d.theme.measure+" ("+d.y4[i]+") by the total ("+d.totals[3]+"), then multiply by 100.";if(d.vis.kind==='waterfall')return"Read "+name+"'s Proposal B adjustment in Exhibit 2: "+d.kmB[i]+" "+d.theme.unit+".";return"Add the four "+name+" group values: "+d.terr.map(x=>x[i]).join(" + ")+" = "+d.totals[i]+" "+d.theme.unit+"."}
+  if(item.sec==='Report'&&item.label.startsWith('Chart ')){const name=item.label.slice(6),i=d.vis.labels.indexOf(name);if(d.vis.kind==='compare'){const group=Math.floor(i/2);return i%2?"Apply "+d.names[group]+"'s Proposal A rule ("+d.aRules[group]+") to "+d.y4[group]+" = "+d.aValues[group]+" "+d.theme.unit+".":"Read "+d.names[group]+"'s baseline from Exhibit 1: "+d.y4[group]+" "+d.theme.unit+"."}if(d.vis.kind==='share')return"Divide "+name+"'s Year 4 "+d.theme.measure+" ("+d.y4[i]+") by the total ("+d.totals[3]+"), then multiply by 100.";if(d.vis.kind==='waterfall')return"Apply "+name+"'s Proposal B rule ("+d.bRules[i]+") to its Year 4 baseline: adjustment "+d.kmB[i]+" "+d.theme.unit+".";return"Add the four "+name+" group values: "+d.terr.map(x=>x[i]).join(" + ")+" = "+d.totals[i]+" "+d.theme.unit+"."}
   if(item.sec==='Cases'){const i=Number(item.label.match(/Case (\d+)/)?.[1])-1;return d.cases[i]?.explain||"Recheck the inputs and units."}
   return"Revisit the source figures and calculation.";
 }

@@ -1,5 +1,5 @@
 /* Local learning data and deterministic practice variants. */
-const HISTORY_KEY="solve-lab-history-v1",SETTINGS_KEY="solve-lab-settings",FEEDBACK_KEY="solve-lab-feedback-v1",SCORING_VERSION=2;
+const HISTORY_KEY="solve-lab-history-v1",SETTINGS_KEY="solve-lab-settings",FEEDBACK_KEY="solve-lab-feedback-v1",SCORING_VERSION=5;
 function safeRead(key,fallback){try{const x=JSON.parse(localStorage.getItem(key));return x??fallback}catch{return fallback}}
 function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}}
 function readSettings(){const s=safeRead(SETTINGS_KEY,{});return{difficulty:s.difficulty==="hard"?"hard":"standard",learning:!!s.learning}}

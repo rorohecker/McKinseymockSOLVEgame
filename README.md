@@ -18,9 +18,9 @@ cd python && python3 tools/serve.py       # http://localhost:8765
 
 # check everything
 cd python
-python3 -m unittest discover -s tests -v  # 11 tests (parity uses Node.js or Chrome)
+python3 -m unittest discover -s tests -v  # 12 tests (parity uses Node.js or Chrome)
 python3 tools/validate.py 1 500           # scenario sanity over 500 seeds
-python3 tools/parity_check.py 1 300       # Python port == JS in the HTML
+python3 tools/parity_check.py 1 1000      # Python port == JS in the HTML
 python3 tools/ui_smoke.py                 # full browser routes, spaced reviews and timeouts
 ```
 
@@ -28,7 +28,7 @@ For the browser version, no installs are needed: open `app/index.html` with its 
 
 ## Windows desktop executable
 
-Double-click [`dist/SolvePracticeLab.exe`](dist/SolvePracticeLab.exe) to open the game in its own window. It is a single-file, 64-bit Windows build with the HTML, scripts, pixel assets and Python runtime bundled. Python is not needed to play. The desktop window uses Microsoft Edge WebView2 Runtime, which is already present on many Windows 10/11 computers. The app keeps its WebView profile under `%LOCALAPPDATA%\SolvePracticeLab\WebView` so history and spaced reviews survive restarts. It serves only on `127.0.0.1:8765`; close another Solve Practice Lab window before opening a second copy.
+Download `SolvePracticeLab.exe` and its checksum from the [latest release](https://github.com/rorohecker/McKinseymockSOLVEgame/releases/latest), then double-click the executable to open the game in its own window. It is a single-file, 64-bit Windows build with the HTML, scripts, pixel assets and Python runtime bundled. Python is not needed to play. The desktop window uses Microsoft Edge WebView2 Runtime, which is already present on many Windows 10/11 computers. The app keeps its WebView profile under `%LOCALAPPDATA%\SolvePracticeLab\WebView` so history and spaced reviews survive restarts. It serves only on `127.0.0.1:8765`; close another Solve Practice Lab window before opening a second copy.
 
 To rebuild the executable on Windows:
 
@@ -68,19 +68,19 @@ The build script checks the bundled HTTP assets and writes `dist/SolvePracticeLa
 
 | Check | Result |
 |---|---|
-| Python port vs JS in `app/index.html` | 300 seeds matched in headless Chrome on Windows; the parity tool also uses Node.js when available. |
+| Python port vs JS in `app/index.html` | 1,000 seeds matched; the parity tool uses Node.js or headless Chrome. |
 | Perfect Redrock answer sheet | scores 175 on 500 seeds; empty sheet scores 0 |
 | Sea Wolf sites | planted team meets every requirement, solver finds a treatment at least as strong, unique names and 28-microbe pools across 1,500 sites |
-| Unit tests | 11 pass |
+| Unit tests | 12 pass |
 | Interface | `python python/tools/ui_smoke.py` completes the 65, 85 and 95-minute routes, every standalone game, and imperfect or partial runs using browser input events; it checks all six spaced skill targets, review scheduling, pause and quit, timeouts, keyboard shortcuts and two-choice Sea Wolf profiles at 1280, 500 and 360 pixels. It checks text contrast, control labels, broken placeholders and local image loading; dark and light screens were also reviewed visually. Manual play remains useful for feel and pacing. |
 
 ## Interface notes
 
-The DAY/NIGHT control saves your theme preference locally. The Keys menu lists shortcuts. Pause freezes the active timer and hides the game; Alt+P or Escape resumes. Quit asks before discarding an unfinished run, while saved history stays. In the Windows build, the quit prompt also offers Close desktop app. Redrock uses Alt+1/2/3 for Notebook, Exhibits and Calculator. Click or drag facts into the Notebook, mark important entries, and drag saved values into calculations or numeric answers. The calculator accepts mouse and keyboard input, keeps recent results, and lets you drag a result to an answer or transfer it to a focused field. Redrock flags malformed numeric answers before you lock a question; clear a field to skip it. Sea Wolf uses 1/2/3 for categorisation and prospects; during categorisation, the current and upcoming site briefs appear together so you can judge the “Next site” choice. SFL decisions use A/B/C. The results screen shows worked review, process metrics, a seed challenge link, CSV and print-to-PDF controls. Sea Wolf's review follows its four main phases and compares your treatment with the best available practice example.
+The DAY/NIGHT control saves your theme preference locally. The Keys menu lists shortcuts. Pause freezes the active timer and hides the game; Alt+P or Escape resumes. Quit asks before discarding an unfinished run, while saved history stays. In the Windows build, the quit prompt also offers Close desktop app. Redrock uses Alt+1/2/3 for Notebook, Exhibits and Calculator; during Analysis those shortcuts focus notes, expand the exhibits or focus the calculator, which stay visible together on wide screens. Its study information and exhibits are separate investigation steps; all three linked Analysis questions stay on one page. The Report has separate Written, Graph and Visual steps; the first two cases share a four-year exhibit. Click or drag facts from the study, exhibits and cases into the Notebook, mark important entries, and drag saved values into calculations or numeric answers. The calculator accepts mouse and keyboard input, keeps recent results, and lets you drag a result to an answer or transfer it to a focused field. Redrock flags malformed numeric answers before you continue to the report; clear a field to skip it. Sea Wolf uses 1/2/3 for categorisation and prospects; during categorisation, the current and upcoming site briefs appear together so you can judge the “Next site” choice. SFL decisions use A/B/C, and Team Lab researchers can be dragged onto workstations or assigned with selectors. The results screen shows worked review, process metrics, a seed challenge link, CSV and print-to-PDF controls. Sea Wolf's review follows its four main phases and compares your treatment with the best available practice example.
 
 Extended sittings use 85 minutes (Redrock + Sea Wolf + 20-minute SFL Project Lead) or 95 minutes (with the 30-minute SFL Team Lab). A break screen pauses between games. The SFL tasks, timing and scoring are practice reconstructions because official details are limited.
 
-Short sessions cover mental math, six Redrock cases at two minutes each, and Sea Wolf filtering. The Sea Wolf filter drill shows its sorting rule beside every candidate; final treatments still use three-microbe averages. The five-minute adaptive drill reads recent missed skills from local history and chooses focused math, Redrock data, Sea Wolf filtering, or SFL decisions; a first run starts with percent math. Scores, phase time and mistake summaries are saved in this browser. Standard/Hard changes Sea Wolf range widths and distractors plus Redrock numeric tolerance; learning hints can be switched on. Personal difficulty comparisons remain on this device.
+Short sessions cover mental math, six Redrock cases at two minutes each, and Sea Wolf filtering. Redrock now draws three of its four variable cases from the multi-step bank, so every run has a demanding mix. The Sea Wolf filter drill shows its sorting rule beside every candidate; final treatments still use three-microbe averages. The five-minute adaptive drill reads recent missed skills from local history and chooses focused math, Redrock data, Sea Wolf filtering, or SFL decisions; a first run starts with percent math. Scores, phase time and mistake summaries are saved in this browser. Standard/Hard changes Sea Wolf range widths and distractors plus Redrock numeric tolerance; learning hints can be switched on. Personal difficulty comparisons remain on this device.
 
 The [practice scoring model](docs/PRACTICE_SCORING.md) grades Sea Wolf sorting, prospects, final treatment choice and target precision; Redrock numeric near misses and chart choice; and SFL decision consistency and outcomes. These weights are this project's rules. Past saved scores remain visible as legacy entries; history trends and seed comparisons use the current scoring model and matching difficulty. Shared challenge links include the difficulty setting.
 
